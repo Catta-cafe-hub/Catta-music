@@ -106,6 +106,23 @@
             }
             .playlist-item .del-btn { color: #e53935; cursor: pointer; font-weight: bold; padding: 0 5px; }
             .playlist-item .del-btn:hover { color: #b71c1c; }
+            
+            /* Marquee Scroll Effect */
+            .cattamusic-marquee-wrapper {
+                width: 100%;
+                overflow: hidden;
+                white-space: nowrap;
+                position: relative;
+            }
+            .cattamusic-marquee {
+                display: inline-block;
+                padding-left: 100%;
+                animation: cattaScroll 12s linear infinite;
+            }
+            @keyframes cattaScroll {
+                0% { transform: translate(0, 0); }
+                100% { transform: translate(-100%, 0); }
+            }
         </style>`;
         $('head').append(inlineCSS);
     }
@@ -222,12 +239,47 @@
         if (msgId === lastProcessedMsgId) return;
         lastProcessedMsgId = msgId;
 
-        // A. Single Song Trigger (เล่นออโต้ + เข้าเพลย์ลิสต์ตัวละคร)
+        // A. Audio Catcher (จับทุกลิงก์เสียง)
+        let foundAnyAudio = false;
+        let firstAudioUrl = null;
+
+        // 1. จับแบบเจาะจง (มีปุ่ม inline)
         const musicMatch = originalText.match(CHAT_MUSIC_REGEX);
         if (musicMatch) {
             let targetId = addTrackToActiveChar(musicMatch[1], musicMatch[2], "shared");
+            firstAudioUrl = musicMatch[2].trim();
+            foundAnyAudio = true;
+        } else {
+            // 2. จับแบบหว่านแหหาลิงก์ไฟล์เสียงทั้งหมด (กรณีบอทพิมพ์ลิงก์มาดิบๆ)
+            const audioRegex = /(https?:\/\/[^\s\)]+\.(?:mp3|wav|ogg|m4a))/gi;
+            let audioMatches;
+            let extractedTracks = [];
             
-            // เด้งหน้าต่างขึ้นมา
+            while ((audioMatches = audioRegex.exec(originalText)) !== null) {
+                extractedTracks.push(audioMatches[1]);
+            }
+
+            if (extractedTracks.length > 0) {
+                firstAudioUrl = extractedTracks[0];
+                foundAnyAudio = true;
+                
+                // ยัดลงเพลย์ลิสต์จากหลังมาหน้า เพื่อให้เพลงแรกเด้งขึ้นไปอยู่บนสุดพอดี
+                for (let i = extractedTracks.length - 1; i >= 0; i--) {
+                    let url = extractedTracks[i];
+                    let filename = url.split('/').pop();
+                    try { filename = decodeURIComponent(filename); } catch(e) {}
+                    filename = filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
+                    
+                    addTrackToActiveChar(filename, url, "auto-detect");
+                }
+            }
+        }
+
+        // เล่นเพลงทันทีถ้าเจอลิงก์ในแชท (ไม่ว่าจะจากปุ่มหรือจากลิงก์ดิบๆ)
+        if (foundAnyAudio && firstAudioUrl) {
+            let activeChar = getActiveCharInfo();
+            let targetId = activeChar ? activeChar.id : 'chat';
+            
             const win = $(`#${WIN_ID}`);
             if (!win.is(':visible') && settings.showBubble) {
                 win.css({ top: '10px', left: '50%', transform: 'translateX(-50%)' });
@@ -235,9 +287,8 @@
             }
             
             switchTab('char', targetId);
-            playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === musicMatch[2].trim()), 'char', targetId);
-            notifyUser("🎵 เล่นเพลงอัตโนมัติจากแชท!");
-            return;
+            playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === firstAudioUrl), 'char', targetId);
+            notifyUser("📥 ดึงเพลงจากแชทและเริ่มเล่นทันที!");
         }
 
         // 🕵️‍♂️ แอบดึงข้อมูลความลับของตัวละครจาก SillyTavern (Description, Personality, Scenario)
@@ -378,81 +429,145 @@
     function buildPlayerWindow() {
         if (document.getElementById(WIN_ID)) return;
         
-        // รูปแบบมินิมอล (Compact Style) เปลี่ยนสีตาม Theme (ทิ้ง hardcode สีดำ)
+        // ✨ Redesigned UI v3.0 — Premium gradient music player
         const html = `
-            <div id="${WIN_ID}" style="display: none; position: fixed; z-index: 10000; top: 10px; left: 50%; transform: translateX(-50%); width: 280px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-radius: 12px; overflow: hidden; border: 2px solid var(--catta-main, #ff9800); background: var(--catta-bg, #fffaf0); color: var(--catta-text, #333);">
-                <div class="cattamusic-header" style="padding: 5px 10px; font-size: 12px; font-weight: bold; background: var(--catta-main, #ff9800); color: white; display: flex; justify-content: space-between; align-items: center; cursor: grab;">
-                    <span>🐾 Catta Music</span><button id="catta-close-win" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer; padding: 0;">×</button>
-                </div>
-                
-                <div id="catta-banner-container" style="width: 100%; padding: 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
-                    <img id="catta-cover-img" src="${ICON_URL}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-                    <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center;">
-                        <div id="catta-cover-title" style="font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">Catta Music</div>
-                        <div id="catta-display-name" class="cattamusic-marquee" style="color: var(--catta-main, #ff9800); font-size: 11px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Ready to play!</div>
+            <div id="${WIN_ID}" style="display:none; position:fixed; z-index:10000; top:12px; left:50%; transform:translateX(-50%);">
+                <!-- HEADER -->
+                <div class="cattamusic-header">
+                    <span class="catta-header-title">🐾 Catta Music</span>
+                    <div style="display:flex;align-items:center;gap:5px;">
+                        <span id="catta-track-count" style="font-size:9px;color:var(--catta-muted);font-weight:700;">0 tracks</span>
+                        <button id="catta-btn-minimize" title="ย่อ/ขยาย" style="background:rgba(255,255,255,0.08);border:none;color:var(--catta-muted);cursor:pointer;font-size:13px;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;line-height:1;">▾</button>
+                        <button id="catta-close-win">×</button>
                     </div>
                 </div>
 
-                <div class="cattamusic-screen" style="border: none; padding: 4px 10px; background: var(--catta-screen, #ffcc80); font-size: 10px; font-weight: bold;">
-                    <div class="cattamusic-status-bar" style="display: flex; justify-content: space-between;"><span id="catta-time">00:00</span><span id="catta-vol">Vol: 3</span><span id="catta-track-count">0 tracks</span></div>
+                <!-- MINI BAR (แสดงเมื่อ minimize) -->
+                <div id="catta-mini-bar" style="display:none; align-items:center; gap:8px; padding:6px 12px; border-top:0.5px solid rgba(255,255,255,0.06);">
+                    <img id="catta-mini-img" src="${ICON_URL}" style="width:28px;height:28px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+                    <div style="flex:1;min-width:0;overflow:hidden;">
+                        <div id="catta-mini-title" style="font-size:11px;font-weight:800;color:var(--catta-text,#f0e8ff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Catta Music</div>
+                        <div id="catta-mini-sub" style="font-size:9px;color:var(--catta-muted);font-weight:700;letter-spacing:0.5px;">Ready to play</div>
+                    </div>
+                    <button id="catta-mini-prev" style="background:none;border:none;color:var(--catta-muted);cursor:pointer;font-size:13px;padding:2px 4px;transition:color 0.2s;">⏮</button>
+                    <button id="catta-mini-play" style="background:none;border:none;color:var(--catta-main,#ff6b9d);cursor:pointer;font-size:16px;padding:2px 4px;transition:transform 0.15s;">▶</button>
+                    <button id="catta-mini-next" style="background:none;border:none;color:var(--catta-muted);cursor:pointer;font-size:13px;padding:2px 4px;transition:color 0.2s;">⏭</button>
+                </div>
+
+                <!-- COVER + SONG INFO -->
+                <div id="catta-banner-container">
+                    <img id="catta-cover-img" src="${ICON_URL}">
+                    <div class="catta-cover-text">
+                        <div id="catta-cover-title">Catta Music</div>
+                        <div class="cattamusic-marquee-wrapper">
+                            <div id="catta-display-name" class="cattamusic-marquee">Ready to play ✨</div>
+                        </div>
+                        <!-- Mood pills row -->
+                        <div id="catta-mood-row" style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;"></div>
+                    </div>
+                </div>
+
+                <!-- STATUS BAR -->
+                <div class="cattamusic-screen">
+                    <div class="cattamusic-status-bar">
+                        <span id="catta-time" style="font-variant-numeric:tabular-nums;">00:00</span>
+                        <div class="catta-status-dot" id="catta-play-dot" style="opacity:0;"></div>
+                        <span id="catta-vol">Vol: 3</span>
+                    </div>
                 </div>
                 
-                <div class="cattamusic-controls" style="padding: 8px; display: flex; justify-content: space-around; border-bottom: 1px solid rgba(128,128,128,0.2);">
-                    <button id="catta-btn-loop" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-arrow-right" title="เล่นต่อ"></i></button>
-                    <button id="catta-btn-prev" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-backward-step"></i></button>
-                    <button id="catta-btn-play" style="background:var(--catta-main, #ff9800); border:none; color:white; width:30px; height:30px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"><i class="fa-solid fa-play"></i></button>
-                    <button id="catta-btn-next" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-forward-step"></i></button>
-                    <button id="catta-btn-voldown" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-volume-low"></i></button>
-                    <button id="catta-btn-volup" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-volume-high"></i></button>
+                <!-- CONTROLS -->
+                <div class="cattamusic-controls">
+                    <button id="catta-btn-loop" title="วนซ้ำ"><i class="fa-solid fa-arrow-right"></i></button>
+                    <button id="catta-btn-prev" title="ก่อนหน้า"><i class="fa-solid fa-backward-step"></i></button>
+                    <button id="catta-btn-play"><i class="fa-solid fa-play"></i></button>
+                    <button id="catta-btn-next" title="ถัดไป"><i class="fa-solid fa-forward-step"></i></button>
+                    <button id="catta-btn-voldown" title="ลดเสียง"><i class="fa-solid fa-volume-low"></i></button>
+                    <button id="catta-btn-volup" title="เพิ่มเสียง"><i class="fa-solid fa-volume-high"></i></button>
                 </div>
                 
-                <div class="cattamusic-tabs" style="display: flex; border-bottom: 1px solid rgba(128,128,128,0.2);">
-                    <button id="catta-tab-user" style="flex:1; padding: 6px; background:none; border:none; font-weight:bold; cursor:pointer; font-size:12px; transition:0.2s;">👤 ส่วนตัว</button>
-                    <button id="catta-tab-char" style="flex:1; padding: 6px; background:none; border:none; font-weight:bold; cursor:pointer; font-size:12px; transition:0.2s;">🐱 ตัวละคร</button>
-                    <button id="catta-btn-toggle-tools" style="background:none; border:none; color:var(--catta-main, #ff9800); cursor:pointer; padding: 0 12px; font-size:14px; border-left: 1px solid rgba(128,128,128,0.2); transition:0.2s;" title="เครื่องมือจัดการเพลย์ลิสต์"><i class="fa-solid fa-sliders"></i></button>
+                <!-- TABS -->
+                <div class="cattamusic-tabs">
+                    <button id="catta-tab-user">👤 ส่วนตัว</button>
+                    <button id="catta-tab-char">🐱 ตัวละคร</button>
+                    <button id="catta-btn-toggle-tools" title="จัดการเพลย์ลิสต์"><i class="fa-solid fa-sliders"></i></button>
                 </div>
                 
-                <div class="cattamusic-playlist" style="background: var(--catta-bg, #fffaf0);">
-                    <!-- Tools Container (ซ่อน/แสดงได้) -->
-                    <div id="catta-tools-container" style="display: none; background: rgba(0,0,0,0.03); border-bottom: 1px solid rgba(128,128,128,0.2);">
+                <!-- PLAYLIST -->
+                <div class="cattamusic-playlist">
+                    <!-- Tools Container (toggle) -->
+                    <div id="catta-tools-container" style="display:none; padding:8px 10px; border-bottom:0.5px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:6px;">
                         <!-- User Playlist Manager -->
-                        <div id="catta-user-manager" class="catta-manager-row" style="display:none; padding:8px; flex-direction:column; gap:5px;">
-                            <div style="display:flex; gap:5px;">
-                                <select id="catta-user-sel" style="flex-grow:1; background:rgba(255,255,255,0.7)!important; border:1px solid rgba(128,128,128,0.4); padding:3px 5px; font-size:11px;"></select>
-                                <button id="catta-btn-del-user" class="catta-btn-small" style="background:#e53935; border:none; color:white; padding:2px 6px; border-radius:3px;" title="ลบรายการนี้"><i class="fa-solid fa-trash"></i></button>
+                        <div id="catta-user-manager" class="catta-manager-row" style="display:none; flex-direction:column; gap:5px;">
+                            <div style="display:flex;gap:5px;">
+                                <select id="catta-user-sel" style="flex-grow:1;"></select>
+                                <button id="catta-btn-del-user" class="catta-btn-small" style="background:#c62828;" title="ลบรายการนี้"><i class="fa-solid fa-trash"></i></button>
                             </div>
-                            <div style="display:flex; gap:5px;">
-                                <input type="text" id="catta-new-user-name" placeholder="ตั้งชื่อรายการส่วนตัวใหม่" style="flex-grow:1; background:rgba(255,255,255,0.7)!important; border:1px solid rgba(128,128,128,0.4); padding:3px 5px; font-size:11px;">
-                                <button id="catta-btn-new-user" class="catta-btn-small" style="background:#4caf50; border:none; color:white; padding:2px 6px; border-radius:3px;">สร้าง</button>
+                            <div style="display:flex;gap:5px;">
+                                <input type="text" id="catta-new-user-name" placeholder="ชื่อเพลย์ลิสต์ใหม่..." style="flex-grow:1;">
+                                <button id="catta-btn-new-user" class="catta-btn-small" style="background:#2e7d32;">+ สร้าง</button>
                             </div>
                         </div>
 
                         <!-- Char Playlist Manager -->
-                        <div id="catta-char-manager" class="catta-manager-row" style="display:none; padding:8px; flex-direction:column; gap:5px;">
-                            <div style="display:flex; gap:5px;">
-                                <select id="catta-char-sel" style="flex-grow:1; background:rgba(255,255,255,0.7)!important; border:1px solid rgba(128,128,128,0.4); padding:3px 5px; font-size:11px;"></select>
-                                <button id="catta-btn-del-char" class="catta-btn-small" style="background:#e53935; border:none; color:white; padding:2px 6px; border-radius:3px;" title="ลบรายการตัวละครนี้"><i class="fa-solid fa-trash"></i></button>
+                        <div id="catta-char-manager" class="catta-manager-row" style="display:none; flex-direction:column; gap:5px;">
+                            <div style="display:flex;gap:5px;">
+                                <select id="catta-char-sel" style="flex-grow:1;"></select>
+                                <button id="catta-btn-del-char" class="catta-btn-small" style="background:#c62828;" title="ลบตัวละครนี้"><i class="fa-solid fa-trash"></i></button>
                             </div>
-                            <div style="display:flex; gap:5px;">
-                                <input type="text" id="catta-search-char" placeholder="ID/ชื่อ ตัวละคร" style="flex-grow:1; background:rgba(255,255,255,0.7)!important; border:1px solid rgba(128,128,128,0.4); padding:3px 5px; font-size:11px;">
-                                <button id="catta-btn-search-char" class="catta-btn-small" style="background:#2196f3; border:none; color:white; padding:2px 6px; border-radius:3px;"><i class="fa-solid fa-search"></i> ค้นหา</button>
+                            <div style="display:flex;gap:5px;">
+                                <input type="text" id="catta-search-char" placeholder="ID หรือชื่อตัวละคร..." style="flex-grow:1;">
+                                <button id="catta-btn-search-char" class="catta-btn-small" style="background:#1565c0;"><i class="fa-solid fa-search"></i> ค้นหา</button>
                             </div>
-                            <div id="catta-char-search-results" style="display:none; flex-direction:column; gap:5px; margin-top:5px;">
-                                <select id="catta-char-result-sel" style="flex-grow:1; background:rgba(255,255,255,0.7)!important; border:1px solid rgba(128,128,128,0.4); padding:3px 5px; font-size:11px;"></select>
-                                <button id="catta-btn-confirm-char" class="catta-btn-small" style="background:#4caf50; border:none; color:white; padding:2px 6px; border-radius:3px; width:100%;">เพิ่มตัวละครนี้</button>
+                            <div id="catta-char-search-results" style="display:none; flex-direction:column; gap:5px;">
+                                <select id="catta-char-result-sel" style="flex-grow:1;"></select>
+                                <button id="catta-btn-confirm-char" class="catta-btn-small" style="background:#2e7d32; width:100%;">🐱 เพิ่มตัวละครนี้</button>
                             </div>
                         </div>
 
-                        <div id="catta-add-url-box" style="display:flex; gap:5px; padding:0 8px 8px 8px;">
-                            <input type="text" id="catta-input-url" placeholder="วางลิ้งค์ .mp3 เพื่อเพิ่มเข้าเพลย์ลิสต์นี้..." style="flex-grow:1; font-size:11px; padding:3px 5px; background:rgba(255,255,255,0.7)!important; border:1px solid rgba(128,128,128,0.4); border-radius:3px;">
-                            <button id="catta-btn-save" class="catta-btn-small" style="background:var(--catta-main, #ff9800); border:none; color:white; padding:3px 8px; border-radius:3px;">+ Add</button>
+                        <!-- Add Track URL -->
+                        <div id="catta-add-url-box" style="display:flex;gap:5px;">
+                            <input type="text" id="catta-input-url" placeholder="วางลิงก์ .mp3 ที่นี่..." style="flex-grow:1;">
+                            <button id="catta-btn-save" class="catta-btn-small">+ เพิ่ม</button>
                         </div>
                     </div>
                     
-                    <div id="catta-list-display" class="catta-scroll-list" style="max-height: 150px; overflow-y: auto; padding: 8px;"></div>
+                    <div id="catta-list-display" style="padding:6px 0;"></div>
                 </div>
             </div>`;
         $("body").append(html);
+        
+        // ══ MINIMIZE LOGIC ══
+        let isMinimized = false;
+        const fullSections = ['#catta-banner-container', '.cattamusic-screen', '.cattamusic-controls', '.cattamusic-tabs', '.cattamusic-playlist'];
+        
+        function setMinimized(mini) {
+            isMinimized = mini;
+            if (mini) {
+                // ซ่อนส่วนที่ไม่ต้องการ
+                fullSections.forEach(sel => $(`#${WIN_ID}`).find(sel).hide());
+                $('#catta-mini-bar').css('display','flex');
+                $('#catta-btn-minimize').text('▴').attr('title','ขยาย');
+                // sync mini bar info
+                $('#catta-mini-img').attr('src', $('#catta-cover-img').attr('src'));
+                $('#catta-mini-title').text($('#catta-cover-title').text());
+                $('#catta-mini-sub').text(isPlaying ? '▶ กำลังเล่น' : '⏸ หยุดเล่น');
+                $('#catta-mini-play').text(isPlaying ? '⏸' : '▶');
+            } else {
+                fullSections.forEach(sel => $(`#${WIN_ID}`).find(sel).show());
+                $('#catta-mini-bar').hide();
+                $('#catta-btn-minimize').text('▾').attr('title','ย่อ');
+            }
+        }
+        
+        $('#catta-btn-minimize').on('click', () => setMinimized(!isMinimized));
+        
+        // Mini bar controls
+        $('#catta-mini-play').on('click', () => {
+            if(isAuthorized) { togglePlay(); $('#catta-mini-play').text(isPlaying ? '⏸' : '▶'); $('#catta-mini-sub').text(isPlaying ? '▶ กำลังเล่น' : '⏸ หยุดเล่น'); }
+        });
+        $('#catta-mini-prev').on('click', () => isAuthorized && playPrev());
+        $('#catta-mini-next').on('click', () => isAuthorized && playNext());
         
         // Buttons
         $('#catta-tab-user').on('click', () => switchTab('user'));
@@ -617,6 +732,7 @@
     function updateCoverUI() {
         let title = "Catta Music";
         let img = ICON_URL;
+        let charTabName = "🐱 ตัวละคร";
 
         // ถ้าเล่นอยู่ ให้โชว์ปกของอันที่กำลังเล่นเป็นหลัก
         let targetTab = isPlaying ? playingTab : viewingTab;
@@ -625,13 +741,28 @@
         if (targetTab === 'user') {
             const p = userPlaylists[targetId];
             if (p) title = p.name;
+            // อัปเดตชื่อแท็บตัวละครตามสิ่งที่เปิดดูอยู่
+            const c = charPlaylists[viewingId];
+            if (c && viewingId !== 'chat') charTabName = `🐱 ${c.name}`;
         } else {
             const p = charPlaylists[targetId];
-            if (p) { title = p.name; img = p.avatar; }
+            if (p) { 
+                title = p.name; 
+                img = p.avatar; 
+                if (targetId !== 'chat') charTabName = `🐱 ${p.name}`;
+            }
         }
         
         $("#catta-cover-title").text(title);
         $("#catta-cover-img").attr("src", img);
+        
+        // อัปเดตข้อความบนปุ่มแท็บ
+        const tabBtn = $("#catta-tab-char");
+        const currentText = tabBtn.text();
+        const newText = charTabName.length > 15 ? charTabName.substring(0, 15) + '...' : charTabName;
+        if (currentText !== newText) {
+            tabBtn.text(newText);
+        }
     }
 
     function togglePlayerSmart() {
@@ -695,8 +826,17 @@
         const list = getViewingArray();
         list.forEach((track, i) => {
             const isActive = (playingTab === viewingTab && playingId === viewingId && currentTrackIndex === i);
-            const item = $(`<div class="playlist-item ${isActive?'active-track':''}"><span>${i+1}. ${track.name}</span><span class="del-btn">×</span></div>`);
-            item.find('span:first').on('click', () => isAuthorized && playTrack(i, viewingTab, viewingId));
+            const numBadge = isActive && isPlaying
+                ? `<div class="catta-eq"><span></span><span></span><span></span></div>`
+                : `<span class="track-num-badge">${i+1}</span>`;
+            const item = $(`
+                <div class="playlist-item ${isActive?'active-track':''}">
+                    ${numBadge}
+                    <span class="track-name-text">${track.name}</span>
+                    ${track.mood ? `<span style="font-size:9px;color:var(--catta-muted);margin-right:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;">${track.mood}</span>` : ''}
+                    <span class="del-btn">×</span>
+                </div>`);
+            item.find('.track-name-text').on('click', () => isAuthorized && playTrack(i, viewingTab, viewingId));
             item.find('.del-btn').on('click', (e) => { e.stopPropagation(); list.splice(i, 1); saveData(); renderPlaylist(); });
             container.append(item);
         });
@@ -718,6 +858,22 @@
         
         $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>');
         $("#catta-display-name").text(list[i].name);
+        $("#catta-play-dot").css('opacity','1');
+        
+        // sync mini bar
+        if ($('#catta-mini-bar').is(':visible')) {
+            $('#catta-mini-title').text(list[i].name);
+            $('#catta-mini-sub').text('▶ กำลังเล่น');
+            $('#catta-mini-play').text('⏸');
+        }
+        
+        // แสดง mood pills
+        if (list[i].mood) {
+            const pills = list[i].mood.split('|').map(m => `<span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,0.08);color:var(--catta-muted);font-weight:700;border:0.5px solid rgba(255,255,255,0.12);">${m.trim()}</span>`).join('');
+            $("#catta-mood-row").html(pills);
+        } else {
+            $("#catta-mood-row").empty();
+        }
         
         updateCoverUI();
         renderPlaylist();
@@ -726,8 +882,19 @@
     }
 
     function togglePlay() {
-        const list = getPlayingArray();
-        if (!audioPlayer.src && list.length > 0) return playTrack(0, playingTab, playingId);
+        const list = viewingTab === 'char' ? charPlaylists[viewingId].tracks : userPlaylists[viewingId].tracks;
+        
+        // ถ้ายังไม่ได้เริ่มเล่น หรือไม่มีลิงก์เพลงค้างใน Audio เลย
+        if (!audioPlayer.src || audioPlayer.src === window.location.href) {
+            // ให้เล่นเพลงแรกใน *หน้าต่างที่กำลังเปิดดูอยู่ (Viewing)*
+            if (list && list.length > 0) {
+                return playTrack(0, viewingTab, viewingId);
+            } else {
+                return notifyUser("⚠️ เพลย์ลิสต์นี้ว่างเปล่า");
+            }
+        }
+        
+        // ถัามีเพลงเล่นค้างอยู่ ให้สลับเล่น/หยุด
         if (isPlaying) { audioPlayer.pause(); $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); }
         else { audioPlayer.play(); $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>'); }
         isPlaying = !isPlaying;
@@ -751,27 +918,11 @@
         const win = $(`#${WIN_ID}`);
         if(!win.length) return;
         
+        // ✨ v3.0: CSS variables only via data-theme
+        win[0].setAttribute('data-theme', themeName);
         document.documentElement.style.setProperty('--catta-main', T.main);
-        document.documentElement.style.setProperty('--catta-bg', T.bg);
-        document.documentElement.style.setProperty('--catta-screen', T.screen);
-        document.documentElement.style.setProperty('--catta-text', T.text);
-
-        win.css({ 'border-color': T.main, 'background-color': T.bg, 'color': T.text });
-        win.find('.cattamusic-header, .catta-btn-small[id="catta-btn-save"]').css({'background-color': T.main, 'color': '#fff'});
-        
-        win.find('.cattamusic-tabs button').css({ 'color': T.text });
-        win.find('.cattamusic-tabs .active').css({'background-color': T.main, 'color': '#fff'});
-        
-        win.find('.cattamusic-screen').css({ 'background-color': T.screen, 'color': T.text });
-        win.find('.cattamusic-controls button').css({ 'color': T.text });
-        win.find('#catta-btn-play').css({'background-color': T.main, 'color': '#fff'});
-        
-        const toolsBtn = win.find('#catta-btn-toggle-tools');
-        if (toolsBtn.css('background-color') === 'rgba(0, 0, 0, 0)') { // if closed
-            toolsBtn.css('color', T.main);
-        } else {
-            toolsBtn.css('color', T.text);
-        }
+        document.documentElement.style.setProperty('--catta-text', T.text || '#f0e8ff');
+        win.css({ 'background': T.bg || '#1a0a2e', 'border-color': T.main + '55' });
 
         settings.theme = themeName; saveData();
     }
