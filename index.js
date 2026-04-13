@@ -54,75 +54,306 @@
     let lastProcessedMsgId = "";
 
     const themes = {
-        orange: { main: '#ff9800', bg: '#fffaf0', screen: '#ffcc80', text: '#333' },
-        pink: { main: '#f06292', bg: '#fce4ec', screen: '#f8bbd0', text: '#880e4f' },
-        blue: { main: '#2196f3', bg: '#e3f2fd', screen: '#bbdefb', text: '#0d47a1' },
-        green: { main: '#4caf50', bg: '#e8f5e9', screen: '#c8e6c9', text: '#1b5e20' },
-        purple: { main: '#9c27b0', bg: '#f3e5f5', screen: '#e1bee7', text: '#4a148c' },
-        mint: { main: '#00bfa5', bg: '#e0f2f1', screen: '#b2dfdb', text: '#004d40' },
-        latte: { main: '#8d6e63', bg: '#efebe9', screen: '#d7ccc8', text: '#3e2723' },
-        dark: { main: '#424242', bg: '#212121', screen: '#37474f', text: '#eceff1' },
-        midnight: { main: '#1a237e', bg: '#121212', screen: '#1a1a2e', text: '#e8eaf6' },
-        blood: { main: '#d32f2f', bg: '#1c1c1c', screen: '#2b2b2b', text: '#ffcdd2' }
+        pink:     { main:'#ff6b9d', accent:'#ff9a56', dark:'#1a0a2e', card:'#2d1b54', text:'#f0e8ff', muted:'#b08ecf', glow:'rgba(255,107,157,0.4)',  dot:'rgba(255,107,157,0.8)'  },
+        orange:   { main:'#ff9a56', accent:'#ffd93d', dark:'#1f0e00', card:'#2e1a00', text:'#fff0e0', muted:'#c4956b', glow:'rgba(255,154,86,0.4)',   dot:'rgba(255,154,86,0.9)'   },
+        blue:     { main:'#4d96ff', accent:'#6bcb77', dark:'#050f2e', card:'#0d1f5c', text:'#e8f0ff', muted:'#7a9fd4', glow:'rgba(77,150,255,0.4)',   dot:'rgba(77,150,255,0.9)'   },
+        mint:     { main:'#6bcb77', accent:'#4d96ff', dark:'#041a0a', card:'#082e14', text:'#e8ffe8', muted:'#7cb882', glow:'rgba(107,203,119,0.4)',  dot:'rgba(107,203,119,0.9)'  },
+        purple:   { main:'#b388ff', accent:'#ff6b9d', dark:'#0d0025', card:'#1a0040', text:'#f0e8ff', muted:'#9b78d4', glow:'rgba(179,136,255,0.45)', dot:'rgba(179,136,255,0.9)'  },
+        midnight: { main:'#4fc3f7', accent:'#81d4fa', dark:'#050a12', card:'#0d1525', text:'#e0f4ff', muted:'#6a9fb5', glow:'rgba(79,195,247,0.4)',   dot:'rgba(79,195,247,0.9)'   },
+        latte:    { main:'#d4a574', accent:'#ff9a56', dark:'#1a1008', card:'#2e1c0c', text:'#fff0dc', muted:'#b08c6a', glow:'rgba(212,165,116,0.4)',  dot:'rgba(212,165,116,0.9)'  },
+        dark:     { main:'#aaaaaa', accent:'#888888', dark:'#0a0a0a', card:'#1a1a1a', text:'#e0e0e0', muted:'#707070', glow:'rgba(180,180,180,0.2)',  dot:'rgba(200,200,200,0.7)'  },
+        blood:    { main:'#ef5350', accent:'#ff7043', dark:'#1a0505', card:'#2d0808', text:'#ffe0e0', muted:'#b07070', glow:'rgba(239,83,80,0.45)',    dot:'rgba(239,83,80,0.9)'    },
+        green:    { main:'#66bb6a', accent:'#a5d6a7', dark:'#051a05', card:'#0a2e0a', text:'#e0ffe0', muted:'#7cb87e', glow:'rgba(102,187,106,0.4)',  dot:'rgba(102,187,106,0.9)'  }
     };
 
     // ══════════════════════════════════════════════
-    // 2. CSS STYLES (Inline UI)
+    // 2. CSS STYLES — SillyTavern-safe, all !important
     // ══════════════════════════════════════════════
     if (!$('#cattamusic-inline-css').length) {
         const inlineCSS = `
+        <link id="cattamusic-font" href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
         <style id="cattamusic-inline-css">
-            .catta-inline-music {
-                display: inline-flex; align-items: center; 
-                background: #111111;
-                color: #ffffff !important; padding: 6px 14px; border-radius: 20px; 
-                cursor: pointer; font-family: sans-serif; font-size: 13px; 
-                box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: all 0.2s ease; margin: 5px 0;
-                border: 1px solid rgba(255,255,255,0.1);
-            }
-            .catta-inline-music:hover { 
-                transform: translateY(-2px); 
-                box-shadow: 0 6px 14px rgba(0,0,0,0.5); 
-                border: 1px solid var(--catta-main, #ff9800);
-            }
-            .catta-inline-music .music-icon { margin-right: 10px; font-size: 18px; color: var(--catta-main, #ff9800); }
-            .catta-inline-music .music-info { display: flex; flex-direction: column; line-height: 1.3; }
-            .catta-inline-music .music-title { font-weight: bold; color: #ffffff; }
-            .catta-inline-music .music-status { font-size: 10px; color: var(--catta-main, #aaaaaa); text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; }
-            
-            .catta-manager-row input, .catta-manager-row select {
-                background: white !important; color: black !important;
-                border: 1px solid #ccc; border-radius: 4px; padding: 4px 6px; font-size: 12px; outline: none;
-            }
-            .playlist-item {
-                display: flex; justify-content: space-between; padding: 5px 8px; margin: 3px 0;
-                background: rgba(0,0,0,0.05); border-radius: 4px; font-size: 11px; cursor: pointer;
-                transition: 0.2s; color: var(--catta-text, #333);
-            }
-            .playlist-item:hover { background: rgba(0,0,0,0.1); }
-            .playlist-item.active-track {
-                background: var(--catta-screen, #ffcc80);
-                font-weight: bold; border-left: 3px solid var(--catta-main, #ff9800);
-            }
-            .playlist-item .del-btn { color: #e53935; cursor: pointer; font-weight: bold; padding: 0 5px; }
-            .playlist-item .del-btn:hover { color: #b71c1c; }
-            
-            /* Marquee Scroll Effect */
-            .cattamusic-marquee-wrapper {
-                width: 100%;
-                overflow: hidden;
-                white-space: nowrap;
-                position: relative;
-            }
-            .cattamusic-marquee {
-                display: inline-block;
-                padding-left: 100%;
-                animation: cattaScroll 12s linear infinite;
-            }
-            @keyframes cattaScroll {
-                0% { transform: translate(0, 0); }
-                100% { transform: translate(-100%, 0); }
-            }
+
+        /* ── KEYFRAMES ── */
+        @keyframes cattaScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-100%)} }
+        @keyframes cattaPulse  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.45;transform:scale(.7)} }
+        @keyframes cattaEQ     { to{height:3px!important} }
+        @keyframes cattaFloat  { 0%,100%{transform:translateY(0) rotate(0deg)} 40%{transform:translateY(-4px) rotate(-3deg)} 70%{transform:translateY(-2px) rotate(2deg)} }
+        @keyframes cattaSlideIn{ from{opacity:0;transform:translateY(-10px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+        /* ── PLAYER WINDOW ── */
+        #cattamusic-player-window {
+            position:fixed!important; z-index:10000!important;
+            width:270px!important; border-radius:22px!important;
+            overflow:hidden!important; user-select:none!important;
+            font-family:'Itim',cursive!important;
+            box-shadow:0 20px 60px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.06) inset!important;
+            animation:cattaSlideIn .28s cubic-bezier(.34,1.56,.64,1)!important;
+        }
+
+        /* ── HEADER ── */
+        #cattamusic-player-window .cattamusic-header {
+            display:flex!important; justify-content:space-between!important; align-items:center!important;
+            padding:10px 12px 8px!important; cursor:grab!important;
+            border-bottom:1px solid rgba(255,255,255,.07)!important;
+        }
+        #cattamusic-player-window .cattamusic-header:active { cursor:grabbing!important; }
+        #cattamusic-player-window .catta-header-title {
+            font-size:14px!important; font-weight:400!important;
+            font-family:'Itim',cursive!important; letter-spacing:.3px!important;
+        }
+        #cattamusic-player-window .hdr-right {
+            display:flex!important; align-items:center!important; gap:5px!important;
+        }
+        #catta-track-count {
+            font-size:9px!important; font-family:'Itim',cursive!important;
+            font-weight:400!important; letter-spacing:.5px!important;
+        }
+        #catta-btn-minimize, #catta-close-win {
+            width:22px!important; height:22px!important; border:none!important;
+            border-radius:7px!important; cursor:pointer!important;
+            display:flex!important; align-items:center!important; justify-content:center!important;
+            font-size:13px!important; line-height:1!important; transition:all .2s!important;
+            padding:0!important; box-shadow:none!important;
+        }
+        #catta-btn-minimize { background:rgba(255,255,255,.09)!important; }
+        #catta-close-win    { background:rgba(255,255,255,.06)!important; }
+        #catta-btn-minimize:hover { background:rgba(255,107,157,.25)!important; }
+        #catta-close-win:hover    { background:rgba(239,83,80,.25)!important; color:#ef5350!important; }
+
+        /* ── COVER / BANNER ── */
+        #catta-banner-container {
+            display:flex!important; align-items:center!important; gap:11px!important;
+            padding:11px 13px 9px!important;
+            border-bottom:1px solid rgba(255,255,255,.06)!important;
+        }
+        #catta-cover-img {
+            width:52px!important; height:52px!important; border-radius:13px!important;
+            object-fit:cover!important; flex-shrink:0!important;
+            box-shadow:0 6px 20px rgba(0,0,0,.5)!important;
+            transition:transform .3s!important;
+        }
+        #catta-cover-img:hover { transform:scale(1.05) rotate(-2deg)!important; }
+        #catta-cover-title {
+            font-size:13px!important; font-weight:400!important; font-family:'Itim',cursive!important;
+            white-space:nowrap!important; overflow:hidden!important; text-overflow:ellipsis!important;
+            margin-bottom:2px!important;
+        }
+        #catta-mood-row { display:flex!important; gap:4px!important; margin-top:4px!important; flex-wrap:wrap!important; }
+        #catta-mood-row span {
+            font-size:9px!important; padding:2px 8px!important; border-radius:20px!important;
+            font-family:'Itim',cursive!important; border:1px solid!important;
+        }
+
+        /* Marquee */
+        .cattamusic-marquee-wrapper {
+            width:100%!important; overflow:hidden!important; white-space:nowrap!important; position:relative!important;
+        }
+        .cattamusic-marquee {
+            display:inline-block!important; padding-left:100%!important; font-size:10px!important;
+            font-family:'Itim',cursive!important; font-weight:400!important; letter-spacing:.3px!important;
+            animation:cattaScroll 14s linear infinite!important;
+        }
+
+        /* ── STATUS BAR ── */
+        #cattamusic-player-window .cattamusic-screen {
+            padding:4px 13px!important; display:flex!important;
+            border-top:none!important; border-left:none!important; border-right:none!important;
+        }
+        #cattamusic-player-window .cattamusic-status-bar {
+            display:flex!important; justify-content:space-between!important; align-items:center!important;
+            width:100%!important; font-size:9px!important; font-family:'Itim',cursive!important; font-weight:400!important;
+        }
+        #catta-play-dot {
+            width:6px!important; height:6px!important; border-radius:50%!important;
+            animation:cattaPulse 2s ease-in-out infinite!important;
+        }
+
+        /* ── CONTROLS ── */
+        #cattamusic-player-window .cattamusic-controls {
+            display:flex!important; align-items:center!important; justify-content:space-around!important;
+            padding:9px 12px 7px!important; border-bottom:1px solid rgba(255,255,255,.06)!important;
+        }
+        #cattamusic-player-window .cattamusic-controls button {
+            background:none!important; border:none!important; cursor:pointer!important;
+            width:34px!important; height:34px!important; border-radius:50%!important;
+            display:flex!important; align-items:center!important; justify-content:center!important;
+            font-size:13px!important; transition:all .2s cubic-bezier(.34,1.56,.64,1)!important;
+            padding:0!important; box-shadow:none!important;
+        }
+        #cattamusic-player-window .cattamusic-controls button:hover {
+            transform:scale(1.12)!important;
+        }
+        #catta-btn-play {
+            width:46px!important; height:46px!important; border-radius:50%!important;
+            color:#fff!important; font-size:15px!important;
+        }
+        #catta-btn-play:hover { transform:scale(1.07)!important; }
+
+        /* ── TABS ── */
+        #cattamusic-player-window .cattamusic-tabs {
+            display:flex!important; border-bottom:1px solid rgba(255,255,255,.06)!important;
+            padding:0 8px!important; gap:2px!important;
+        }
+        #cattamusic-player-window .cattamusic-tabs button {
+            flex:1!important; border:none!important; padding:7px 3px!important;
+            font-size:11px!important; cursor:pointer!important;
+            font-family:'Itim',cursive!important; font-weight:400!important;
+            background:transparent!important; transition:all .2s!important;
+            border-bottom:2px solid transparent!important; margin-bottom:-1px!important;
+            box-shadow:none!important;
+        }
+        #catta-btn-toggle-tools {
+            flex:none!important; background:none!important; border:none!important;
+            cursor:pointer!important; padding:0 10px!important; font-size:13px!important;
+            border-left:1px solid rgba(255,255,255,.07)!important;
+            transition:color .2s!important; box-shadow:none!important;
+        }
+
+        /* ── PLAYLIST ── */
+        #cattamusic-player-window .cattamusic-playlist {
+            background:transparent!important;
+        }
+        #catta-list-display {
+            max-height:120px!important; overflow-y:auto!important; padding:4px 0!important;
+        }
+        #catta-list-display::-webkit-scrollbar { width:3px!important; }
+        #catta-list-display::-webkit-scrollbar-thumb { border-radius:3px!important; }
+
+        .playlist-item {
+            display:flex!important; align-items:center!important; gap:8px!important;
+            padding:6px 12px!important; cursor:pointer!important;
+            font-family:'Itim',cursive!important; font-size:11px!important; font-weight:400!important;
+            transition:all .15s!important; border-left:2px solid transparent!important;
+            border-radius:0!important; margin:0!important;
+        }
+        .playlist-item:hover { background:rgba(255,107,157,.07)!important; }
+        .playlist-item.active-track { border-left-width:2px!important; border-left-style:solid!important; }
+        .playlist-item .track-num-badge {
+            width:16px!important; text-align:center!important;
+            font-size:10px!important; flex-shrink:0!important; font-family:'Itim',cursive!important;
+        }
+        .playlist-item .track-name-text {
+            flex:1!important; white-space:nowrap!important;
+            overflow:hidden!important; text-overflow:ellipsis!important;
+            font-family:'Itim',cursive!important;
+        }
+        .playlist-item .del-btn {
+            color:rgba(255,255,255,.18)!important; cursor:pointer!important;
+            font-size:14px!important; padding:0 3px!important;
+            transition:color .2s!important; flex-shrink:0!important;
+            font-family:sans-serif!important;
+        }
+        .playlist-item .del-btn:hover { color:#ff6b9d!important; }
+
+        /* EQ bars */
+        .catta-eq {
+            display:inline-flex!important; align-items:flex-end!important;
+            gap:2px!important; height:14px!important; flex-shrink:0!important; width:16px!important;
+        }
+        .catta-eq span {
+            width:3px!important; border-radius:2px!important;
+            animation:cattaEQ .55s ease-in-out infinite alternate!important;
+        }
+        .catta-eq span:nth-child(1){height:8px!important;animation-delay:0s!important}
+        .catta-eq span:nth-child(2){height:12px!important;animation-delay:.15s!important}
+        .catta-eq span:nth-child(3){height:5px!important;animation-delay:.3s!important}
+
+        /* ── TOOLS (inputs/selects) ── */
+        #catta-tools-container {
+            border-bottom:1px solid rgba(255,255,255,.06)!important;
+        }
+        .catta-manager-row { display:flex!important; flex-direction:column!important; gap:5px!important; }
+        #catta-tools-container input,
+        #catta-tools-container select {
+            background:rgba(255,255,255,.08)!important; color:#f0e8ff!important;
+            border:1px solid rgba(255,255,255,.15)!important; border-radius:10px!important;
+            padding:6px 10px!important; font-size:11px!important;
+            font-family:'Itim',cursive!important; outline:none!important;
+            transition:border-color .2s!important; width:auto!important;
+            box-shadow:none!important;
+        }
+        #catta-tools-container input:focus,
+        #catta-tools-container select:focus { border-color:#ff6b9d!important; }
+        #catta-tools-container input::placeholder { color:rgba(255,255,255,.3)!important; }
+
+        .catta-btn-small {
+            border:none!important; color:#fff!important; padding:6px 10px!important;
+            border-radius:10px!important; font-family:'Itim',cursive!important;
+            font-size:11px!important; cursor:pointer!important;
+            transition:all .2s!important; white-space:nowrap!important;
+            box-shadow:none!important;
+        }
+        .catta-btn-small:hover { filter:brightness(1.15)!important; transform:translateY(-1px)!important; }
+        .catta-btn-small:active { transform:scale(.96)!important; }
+
+        /* ── MINI BAR ── */
+        #catta-mini-bar {
+            align-items:center!important; gap:8px!important;
+            padding:8px 12px!important; border-top:1px solid rgba(255,255,255,.06)!important;
+        }
+        #catta-mini-img {
+            width:30px!important; height:30px!important; border-radius:8px!important;
+            object-fit:cover!important; flex-shrink:0!important;
+        }
+        #catta-mini-title {
+            font-size:11px!important; font-family:'Itim',cursive!important;
+            white-space:nowrap!important; overflow:hidden!important; text-overflow:ellipsis!important;
+        }
+        #catta-mini-sub {
+            font-size:9px!important; font-family:'Itim',cursive!important;
+            letter-spacing:.3px!important; margin-top:1px!important;
+        }
+        #catta-mini-prev, #catta-mini-next, #catta-mini-play {
+            background:none!important; border:none!important;
+            cursor:pointer!important; padding:3px 5px!important;
+            border-radius:6px!important; transition:all .2s!important;
+            font-size:13px!important; box-shadow:none!important;
+        }
+        #catta-mini-play { font-size:16px!important; }
+        #catta-mini-play:hover { transform:scale(1.12)!important; }
+
+        /* ── INLINE MUSIC PILL (in chat) ── */
+        .catta-inline-music {
+            display:inline-flex!important; align-items:center!important; gap:10px!important;
+            background:rgba(20,10,40,.9)!important; border:1px solid rgba(255,107,157,.4)!important;
+            color:#fff!important; padding:8px 16px!important; border-radius:20px!important;
+            cursor:pointer!important; font-family:'Itim',cursive!important; font-size:13px!important;
+            box-shadow:0 4px 16px rgba(0,0,0,.35)!important;
+            transition:all .25s cubic-bezier(.34,1.56,.64,1)!important; margin:5px 0!important;
+        }
+        .catta-inline-music:hover {
+            transform:translateY(-3px)!important;
+            box-shadow:0 10px 28px rgba(255,107,157,.3)!important;
+        }
+        .catta-inline-music .music-icon { font-size:18px!important; }
+        .catta-inline-music .music-info { display:flex!important; flex-direction:column!important; line-height:1.3!important; }
+        .catta-inline-music .music-title { font-weight:400!important; color:#fff!important; font-family:'Itim',cursive!important; }
+        .catta-inline-music .music-status { font-size:9px!important; text-transform:uppercase!important; letter-spacing:1px!important; font-family:'Itim',cursive!important; }
+
+        /* ── SETTINGS ── */
+        .cattamusic-settings-block {
+            border-radius:14px!important; padding:14px!important; margin:10px 0!important;
+            font-family:'Itim',cursive!important;
+        }
+        .cattamusic-settings-block h4 { font-size:14px!important; font-family:'Itim',cursive!important; margin-bottom:8px!important; }
+        .cattamusic-settings-block label { font-family:'Itim',cursive!important; font-size:13px!important; }
+        .theme-selectors { display:flex!important; gap:7px!important; flex-wrap:wrap!important; margin-top:8px!important; }
+        .theme-dot {
+            width:24px!important; height:24px!important; border-radius:50%!important;
+            cursor:pointer!important; border:2px solid rgba(255,255,255,.25)!important;
+            box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
+            transition:all .2s cubic-bezier(.34,1.56,.64,1)!important;
+        }
+        .theme-dot:hover { transform:scale(1.22)!important; border-color:#fff!important; }
+
+        /* ── BUBBLE ── */
+        #cattamusic-bubble { border-radius:50%!important; transition:transform .25s,filter .2s!important; }
+        #cattamusic-bubble:hover {
+            transform:scale(1.12) rotate(-5deg)!important;
+            animation:none!important;
+        }
+
         </style>`;
         $('head').append(inlineCSS);
     }
@@ -428,113 +659,124 @@
 
     function buildPlayerWindow() {
         if (document.getElementById(WIN_ID)) return;
-        
-        // ✨ Redesigned UI v3.0 — Premium gradient music player
+        const T = themes[settings.theme] || themes.pink;
+        const S = {
+            win:  `display:none;position:fixed!important;z-index:10000!important;top:12px;left:50%;transform:translateX(-50%);width:270px;border-radius:22px;overflow:hidden;font-family:'Itim',cursive;background:${T.dark};border:1.5px solid ${T.main}44;box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset;`,
+            hdr:  `display:flex;justify-content:space-between;align-items:center;padding:10px 12px 8px;cursor:grab;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.07);`,
+            ttl:  `font-size:14px;font-family:'Itim',cursive;background:linear-gradient(90deg,${T.main},${T.accent});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;`,
+            hdR:  `display:flex;align-items:center;gap:5px;`,
+            cnt:  `font-size:9px;color:${T.muted};font-family:'Itim',cursive;`,
+            minB: `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0;box-shadow:none!important;background:rgba(255,255,255,.09);color:${T.muted};transition:all .2s;`,
+            cls:  `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;box-shadow:none!important;background:rgba(255,255,255,.06);color:${T.muted};transition:all .2s;`,
+            mini: `display:none;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.07);`,
+            mImg: `width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.5);`,
+            mTtl: `font-size:11px;font-family:'Itim',cursive;color:${T.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`,
+            mSub: `font-size:9px;font-family:'Itim',cursive;color:${T.muted};margin-top:1px;`,
+            mBtn: `background:none;border:none!important;cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .2s;box-shadow:none!important;font-size:13px;color:${T.muted};`,
+            mPlay:`background:none;border:none!important;cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .2s;box-shadow:none!important;font-size:17px;color:${T.main};`,
+            ban:  `display:flex;align-items:center;gap:11px;padding:11px 13px 9px;border-bottom:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,${T.main}12,transparent);`,
+            cov:  `width:52px;height:52px;border-radius:13px;object-fit:cover;flex-shrink:0;box-shadow:0 6px 20px rgba(0,0,0,.5);`,
+            cTtl: `font-size:13px;font-family:'Itim',cursive;color:${T.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;`,
+            scr:  `padding:4px 13px;display:flex;background:rgba(0,0,0,.22);`,
+            sBar: `display:flex;justify-content:space-between;align-items:center;width:100%;font-size:9px;font-family:'Itim',cursive;color:${T.muted};`,
+            dot:  `width:6px;height:6px;border-radius:50%;background:${T.main};opacity:0;`,
+            ctrl: `display:flex;align-items:center;justify-content:space-around;padding:9px 12px 7px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.12);`,
+            cBtn: `background:none!important;border:none!important;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;padding:0;box-shadow:none!important;color:${T.muted};`,
+            pBtn: `border:none!important;cursor:pointer;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;padding:0;color:#fff!important;background:linear-gradient(135deg,${T.main},${T.accent});box-shadow:0 6px 20px ${T.glow};`,
+            tabs: `display:flex;border-bottom:1px solid rgba(255,255,255,.06);padding:0 8px;gap:2px;background:rgba(0,0,0,.15);`,
+            tab:  `flex:1;border:none!important;padding:7px 3px;font-size:11px;cursor:pointer;font-family:'Itim',cursive;background:transparent!important;color:${T.muted};transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-1px;box-shadow:none!important;`,
+            tTl:  `flex:none;background:none!important;border:none!important;cursor:pointer;padding:0 10px;font-size:13px;border-left:1px solid rgba(255,255,255,.07);color:${T.muted};transition:color .2s;box-shadow:none!important;`,
+            pl:   `background:${T.dark};`,
+            tool: `display:none;padding:8px 10px;flex-direction:column;gap:5px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.2);`,
+            inp:  `background:rgba(255,255,255,.08)!important;color:${T.text}!important;border:1px solid rgba(255,255,255,.15)!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;`,
+            sel:  `background:rgba(255,255,255,.08)!important;color:${T.text}!important;border:1px solid rgba(255,255,255,.15)!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;flex-grow:1;`,
+            sB:   `border:none!important;color:#fff!important;padding:6px 10px;border-radius:10px;font-family:'Itim',cursive;font-size:11px;cursor:pointer;box-shadow:none!important;white-space:nowrap;flex-shrink:0;`,
+            lst:  `max-height:120px;overflow-y:auto;padding:4px 0;`,
+        };
         const html = `
-            <div id="${WIN_ID}" style="display:none; position:fixed; z-index:10000; top:12px; left:50%; transform:translateX(-50%);">
-                <!-- HEADER -->
-                <div class="cattamusic-header">
-                    <span class="catta-header-title">🐾 Catta Music</span>
-                    <div style="display:flex;align-items:center;gap:5px;">
-                        <span id="catta-track-count" style="font-size:9px;color:var(--catta-muted);font-weight:700;">0 tracks</span>
-                        <button id="catta-btn-minimize" title="ย่อ/ขยาย" style="background:rgba(255,255,255,0.08);border:none;color:var(--catta-muted);cursor:pointer;font-size:13px;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;line-height:1;">▾</button>
-                        <button id="catta-close-win">×</button>
-                    </div>
+        <div id="${WIN_ID}" style="${S.win}">
+            <div class="cattamusic-header" style="${S.hdr}">
+                <span class="catta-header-title" style="${S.ttl}">🐾 Catta Music</span>
+                <div style="${S.hdR}">
+                    <span id="catta-track-count" style="${S.cnt}">0 tracks</span>
+                    <button id="catta-btn-minimize" style="${S.minB}" title="ย่อ">▾</button>
+                    <button id="catta-close-win" style="${S.cls}">×</button>
                 </div>
-
-                <!-- MINI BAR (แสดงเมื่อ minimize) -->
-                <div id="catta-mini-bar" style="display:none; align-items:center; gap:8px; padding:6px 12px; border-top:0.5px solid rgba(255,255,255,0.06);">
-                    <img id="catta-mini-img" src="${ICON_URL}" style="width:28px;height:28px;border-radius:8px;object-fit:cover;flex-shrink:0;">
-                    <div style="flex:1;min-width:0;overflow:hidden;">
-                        <div id="catta-mini-title" style="font-size:11px;font-weight:800;color:var(--catta-text,#f0e8ff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Catta Music</div>
-                        <div id="catta-mini-sub" style="font-size:9px;color:var(--catta-muted);font-weight:700;letter-spacing:0.5px;">Ready to play</div>
-                    </div>
-                    <button id="catta-mini-prev" style="background:none;border:none;color:var(--catta-muted);cursor:pointer;font-size:13px;padding:2px 4px;transition:color 0.2s;">⏮</button>
-                    <button id="catta-mini-play" style="background:none;border:none;color:var(--catta-main,#ff6b9d);cursor:pointer;font-size:16px;padding:2px 4px;transition:transform 0.15s;">▶</button>
-                    <button id="catta-mini-next" style="background:none;border:none;color:var(--catta-muted);cursor:pointer;font-size:13px;padding:2px 4px;transition:color 0.2s;">⏭</button>
+            </div>
+            <div id="catta-mini-bar" style="${S.mini}">
+                <img id="catta-mini-img" src="${ICON_URL}" style="${S.mImg}">
+                <div style="flex:1;min-width:0;overflow:hidden;">
+                    <div id="catta-mini-title" style="${S.mTtl}">Catta Music</div>
+                    <div id="catta-mini-sub"   style="${S.mSub}">Ready to play</div>
                 </div>
-
-                <!-- COVER + SONG INFO -->
-                <div id="catta-banner-container">
-                    <img id="catta-cover-img" src="${ICON_URL}">
-                    <div class="catta-cover-text">
-                        <div id="catta-cover-title">Catta Music</div>
-                        <div class="cattamusic-marquee-wrapper">
-                            <div id="catta-display-name" class="cattamusic-marquee">Ready to play ✨</div>
+                <button id="catta-mini-prev" style="${S.mBtn}">⏮</button>
+                <button id="catta-mini-play" style="${S.mPlay}">▶</button>
+                <button id="catta-mini-next" style="${S.mBtn}">⏭</button>
+            </div>
+            <div id="catta-banner-container" style="${S.ban}">
+                <img id="catta-cover-img" src="${ICON_URL}" style="${S.cov}">
+                <div style="flex:1;min-width:0;overflow:hidden;">
+                    <div id="catta-cover-title" style="${S.cTtl}">Catta Music</div>
+                    <div class="cattamusic-marquee-wrapper" style="width:100%;overflow:hidden;white-space:nowrap;">
+                        <div id="catta-display-name" class="cattamusic-marquee" style="display:inline-block;padding-left:100%;font-size:10px;font-family:'Itim',cursive;color:${T.main};animation:cattaScroll 14s linear infinite;">✨ Ready to play!</div>
+                    </div>
+                    <div id="catta-mood-row" style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;"></div>
+                </div>
+            </div>
+            <div class="cattamusic-screen" style="${S.scr}">
+                <div class="cattamusic-status-bar" style="${S.sBar}">
+                    <span id="catta-time">00:00</span>
+                    <div id="catta-play-dot" style="${S.dot}"></div>
+                    <span id="catta-vol">Vol: 3</span>
+                </div>
+            </div>
+            <div class="cattamusic-controls" style="${S.ctrl}">
+                <button id="catta-btn-loop"    style="${S.cBtn}" title="วนซ้ำ"><i class="fa-solid fa-arrow-right"></i></button>
+                <button id="catta-btn-prev"    style="${S.cBtn}" title="ก่อนหน้า"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="catta-btn-play"    style="${S.pBtn}"><i class="fa-solid fa-play"></i></button>
+                <button id="catta-btn-next"    style="${S.cBtn}" title="ถัดไป"><i class="fa-solid fa-forward-step"></i></button>
+                <button id="catta-btn-voldown" style="${S.cBtn}"><i class="fa-solid fa-volume-low"></i></button>
+                <button id="catta-btn-volup"   style="${S.cBtn}"><i class="fa-solid fa-volume-high"></i></button>
+            </div>
+            <div class="cattamusic-tabs" style="${S.tabs}">
+                <button id="catta-tab-user" style="${S.tab}">👤 ส่วนตัว</button>
+                <button id="catta-tab-char" style="${S.tab}">🐱 ตัวละคร</button>
+                <button id="catta-btn-toggle-tools" style="${S.tTl}" title="จัดการ"><i class="fa-solid fa-sliders"></i></button>
+            </div>
+            <div class="cattamusic-playlist" style="${S.pl}">
+                <div id="catta-tools-container" style="${S.tool}">
+                    <div id="catta-user-manager" class="catta-manager-row" style="display:none;flex-direction:column;gap:5px;">
+                        <div style="display:flex;gap:5px;">
+                            <select id="catta-user-sel" style="${S.sel}"></select>
+                            <button id="catta-btn-del-user" class="catta-btn-small" style="${S.sB}background:#b71c1c;" title="ลบ"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                        <!-- Mood pills row -->
-                        <div id="catta-mood-row" style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;"></div>
-                    </div>
-                </div>
-
-                <!-- STATUS BAR -->
-                <div class="cattamusic-screen">
-                    <div class="cattamusic-status-bar">
-                        <span id="catta-time" style="font-variant-numeric:tabular-nums;">00:00</span>
-                        <div class="catta-status-dot" id="catta-play-dot" style="opacity:0;"></div>
-                        <span id="catta-vol">Vol: 3</span>
-                    </div>
-                </div>
-                
-                <!-- CONTROLS -->
-                <div class="cattamusic-controls">
-                    <button id="catta-btn-loop" title="วนซ้ำ"><i class="fa-solid fa-arrow-right"></i></button>
-                    <button id="catta-btn-prev" title="ก่อนหน้า"><i class="fa-solid fa-backward-step"></i></button>
-                    <button id="catta-btn-play"><i class="fa-solid fa-play"></i></button>
-                    <button id="catta-btn-next" title="ถัดไป"><i class="fa-solid fa-forward-step"></i></button>
-                    <button id="catta-btn-voldown" title="ลดเสียง"><i class="fa-solid fa-volume-low"></i></button>
-                    <button id="catta-btn-volup" title="เพิ่มเสียง"><i class="fa-solid fa-volume-high"></i></button>
-                </div>
-                
-                <!-- TABS -->
-                <div class="cattamusic-tabs">
-                    <button id="catta-tab-user">👤 ส่วนตัว</button>
-                    <button id="catta-tab-char">🐱 ตัวละคร</button>
-                    <button id="catta-btn-toggle-tools" title="จัดการเพลย์ลิสต์"><i class="fa-solid fa-sliders"></i></button>
-                </div>
-                
-                <!-- PLAYLIST -->
-                <div class="cattamusic-playlist">
-                    <!-- Tools Container (toggle) -->
-                    <div id="catta-tools-container" style="display:none; padding:8px 10px; border-bottom:0.5px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:6px;">
-                        <!-- User Playlist Manager -->
-                        <div id="catta-user-manager" class="catta-manager-row" style="display:none; flex-direction:column; gap:5px;">
-                            <div style="display:flex;gap:5px;">
-                                <select id="catta-user-sel" style="flex-grow:1;"></select>
-                                <button id="catta-btn-del-user" class="catta-btn-small" style="background:#c62828;" title="ลบรายการนี้"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                            <div style="display:flex;gap:5px;">
-                                <input type="text" id="catta-new-user-name" placeholder="ชื่อเพลย์ลิสต์ใหม่..." style="flex-grow:1;">
-                                <button id="catta-btn-new-user" class="catta-btn-small" style="background:#2e7d32;">+ สร้าง</button>
-                            </div>
-                        </div>
-
-                        <!-- Char Playlist Manager -->
-                        <div id="catta-char-manager" class="catta-manager-row" style="display:none; flex-direction:column; gap:5px;">
-                            <div style="display:flex;gap:5px;">
-                                <select id="catta-char-sel" style="flex-grow:1;"></select>
-                                <button id="catta-btn-del-char" class="catta-btn-small" style="background:#c62828;" title="ลบตัวละครนี้"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                            <div style="display:flex;gap:5px;">
-                                <input type="text" id="catta-search-char" placeholder="ID หรือชื่อตัวละคร..." style="flex-grow:1;">
-                                <button id="catta-btn-search-char" class="catta-btn-small" style="background:#1565c0;"><i class="fa-solid fa-search"></i> ค้นหา</button>
-                            </div>
-                            <div id="catta-char-search-results" style="display:none; flex-direction:column; gap:5px;">
-                                <select id="catta-char-result-sel" style="flex-grow:1;"></select>
-                                <button id="catta-btn-confirm-char" class="catta-btn-small" style="background:#2e7d32; width:100%;">🐱 เพิ่มตัวละครนี้</button>
-                            </div>
-                        </div>
-
-                        <!-- Add Track URL -->
-                        <div id="catta-add-url-box" style="display:flex;gap:5px;">
-                            <input type="text" id="catta-input-url" placeholder="วางลิงก์ .mp3 ที่นี่..." style="flex-grow:1;">
-                            <button id="catta-btn-save" class="catta-btn-small">+ เพิ่ม</button>
+                        <div style="display:flex;gap:5px;">
+                            <input type="text" id="catta-new-user-name" placeholder="ชื่อเพลย์ลิสต์ใหม่..." style="${S.inp}flex-grow:1;">
+                            <button id="catta-btn-new-user" class="catta-btn-small" style="${S.sB}background:#1b5e20;">+ สร้าง</button>
                         </div>
                     </div>
-                    
-                    <div id="catta-list-display" style="padding:6px 0;"></div>
+                    <div id="catta-char-manager" class="catta-manager-row" style="display:none;flex-direction:column;gap:5px;">
+                        <div style="display:flex;gap:5px;">
+                            <select id="catta-char-sel" style="${S.sel}"></select>
+                            <button id="catta-btn-del-char" class="catta-btn-small" style="${S.sB}background:#b71c1c;" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <div style="display:flex;gap:5px;">
+                            <input type="text" id="catta-search-char" placeholder="ID หรือชื่อตัวละคร..." style="${S.inp}flex-grow:1;">
+                            <button id="catta-btn-search-char" class="catta-btn-small" style="${S.sB}background:#0d47a1;"><i class="fa-solid fa-search"></i> ค้นหา</button>
+                        </div>
+                        <div id="catta-char-search-results" style="display:none;flex-direction:column;gap:5px;">
+                            <select id="catta-char-result-sel" style="${S.sel}width:100%;"></select>
+                            <button id="catta-btn-confirm-char" class="catta-btn-small" style="${S.sB}background:#1b5e20;width:100%;">🐱 เพิ่มตัวละครนี้</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:5px;margin-top:2px;">
+                        <input type="text" id="catta-input-url" placeholder="วางลิงก์ .mp3 ที่นี่..." style="${S.inp}flex-grow:1;">
+                        <button id="catta-btn-save" class="catta-btn-small" style="${S.sB}background:linear-gradient(135deg,${T.main},${T.accent});">+ เพิ่ม</button>
+                    </div>
                 </div>
-            </div>`;
+                <div id="catta-list-display" style="${S.lst}"></div>
+            </div>
+        </div>`;
         $("body").append(html);
         
         // ══ MINIMIZE LOGIC ══
@@ -803,12 +1045,15 @@
         if (forceId) {
             viewingId = forceId;
         } else {
-            // คืนค่า viewingId กลับไปที่ของเดิมในแท็บนั้น
             viewingId = tab === 'user' ? $("#catta-user-sel").val() : $("#catta-char-sel").val();
         }
         
-        $('.cattamusic-tabs button').removeClass('active');
-        $(`#catta-tab-${tab}`).addClass('active');
+        const T = themes[settings.theme] || themes.pink;
+        // Reset all tab styles
+        $('.cattamusic-tabs button').css({ color: T.muted, borderBottom: '2px solid transparent' });
+        // Highlight active tab with inline style
+        $(`#catta-tab-${tab}`).css({ color: T.main, borderBottom: `2px solid ${T.main}` }).addClass('active');
+        $(`#catta-tab-${tab === 'user' ? 'char' : 'user'}`).removeClass('active');
         
         $('#catta-user-manager').toggle(tab === 'user');
         $('#catta-char-manager').toggle(tab === 'char');
@@ -823,19 +1068,17 @@
         if(!container.length) return;
         container.empty();
         
+        const T = themes[settings.theme] || themes.pink;
         const list = getViewingArray();
         list.forEach((track, i) => {
             const isActive = (playingTab === viewingTab && playingId === viewingId && currentTrackIndex === i);
+            const baseStyle = `display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-family:'Itim',cursive;font-size:11px;border-left:2px solid transparent;transition:background .15s;`;
+            const activeStyle = `background:linear-gradient(90deg,${T.main}1a,transparent);border-left-color:${T.main};color:${T.text};`;
+            const normalStyle = `color:${T.muted};`;
             const numBadge = isActive && isPlaying
-                ? `<div class="catta-eq"><span></span><span></span><span></span></div>`
-                : `<span class="track-num-badge">${i+1}</span>`;
-            const item = $(`
-                <div class="playlist-item ${isActive?'active-track':''}">
-                    ${numBadge}
-                    <span class="track-name-text">${track.name}</span>
-                    ${track.mood ? `<span style="font-size:9px;color:var(--catta-muted);margin-right:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;">${track.mood}</span>` : ''}
-                    <span class="del-btn">×</span>
-                </div>`);
+                ? `<div class="catta-eq" style="display:inline-flex;align-items:flex-end;gap:2px;height:14px;flex-shrink:0;width:16px;"><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:8px;animation:cattaEQ .55s ease-in-out infinite alternate;"></span><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:12px;animation:cattaEQ .55s ease-in-out infinite alternate .15s;"></span><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:5px;animation:cattaEQ .55s ease-in-out infinite alternate .3s;"></span></div>`
+                : `<span class="track-num-badge" style="width:16px;text-align:center;font-size:10px;flex-shrink:0;font-family:'Itim',cursive;color:${T.muted};">${i+1}</span>`;
+            const item = $(`<div class="playlist-item ${isActive?'active-track':''}" style="${baseStyle}${isActive?activeStyle:normalStyle}">${numBadge}<span class="track-name-text" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Itim',cursive;">${track.name}</span>${track.mood?`<span style="font-size:9px;color:${T.muted};margin-right:2px;flex-shrink:0;max-width:55px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${track.mood.split('|')[0]}</span>`:''}<span class="del-btn" style="color:rgba(255,255,255,.18);cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0;line-height:1;">×</span></div>`);
             item.find('.track-name-text').on('click', () => isAuthorized && playTrack(i, viewingTab, viewingId));
             item.find('.del-btn').on('click', (e) => { e.stopPropagation(); list.splice(i, 1); saveData(); renderPlaylist(); });
             container.append(item);
@@ -869,7 +1112,8 @@
         
         // แสดง mood pills
         if (list[i].mood) {
-            const pills = list[i].mood.split('|').map(m => `<span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,0.08);color:var(--catta-muted);font-weight:700;border:0.5px solid rgba(255,255,255,0.12);">${m.trim()}</span>`).join('');
+            const T = themes[settings.theme] || themes.pink;
+            const pills = list[i].mood.split('|').map(m => `<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:${T.main}18;color:${T.main};border:1px solid ${T.main}44;font-family:'Itim',cursive;">${m.trim()}</span>`).join('');
             $("#catta-mood-row").html(pills);
         } else {
             $("#catta-mood-row").empty();
@@ -914,15 +1158,34 @@
     }
 
     function applyTheme(themeName) {
-        const T = themes[themeName] || themes.orange;
+        const T = themes[themeName] || themes.pink;
         const win = $(`#${WIN_ID}`);
         if(!win.length) return;
-        
-        // ✨ v3.0: CSS variables only via data-theme
-        win[0].setAttribute('data-theme', themeName);
-        document.documentElement.style.setProperty('--catta-main', T.main);
-        document.documentElement.style.setProperty('--catta-text', T.text || '#f0e8ff');
-        win.css({ 'background': T.bg || '#1a0a2e', 'border-color': T.main + '55' });
+
+        // Re-apply all color-dependent inline styles
+        win.css({ background: T.dark, borderColor: T.main + '44',
+            boxShadow: `0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset` });
+
+        win.find('#catta-display-name').css('color', T.main);
+        win.find('#catta-play-dot').css('background', T.main);
+        win.find('#catta-cover-title, #catta-mini-title').css('color', T.text);
+        win.find('#catta-track-count, #catta-vol, #catta-time, #catta-mini-sub').css('color', T.muted);
+        win.find('#catta-btn-loop, #catta-btn-prev, #catta-btn-next, #catta-btn-voldown, #catta-btn-volup, #catta-btn-toggle-tools, #catta-mini-prev, #catta-mini-next').css('color', T.muted);
+        win.find('#catta-mini-play').css('color', T.main);
+        win.find('#catta-btn-play').css({
+            background: `linear-gradient(135deg,${T.main},${T.accent})`,
+            boxShadow: `0 6px 20px ${T.glow}`
+        });
+        win.find('#catta-btn-save').css('background', `linear-gradient(135deg,${T.main},${T.accent})`);
+        win.find('.catta-header-title').css({
+            background: `linear-gradient(90deg,${T.main},${T.accent})`,
+            '-webkit-background-clip': 'text', '-webkit-text-fill-color': 'transparent', 'background-clip': 'text'
+        });
+        win.find('#catta-banner-container').css('background', `linear-gradient(180deg,${T.main}12,transparent)`);
+        win.find('.cattamusic-playlist').css('background', T.dark);
+
+        // Active tab indicator
+        win.find('.cattamusic-tabs button.active').css('borderBottomColor', T.main).css('color', T.main);
 
         settings.theme = themeName; saveData();
     }
