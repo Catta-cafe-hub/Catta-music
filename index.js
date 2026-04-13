@@ -1,6 +1,6 @@
 /**
  * Catta Music Player Extension for SillyTavern
- * ระบบไอคอนลอย, เปลี่ยนธีมสี และการตั้งค่าผ่านเมนู ST
+ * ระบบ Responsive, Boundary Lock, และ Smart Positioning
  */
 
 (function() {
@@ -17,8 +17,8 @@
         showBubble: true,
         isEnabled: true,
         theme: 'orange',
-        posBubble: { top: '80%', left: '20px' },
-        posWin: { top: '100px', left: '100px' }
+        posBubble: { top: '80%', left: '10%' },
+        posWin: { top: '20%', left: '50%' }
     };
 
     let playlist = [];
@@ -36,7 +36,6 @@
         purple: { main: '#9c27b0', bg: '#f3e5f5', screen: '#e1bee7', text: '#4a148c' }
     };
 
-    // --- Helper: Load/Save ---
     function loadData() {
         const s = localStorage.getItem(LS_SETTINGS);
         if (s) settings = { ...settings, ...JSON.parse(s) };
@@ -49,64 +48,71 @@
         localStorage.setItem(LS_PLAYLIST, JSON.stringify(playlist));
     }
 
-    // --- Draggable Logic ---
+    // --- ระบบลากแบบไม่หลุดขอบจอ ---
     function makeDraggable(el, handleSelector, isBubble = false) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
         const handle = handleSelector ? el.querySelector(handleSelector) : el;
         
-        handle.onmousedown = (e) => {
-            e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = () => {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                // Save position
-                if (isBubble) {
-                    settings.posBubble = { top: el.style.top, left: el.style.left };
-                } else {
-                    settings.posWin = { top: el.style.top, left: el.style.left };
-                }
-                saveData();
-            };
-            document.onmousemove = (e) => {
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                el.style.top = (el.offsetTop - pos2) + "px";
-                el.style.left = (el.offsetLeft - pos1) + "px";
-            };
-        };
-    }
+        handle.onmousedown = dragMouseDown;
+        handle.ontouchstart = dragMouseDown;
 
-    // --- UI Builders ---
-    function applyTheme(themeName) {
-        const T = themes[themeName] || themes.orange;
-        const root = document.getElementById(WIN_ID);
-        if (!root) return;
-        
-        root.style.borderColor = T.main;
-        root.style.backgroundColor = T.bg;
-        root.style.color = T.text;
-        
-        root.querySelector('.cattamusic-header').style.backgroundColor = T.main;
-        root.querySelector('.cattamusic-screen').style.backgroundColor = T.screen;
-        root.querySelector('.cattamusic-screen').style.borderColor = T.main;
-        
-        root.querySelectorAll('.cattamusic-controls button').forEach(btn => {
-            btn.style.borderColor = T.main;
-            btn.style.color = T.main;
-        });
-        
-        settings.theme = themeName;
-        saveData();
+        function dragMouseDown(e) {
+            // รองรับทั้ง Mouse และ Touch
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            
+            pos3 = clientX;
+            pos4 = clientY;
+            
+            document.onmouseup = closeDragElement;
+            document.ontouchend = closeDragElement;
+            document.onmousemove = elementDrag;
+            document.ontouchmove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+            pos1 = pos3 - clientX;
+            pos2 = pos4 - clientY;
+            pos3 = clientX;
+            pos4 = clientY;
+
+            let newTop = el.offsetTop - pos2;
+            let newLeft = el.offsetLeft - pos1;
+
+            // ตรวจสอบขอบจอ (Boundary Clamp)
+            const margin = 10;
+            const maxLeft = window.innerWidth - el.offsetWidth - margin;
+            const maxTop = window.innerHeight - el.offsetHeight - margin;
+
+            newLeft = Math.max(margin, Math.min(newLeft, maxLeft));
+            newTop = Math.max(margin, Math.min(newTop, maxTop));
+
+            el.style.top = newTop + "px";
+            el.style.left = newLeft + "px";
+            el.style.bottom = "auto";
+            el.style.right = "auto";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.ontouchend = null;
+            document.onmousemove = null;
+            document.ontouchmove = null;
+
+            // บันทึกตำแหน่งเป็น % เพื่อความ Responsive
+            settings[isBubble ? 'posBubble' : 'posWin'] = {
+                top: (el.offsetTop / window.innerHeight * 100) + "%",
+                left: (el.offsetLeft / window.innerWidth * 100) + "%"
+            };
+            saveData();
+        }
     }
 
     function buildSettings() {
         if ($(`#${EXT_ID}-settings`).length) return;
-
         const html = `
             <div id="${EXT_ID}-settings" class="cattamusic-settings-block">
                 <h4>🐾 Catta Music Player</h4>
@@ -120,12 +126,8 @@
                 </div>
                 <div style="margin-top:10px;">
                     <label>เลือกธีมสี:</label>
-                    <div class="theme-selectors" style="display:flex; gap:5px; margin-top:5px;">
-                        <div class="theme-dot" data-theme="orange" style="background:#ff9800;"></div>
-                        <div class="theme-dot" data-theme="pink" style="background:#f06292;"></div>
-                        <div class="theme-dot" data-theme="blue" style="background:#2196f3;"></div>
-                        <div class="theme-dot" data-theme="dark" style="background:#424242;"></div>
-                        <div class="theme-dot" data-theme="purple" style="background:#9c27b0;"></div>
+                    <div class="theme-selectors">
+                        ${Object.keys(themes).map(t => `<div class="theme-dot" data-theme="${t}" style="background:${themes[t].main}"></div>`).join('')}
                     </div>
                 </div>
             </div>
@@ -135,7 +137,7 @@
         $('#catta-cfg-enabled').on('change', function() {
             settings.isEnabled = this.checked;
             saveData();
-            location.reload(); // รีโหลดเพื่อนำการตั้งค่าไปใช้
+            location.reload();
         });
 
         $('#catta-cfg-bubble').on('change', function() {
@@ -144,35 +146,65 @@
             saveData();
         });
 
-        $('.theme-dot').on('click', function() {
-            applyTheme($(this).data('theme'));
-        });
+        $('.theme-dot').on('click', function() { applyTheme($(this).data('theme')); });
     }
 
     function buildBubble() {
         if (!settings.isEnabled || document.getElementById(BUBBLE_ID)) return;
         const bubble = document.createElement('div');
         bubble.id = BUBBLE_ID;
-        bubble.style.cssText = `
-            position: fixed;
-            width: 60px; height: 60px;
-            top: ${settings.posBubble.top}; left: ${settings.posBubble.left};
-            background: url('${ICON_URL}') no-repeat center/contain;
-            z-index: 10001; cursor: pointer;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-            display: ${settings.showBubble ? 'block' : 'none'};
-        `;
+        bubble.style.top = settings.posBubble.top;
+        bubble.style.left = settings.posBubble.left;
+        bubble.style.display = settings.showBubble ? 'block' : 'none';
         document.body.appendChild(bubble);
         makeDraggable(bubble, null, true);
         
         let startX, startY;
         bubble.addEventListener('mousedown', (e) => { startX = e.clientX; startY = e.clientY; });
-        bubble.addEventListener('mouseup', (e) => {
-            // ถ้าขยับไม่เกิน 5px ถือว่าเป็นคลิก (ไม่ใช่การลาก)
-            if (Math.abs(e.clientX - startX) < 5 && Math.abs(e.clientY - startY) < 5) {
-                $(`#${WIN_ID}`).toggle();
+        bubble.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; });
+        
+        bubble.addEventListener('mouseup', handleBubbleClick);
+        bubble.addEventListener('touchend', handleBubbleClick);
+
+        function handleBubbleClick(e) {
+            const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
+            
+            if (Math.abs(clientX - startX) < 5 && Math.abs(clientY - startY) < 5) {
+                togglePlayerWithSmartPos();
             }
-        });
+        }
+    }
+
+    // --- ตรรกะเปิดหน้าต่างแบบฉลาด (หลบแป้นพิมพ์/เด้งเหนือปุ่ม) ---
+    function togglePlayerWithSmartPos() {
+        const win = $(`#${WIN_ID}`);
+        if (win.is(':visible')) {
+            win.fadeOut(200);
+        } else {
+            const bubble = $(`#${BUBBLE_ID}`);
+            const isMobile = window.innerWidth < 600;
+            
+            if (isMobile) {
+                // บนมือถือ ให้เด้งขึ้นมากลางจอค่อนไปทางบน เพื่อหลบแป้นพิมพ์
+                win.css({
+                    top: '15%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    bottom: 'auto'
+                });
+            } else if (bubble.length && settings.showBubble) {
+                // บนคอม ให้เด้งขึ้นเหนือไอคอนกลมๆ
+                let bTop = bubble.offset().top;
+                let bLeft = bubble.offset().left;
+                win.css({
+                    top: (bTop - win.outerHeight() - 20) + "px",
+                    left: bLeft + "px",
+                    transform: 'none'
+                });
+            }
+            win.fadeIn(200);
+        }
     }
 
     function buildPlayerWindow() {
@@ -181,7 +213,7 @@
         const html = `
             <div id="${WIN_ID}" style="display: none; position: fixed; top: ${settings.posWin.top}; left: ${settings.posWin.left}; z-index: 10000;">
                 <div class="cattamusic-header">
-                    <span>🐾 Catta Music</span>
+                    <span>🐾 Catta Music Player</span>
                     <button id="catta-close-win">×</button>
                 </div>
                 <div class="cattamusic-screen">
@@ -191,11 +223,11 @@
                         <span id="catta-track-count">0 tracks</span>
                     </div>
                     <div class="cattamusic-marquee-container">
-                        <div id="catta-display-name" class="cattamusic-marquee">Catta Music — พร้อมรับคำสั่งเจ้าค่ะ...</div>
+                        <div id="catta-display-name" class="cattamusic-marquee">Catta Music — แมวส้มพร้อมลุย!</div>
                     </div>
                 </div>
                 <div class="cattamusic-controls">
-                    <button id="catta-btn-loop"><i class="fa-solid fa-arrow-right"></i></button>
+                    <button id="catta-btn-loop" title="โหมดลูป"><i class="fa-solid fa-arrow-right"></i></button>
                     <button id="catta-btn-prev"><i class="fa-solid fa-backward-step"></i></button>
                     <button id="catta-btn-play"><i class="fa-solid fa-play"></i></button>
                     <button id="catta-btn-next"><i class="fa-solid fa-forward-step"></i></button>
@@ -203,8 +235,8 @@
                     <button id="catta-btn-volup"><i class="fa-solid fa-volume-high"></i></button>
                 </div>
                 <div class="cattamusic-playlist">
-                    <input type="text" id="catta-input-url" placeholder="วางลิ้งค์ .mp3 ตรงนี้..." style="width: 100%; font-size: 11px; margin-bottom:5px;">
-                    <button id="catta-btn-save" class="catta-btn-small">Add Music</button>
+                    <input type="text" id="catta-input-url" placeholder="URL เพลง .mp3 ...">
+                    <button id="catta-btn-save" class="catta-btn-small">Add to List</button>
                     <div id="catta-list-display" class="catta-scroll-list"></div>
                 </div>
             </div>
@@ -213,8 +245,7 @@
         makeDraggable(document.getElementById(WIN_ID), '.cattamusic-header');
         applyTheme(settings.theme);
 
-        // Events
-        $("#catta-close-win").on('click', () => $(`#${WIN_ID}`).hide());
+        $("#catta-close-win").on('click', () => $(`#${WIN_ID}`).fadeOut(200));
         $("#catta-btn-save").on('click', () => {
             const url = $("#catta-input-url").val().trim();
             if (url) {
@@ -239,17 +270,28 @@
         renderPlaylist();
     }
 
-    // --- Audio Logic ---
+    function applyTheme(themeName) {
+        const T = themes[themeName] || themes.orange;
+        const root = $(`#${WIN_ID}`);
+        if (!root.length) return;
+        root.css({ 'border-color': T.main, 'background-color': T.bg, 'color': T.text });
+        root.find('.cattamusic-header').css('background-color', T.main);
+        root.find('.cattamusic-screen').css({ 'background-color': T.screen, 'border-color': T.main });
+        root.find('.cattamusic-controls button').css({ 'border-color': T.main, 'color': T.main });
+        settings.theme = themeName;
+        saveData();
+    }
+
     function renderPlaylist() {
         const container = $("#catta-list-display");
         container.empty();
         playlist.forEach((track, i) => {
-            const item = $(`<div style="font-size:10px; padding:3px; border-bottom:1px solid rgba(0,0,0,0.05); display:flex; justify-content:space-between; cursor:pointer;">
+            const item = $(`<div class="playlist-item">
                 <span class="${currentTrackIndex===i?'active-track':''}">${i+1}. ${track.name}</span>
-                <span style="color:red;">×</span>
+                <span class="delete-track">×</span>
             </div>`);
             item.find('span:first').on('click', () => playTrack(i));
-            item.find('span:last').on('click', (e) => { e.stopPropagation(); playlist.splice(i, 1); saveData(); renderPlaylist(); });
+            item.find('.delete-track').on('click', (e) => { e.stopPropagation(); playlist.splice(i, 1); saveData(); renderPlaylist(); });
             container.append(item);
         });
         $("#catta-track-count").text(`${playlist.length} tracks`);
@@ -260,7 +302,7 @@
         currentTrackIndex = i;
         audioPlayer.src = playlist[i].url;
         audioPlayer.volume = volume / 5;
-        audioPlayer.play();
+        audioPlayer.play().catch(e => console.error("Playback failed:", e));
         isPlaying = true;
         $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>');
         $("#catta-display-name").text(playlist[i].name);
@@ -274,8 +316,8 @@
         isPlaying = !isPlaying;
     }
 
-    function playNext() { playTrack((currentTrackIndex + 1) % playlist.length); }
-    function playPrev() { playTrack((currentTrackIndex - 1 + playlist.length) % playlist.length); }
+    function playNext() { if(playlist.length) playTrack((currentTrackIndex + 1) % playlist.length); }
+    function playPrev() { if(playlist.length) playTrack((currentTrackIndex - 1 + playlist.length) % playlist.length); }
 
     function changeVolume(v) {
         volume = Math.min(5, Math.max(1, volume + v));
@@ -298,7 +340,6 @@
         else if (loopMode === 1 || currentTrackIndex < playlist.length - 1) playNext();
     };
 
-    // --- Init ---
     function init() {
         loadData();
         buildSettings();
