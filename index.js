@@ -88,7 +88,6 @@
             overflow:hidden!important; user-select:none!important;
             font-family:'Itim',cursive!important;
             box-shadow:0 20px 60px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.06) inset!important;
-            animation:cattaSlideIn .28s cubic-bezier(.34,1.56,.64,1)!important;
         }
 
         /* ── HEADER ── */
@@ -372,14 +371,17 @@
         }
 
         /* MINIMIZED STATE */
+        @keyframes cattaSpin { 100% { transform: rotate(360deg); } }
         #cattamusic-player-window.minimized {
-            width: auto !important;
-            min-width: 260px !important;
-            border-radius: 50px !important;
-            padding: 4px !important;
-            background: rgba(10, 10, 10, 0.85) !important;
-            backdrop-filter: blur(10px) !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
+            width: fit-content !important;
+            min-width: 180px !important;
+            max-width: 250px !important;
+            border-radius: 40px !important;
+            padding: 0 !important;
+            background: rgba(18, 18, 24, 0.9) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4) !important;
         }
         #cattamusic-player-window.minimized .cattamusic-header {
             display: none !important;
@@ -387,20 +389,44 @@
         #cattamusic-player-window.minimized #catta-mini-bar {
             border-top: none !important;
             background: transparent !important;
-            padding: 4px 10px 4px 4px !important;
+            padding: 5px 12px 5px 5px !important;
             cursor: grab !important;
+            display: flex !important;
+            gap: 8px !important;
+            align-items: center !important;
         }
         #cattamusic-player-window.minimized #catta-mini-bar:active {
             cursor: grabbing !important;
         }
         #cattamusic-player-window.minimized #catta-mini-img {
-            width: 44px !important;
-            height: 44px !important;
+            width: 36px !important;
+            height: 36px !important;
             border-radius: 50% !important;
             object-fit: cover !important;
             flex-shrink: 0 !important;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5) !important;
             cursor: pointer;
+            animation: cattaSpin 10s linear infinite;
+            animation-play-state: paused;
+        }
+        #cattamusic-player-window.minimized.playing #catta-mini-img {
+            animation-play-state: running;
+        }
+        #cattamusic-player-window.minimized .catta-mini-progress-row {
+            display: none !important;
+        }
+        #cattamusic-player-window.minimized #catta-mini-title {
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+        }
+        #cattamusic-player-window.minimized button {
+            padding: 2px 4px !important;
+            font-size: 13px !important;
+        }
+        #cattamusic-player-window.minimized #catta-mini-play {
+            font-size: 16px !important;
+            padding: 2px 6px !important;
         }
 
         </style>`;
@@ -465,14 +491,28 @@
         return null;
     }
 
-    function addTrackToActiveChar(trackName, trackUrl, mood) {
+    function getTargetChar() {
+        // 1. ลองดึงจากแชทปัจจุบันที่กำลังคุยอยู่
         let activeChar = getActiveCharInfo();
-        let targetId = activeChar ? activeChar.id : 'chat';
+        if (activeChar) return activeChar;
+        
+        // 2. ถ้าดึงไม่ได้ (เช่น แชทกลุ่ม หรือเทสระบบ) แต่ผู้ใช้ 'เลือก' ตัวละครจากรายการที่ค้นหาไว้แล้ว ให้ยึดตัวนั้น
+        if (viewingTab === 'char' && viewingId && viewingId !== 'chat' && charPlaylists[viewingId]) {
+            return { id: viewingId, name: charPlaylists[viewingId].name, avatar: charPlaylists[viewingId].avatar };
+        }
+        
+        // 3. ไม่รู้เลยจริงๆ
+        return { id: 'chat', name: charPlaylists['chat']?.name || 'Unknown', avatar: charPlaylists['chat']?.avatar || ICON_URL };
+    }
+
+    function addTrackToActiveChar(trackName, trackUrl, mood) {
+        let target = getTargetChar();
+        let targetId = target.id;
         
         if (!charPlaylists[targetId]) {
             charPlaylists[targetId] = { 
-                name: activeChar ? activeChar.name : "Unknown", 
-                avatar: activeChar ? activeChar.avatar : ICON_URL, 
+                name: target.name, 
+                avatar: target.avatar, 
                 tracks: [] 
             };
         }
@@ -557,12 +597,11 @@
 
         // เล่นเพลงทันทีถ้าเจอลิงก์ในแชท (ไม่ว่าจะจากปุ่มหรือจากลิงก์ดิบๆ)
         if (foundAnyAudio && firstAudioUrl) {
-            let activeChar = getActiveCharInfo();
-            let targetId = activeChar ? activeChar.id : 'chat';
+            let target = getTargetChar();
+            let targetId = target.id;
             
             const win = $(`#${WIN_ID}`);
             if (!win.is(':visible') && settings.showBubble) {
-                win.css({ top: '10px', left: '50%', transform: 'translateX(-50%)' });
                 win.fadeIn(200);
             }
             
@@ -606,11 +645,11 @@
             console.log("[CattaMusic] 📄 Scan Response Data:", data);
 
             if (data.success) {
-                let activeChar = getActiveCharInfo();
-                let targetId = activeChar ? activeChar.id : 'chat';
+                let target = getTargetChar();
+                let targetId = target.id;
                 
                 if (!charPlaylists[targetId]) {
-                    charPlaylists[targetId] = { name: activeChar ? activeChar.name : "Unknown", avatar: activeChar ? activeChar.avatar : ICON_URL, tracks: [] };
+                    charPlaylists[targetId] = { name: target.name, avatar: target.avatar, tracks: [] };
                 }
 
                 let hasNewTracks = false;
@@ -659,7 +698,6 @@
         
         const win = $(`#${WIN_ID}`);
         if (!win.is(':visible')) {
-            win.css({ top: '10px', left: '50%', transform: 'translateX(-50%)' });
             win.fadeIn(200);
         }
         
@@ -761,7 +799,7 @@
                 <img id="catta-mini-img" src="${ICON_URL}" style="${S.mImg}">
                 <div style="flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;">
                     <div id="catta-mini-title" style="${S.mTtl}">Catta Music</div>
-                    <div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+                    <div class="catta-mini-progress-row" style="display:flex;align-items:center;gap:5px;margin-top:2px;">
                         <span id="catta-mini-time" style="font-size:8px;color:${T.muted};">00:00</span>
                         <input type="range" id="catta-mini-progress" min="0" max="100" value="0" style="flex:1;height:3px;">
                     </div>
@@ -1143,7 +1181,7 @@
     function togglePlayerSmart() {
         const win = $(`#${WIN_ID}`);
         if (win.is(':visible')) win.fadeOut(200);
-        else { win.css({ top: '10px', left: '50%', transform: 'translateX(-50%)' }); win.fadeIn(200); checkAuth(); }
+        else { win.fadeIn(200); checkAuth(); }
     }
 
     function makeDraggable(el, handleSelector, isBubble = false) {
@@ -1249,6 +1287,7 @@
         isPlaying = true;
         
         $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>');
+        $(`#${WIN_ID}`).addClass('playing');
         $("#catta-display-name").text(list[i].name);
         $("#catta-play-dot").css('opacity','1');
         
@@ -1288,8 +1327,8 @@
         }
         
         // ถัามีเพลงเล่นค้างอยู่ ให้สลับเล่น/หยุด
-        if (isPlaying) { audioPlayer.pause(); $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); }
-        else { audioPlayer.play(); $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>'); }
+        if (isPlaying) { audioPlayer.pause(); $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); $(`#${WIN_ID}`).removeClass('playing'); }
+        else { audioPlayer.play(); $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>'); $(`#${WIN_ID}`).addClass('playing'); }
         isPlaying = !isPlaying;
         updateCoverUI();
     }
@@ -1342,7 +1381,7 @@
     function showLockedUI() {
         $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'blur(4px) grayscale(1)', 'pointer-events':'none'});
         $("#catta-display-name").html("<span style='color:red;'>🔒 LOCK: Please Login Catta Cafe</span>");
-        if (isPlaying) { audioPlayer.pause(); isPlaying = false; $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); updateCoverUI(); }
+        if (isPlaying) { audioPlayer.pause(); isPlaying = false; $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); $(`#${WIN_ID}`).removeClass('playing'); updateCoverUI(); }
     }
 
     function hideLockedUI() {
