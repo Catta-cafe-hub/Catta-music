@@ -189,6 +189,22 @@
         if (msgId === lastProcessedMsgId) return;
         lastProcessedMsgId = msgId;
 
+        // A. Single Song Trigger (ดันเข้าเพลย์ลิสต์ตัวละครที่เปิดอยู่ หรือเข้า Chat)
+        const musicMatch = originalText.match(CHAT_MUSIC_REGEX);
+        if (musicMatch) {
+            const track = { name: "✨ " + musicMatch[1].trim(), url: musicMatch[2].trim(), mood: "shared" };
+            let targetId = viewingTab === 'char' ? viewingId : 'chat';
+            if (!charPlaylists[targetId]) targetId = 'chat';
+            
+            if (!charPlaylists[targetId].tracks.some(t => t.url === track.url)) {
+                charPlaylists[targetId].tracks.unshift(track);
+                saveData();
+                if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
+            }
+            playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === track.url), 'char', targetId);
+            return;
+        }
+
         // 🕵️‍♂️ แอบดึงข้อมูลความลับของตัวละครจาก SillyTavern (Description, Personality, Scenario)
         let sourceText = "";
         try {
