@@ -35,6 +35,10 @@
 [data-theme="dark"] { --catta-main:#e0e0e0; --catta-accent2:#9e9e9e; --catta-dark:#0a0a0a; --catta-card:#1a1a1a; --catta-glow:rgba(224,224,224,0.2); }
 [data-theme="blood"] { --catta-main:#ef5350; --catta-accent2:#ff7043; --catta-dark:#1a0505; --catta-card:#2d0808; --catta-glow:rgba(239,83,80,0.4); }
 [data-theme="green"] { --catta-main:#4caf50; --catta-accent2:#66bb6a; --catta-dark:#051a05; --catta-card:#0a2e0a; --catta-glow:rgba(76,175,80,0.35); }
+[data-theme="cotton"] { --catta-main:#ffb6c1; --catta-accent2:#a7c7e7; --catta-dark:#1a0a1a; --catta-card:#2a152a; --catta-glow:rgba(255,182,193,0.4); }
+[data-theme="peach"] { --catta-main:#ffdab9; --catta-accent2:#ffb347; --catta-dark:#1a100a; --catta-card:#2a1a12; --catta-glow:rgba(255,218,185,0.4); }
+[data-theme="sakura"] { --catta-main:#f4a460; --catta-accent2:#ffc0cb; --catta-dark:#1a0d0a; --catta-card:#2a1812; --catta-glow:rgba(244,164,96,0.4); }
+[data-theme="sky"] { --catta-main:#87cefa; --catta-accent2:#e0ffff; --catta-dark:#050a1a; --catta-card:#0d122a; --catta-glow:rgba(135,206,250,0.4); }
 
 /* === BUBBLE (ไอคอนลอย) === */
 #cattamusic-bubble {
