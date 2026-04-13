@@ -63,7 +63,11 @@
         latte:    { main:'#d4a574', accent:'#ff9a56', dark:'#1a1008', card:'#2e1c0c', text:'#fff0dc', muted:'#b08c6a', glow:'rgba(212,165,116,0.4)',  dot:'rgba(212,165,116,0.9)'  },
         dark:     { main:'#aaaaaa', accent:'#888888', dark:'#0a0a0a', card:'#1a1a1a', text:'#e0e0e0', muted:'#707070', glow:'rgba(180,180,180,0.2)',  dot:'rgba(200,200,200,0.7)'  },
         blood:    { main:'#ef5350', accent:'#ff7043', dark:'#1a0505', card:'#2d0808', text:'#ffe0e0', muted:'#b07070', glow:'rgba(239,83,80,0.45)',    dot:'rgba(239,83,80,0.9)'    },
-        green:    { main:'#66bb6a', accent:'#a5d6a7', dark:'#051a05', card:'#0a2e0a', text:'#e0ffe0', muted:'#7cb87e', glow:'rgba(102,187,106,0.4)',  dot:'rgba(102,187,106,0.9)'  }
+        green:    { main:'#66bb6a', accent:'#a5d6a7', dark:'#051a05', card:'#0a2e0a', text:'#e0ffe0', muted:'#7cb87e', glow:'rgba(102,187,106,0.4)',  dot:'rgba(102,187,106,0.9)'  },
+        cotton:   { main:'#ffb6c1', accent:'#a7c7e7', dark:'#1a0a1a', card:'#2a152a', text:'#ffe0e9', muted:'#d4a0b3', glow:'rgba(255,182,193,0.4)',  dot:'rgba(255,182,193,0.9)'  },
+        peach:    { main:'#ffdab9', accent:'#ffb347', dark:'#1a100a', card:'#2a1a12', text:'#ffefe0', muted:'#d4aa8a', glow:'rgba(255,218,185,0.4)',  dot:'rgba(255,218,185,0.9)'  },
+        sakura:   { main:'#f4a460', accent:'#ffc0cb', dark:'#1a0d0a', card:'#2a1812', text:'#ffe8e0', muted:'#d4a090', glow:'rgba(244,164,96,0.4)',   dot:'rgba(244,164,96,0.9)'   },
+        sky:      { main:'#87cefa', accent:'#e0ffff', dark:'#050a1a', card:'#0d122a', text:'#e0f4ff', muted:'#8aa9c4', glow:'rgba(135,206,250,0.4)',  dot:'rgba(135,206,250,0.9)'  }
     };
 
     // ══════════════════════════════════════════════
@@ -603,6 +607,7 @@
             const win = $(`#${WIN_ID}`);
             if (!win.is(':visible') && settings.showBubble) {
                 win.fadeIn(200);
+                $(`#${BUBBLE_ID}`).fadeOut(200);
             }
             
             switchTab('char', targetId);
@@ -699,6 +704,7 @@
         const win = $(`#${WIN_ID}`);
         if (!win.is(':visible')) {
             win.fadeIn(200);
+            $(`#${BUBBLE_ID}`).fadeOut(200);
         }
         
         switchTab('char', targetId);
@@ -1002,7 +1008,10 @@
         $("#catta-btn-volup").on('click', () => isAuthorized && changeVolume(1));
         $("#catta-btn-voldown").on('click', () => isAuthorized && changeVolume(-1));
         $("#catta-btn-loop").on('click', () => isAuthorized && changeLoopMode());
-        $("#catta-close-win").on('click', () => $(`#${WIN_ID}`).fadeOut(200));
+        $("#catta-close-win").on('click', () => {
+            $(`#${WIN_ID}`).fadeOut(200);
+            if (settings.showBubble) $(`#${BUBBLE_ID}`).fadeIn(200);
+        });
 
         // -- USER MANAGER --
         $("#catta-user-sel").on('change', function() { viewingId = $(this).val(); updateCoverUI(); renderPlaylist(); });
@@ -1105,6 +1114,10 @@
             if (!isAuthorized) return;
             const url = $("#catta-input-url").val().trim();
             if (url) { 
+                if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                    alert("❌ ระบบไม่รองรับลิงก์ YouTube ครับ\nกรุณาใช้ลิงก์ตรงของไฟล์เสียงเท่านั้น (เช่น .mp3, .ogg, .wav)");
+                    return;
+                }
                 let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
                 listObj[viewingId].tracks.push({ name: url.split('/').pop() || "Unknown", url }); 
                 $("#catta-input-url").val(""); 
@@ -1180,8 +1193,13 @@
 
     function togglePlayerSmart() {
         const win = $(`#${WIN_ID}`);
-        if (win.is(':visible')) win.fadeOut(200);
-        else { win.fadeIn(200); checkAuth(); }
+        if (win.is(':visible')) {
+            win.fadeOut(200);
+            if (settings.showBubble) $(`#${BUBBLE_ID}`).fadeIn(200);
+        } else {
+            win.fadeIn(200); checkAuth();
+            $(`#${BUBBLE_ID}`).fadeOut(200);
+        }
     }
 
     function makeDraggable(el, handleSelector, isBubble = false) {
