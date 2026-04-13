@@ -25,7 +25,7 @@
 
     let settings = {
         showBubble: true, isEnabled: true, autoMood: true, theme: 'orange', 
-        apiUrl: 'http://localhost:2096', 
+        apiUrl: 'https://st-cattacafe.casa/casa_api', 
         posBubble: { top: '80%', left: '10%' }
     };
 
@@ -300,73 +300,74 @@
     function buildPlayerWindow() {
         if (document.getElementById(WIN_ID)) return;
         
-        // รูปแบบปกเต็ม (Banner Style) ไม่มีจานหมุนๆ
+        // รูปแบบมินิมอล (Compact Style)
         const html = `
-            <div id="${WIN_ID}" style="display: none; position: fixed; z-index: 10000; top: 10px; left: 50%; transform: translateX(-50%); width: 320px;">
-                <div class="cattamusic-header" style="position: absolute; top: 0; left: 0; width: 100%; z-index: 2; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);">
-                    <span>🐾 Catta Music</span><button id="catta-close-win">×</button>
+            <div id="${WIN_ID}" style="display: none; position: fixed; z-index: 10000; top: 10px; left: 50%; transform: translateX(-50%); width: 280px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-radius: 12px; overflow: hidden; border: 1px solid var(--catta-main, #ff9800);">
+                <div class="cattamusic-header" style="padding: 5px 10px; font-size: 12px; font-weight: bold; background: var(--catta-main, #ff9800); color: white; display: flex; justify-content: space-between; align-items: center; cursor: grab;">
+                    <span>🐾 Catta Music</span><button id="catta-close-win" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer; padding: 0;">×</button>
                 </div>
                 
-                <div id="catta-banner-container" style="width: 100%; height: 160px; background-color: #111; background-image: url('${ICON_URL}'); background-size: cover; background-position: top center; position: relative; border-bottom: 2px solid var(--catta-main); transition: background-image 0.4s ease;">
-                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.6), transparent); padding: 25px 15px 10px 15px; box-sizing: border-box;">
-                        <div id="catta-cover-title" style="color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Catta Music</div>
-                        <div id="catta-display-name" class="cattamusic-marquee" style="color: #ddd; font-size: 12px; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Ready to play!</div>
+                <div id="catta-banner-container" style="width: 100%; padding: 10px; background-color: #1a1a1a; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #333;">
+                    <img id="catta-cover-img" src="${ICON_URL}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.5);">
+                    <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center;">
+                        <div id="catta-cover-title" style="color: #fff; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">Catta Music</div>
+                        <div id="catta-display-name" class="cattamusic-marquee" style="color: var(--catta-main, #ff9800); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Ready to play!</div>
                     </div>
                 </div>
 
-                <div class="cattamusic-screen" style="border-top:none; border-radius: 0;">
-                    <div class="cattamusic-status-bar"><span id="catta-time">00:00</span><span id="catta-vol">Vol: 3</span><span id="catta-track-count">0 tracks</span></div>
+                <div class="cattamusic-screen" style="border: none; padding: 4px 10px; background: #222; color: #aaa; font-size: 10px;">
+                    <div class="cattamusic-status-bar" style="display: flex; justify-content: space-between;"><span id="catta-time">00:00</span><span id="catta-vol">Vol: 3</span><span id="catta-track-count">0 tracks</span></div>
                 </div>
                 
-                <div class="cattamusic-controls">
-                    <button id="catta-btn-loop"><i class="fa-solid fa-arrow-right"></i></button>
-                    <button id="catta-btn-prev"><i class="fa-solid fa-backward-step"></i></button>
-                    <button id="catta-btn-play"><i class="fa-solid fa-play"></i></button>
-                    <button id="catta-btn-next"><i class="fa-solid fa-forward-step"></i></button>
-                    <button id="catta-btn-voldown"><i class="fa-solid fa-volume-low"></i></button>
-                    <button id="catta-btn-volup"><i class="fa-solid fa-volume-high"></i></button>
+                <div class="cattamusic-controls" style="padding: 8px; display: flex; justify-content: space-around; background: #1a1a1a; border-bottom: 1px solid #333;">
+                    <button id="catta-btn-loop" style="background:none; border:none; color:#aaa; cursor:pointer;"><i class="fa-solid fa-arrow-right"></i></button>
+                    <button id="catta-btn-prev" style="background:none; border:none; color:#ddd; cursor:pointer;"><i class="fa-solid fa-backward-step"></i></button>
+                    <button id="catta-btn-play" style="background:var(--catta-main, #ff9800); border:none; color:white; width:30px; height:30px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-play"></i></button>
+                    <button id="catta-btn-next" style="background:none; border:none; color:#ddd; cursor:pointer;"><i class="fa-solid fa-forward-step"></i></button>
+                    <button id="catta-btn-voldown" style="background:none; border:none; color:#aaa; cursor:pointer;"><i class="fa-solid fa-volume-low"></i></button>
+                    <button id="catta-btn-volup" style="background:none; border:none; color:#aaa; cursor:pointer;"><i class="fa-solid fa-volume-high"></i></button>
                 </div>
                 
-                <div class="cattamusic-tabs">
-                    <button id="catta-tab-user">👤 ส่วนตัว</button>
-                    <button id="catta-tab-char">🐱 ตัวละคร</button>
+                <div class="cattamusic-tabs" style="display: flex; border-bottom: 1px solid #333; background: #111;">
+                    <button id="catta-tab-user" style="flex:1; padding: 6px; background:none; border:none; color:#aaa; cursor:pointer; font-size:12px;">👤 ส่วนตัว</button>
+                    <button id="catta-tab-char" style="flex:1; padding: 6px; background:none; border:none; color:#aaa; cursor:pointer; font-size:12px;">🐱 ตัวละคร</button>
                 </div>
                 
-                <div class="cattamusic-playlist">
+                <div class="cattamusic-playlist" style="background: #111;">
                     <!-- User Playlist Manager -->
-                    <div id="catta-user-manager" class="catta-manager-row" style="display:none; padding:8px 10px; background:rgba(0,0,0,0.05); flex-direction:column; gap:5px;">
+                    <div id="catta-user-manager" class="catta-manager-row" style="display:none; padding:8px; background:#1a1a1a; flex-direction:column; gap:5px; border-bottom: 1px solid #333;">
                         <div style="display:flex; gap:5px;">
-                            <select id="catta-user-sel" style="flex-grow:1;"></select>
-                            <button id="catta-btn-del-user" class="catta-btn-small" style="background:#e53935; padding:4px 8px;" title="ลบรายการนี้"><i class="fa-solid fa-trash"></i></button>
+                            <select id="catta-user-sel" style="flex-grow:1; background:#222!important; color:#fff!important; border:1px solid #444; padding:2px 4px; font-size:11px;"></select>
+                            <button id="catta-btn-del-user" class="catta-btn-small" style="background:#e53935; border:none; color:white; padding:2px 6px; border-radius:3px;" title="ลบรายการนี้"><i class="fa-solid fa-trash"></i></button>
                         </div>
                         <div style="display:flex; gap:5px;">
-                            <input type="text" id="catta-new-user-name" placeholder="ตั้งชื่อรายการส่วนตัวใหม่" style="flex-grow:1;">
-                            <button id="catta-btn-new-user" class="catta-btn-small" style="padding:4px 8px;">สร้าง</button>
+                            <input type="text" id="catta-new-user-name" placeholder="ตั้งชื่อรายการส่วนตัวใหม่" style="flex-grow:1; background:#222!important; color:#fff!important; border:1px solid #444; padding:2px 4px; font-size:11px;">
+                            <button id="catta-btn-new-user" class="catta-btn-small" style="background:#4caf50; border:none; color:white; padding:2px 6px; border-radius:3px;">สร้าง</button>
                         </div>
                     </div>
 
                     <!-- Char Playlist Manager -->
-                    <div id="catta-char-manager" class="catta-manager-row" style="display:none; padding:8px 10px; background:rgba(0,0,0,0.05); flex-direction:column; gap:5px;">
+                    <div id="catta-char-manager" class="catta-manager-row" style="display:none; padding:8px; background:#1a1a1a; flex-direction:column; gap:5px; border-bottom: 1px solid #333;">
                         <div style="display:flex; gap:5px;">
-                            <select id="catta-char-sel" style="flex-grow:1;"></select>
-                            <button id="catta-btn-del-char" class="catta-btn-small" style="background:#e53935; padding:4px 8px;" title="ลบรายการตัวละครนี้"><i class="fa-solid fa-trash"></i></button>
+                            <select id="catta-char-sel" style="flex-grow:1; background:#222!important; color:#fff!important; border:1px solid #444; padding:2px 4px; font-size:11px;"></select>
+                            <button id="catta-btn-del-char" class="catta-btn-small" style="background:#e53935; border:none; color:white; padding:2px 6px; border-radius:3px;" title="ลบรายการตัวละครนี้"><i class="fa-solid fa-trash"></i></button>
                         </div>
                         <div style="display:flex; gap:5px;">
-                            <input type="text" id="catta-search-char" placeholder="ID/ชื่อ ตัวละคร" style="flex-grow:1;">
-                            <button id="catta-btn-search-char" class="catta-btn-small" style="padding:4px 8px;"><i class="fa-solid fa-cloud-arrow-down"></i> ค้นหา</button>
+                            <input type="text" id="catta-search-char" placeholder="ID/ชื่อ ตัวละคร" style="flex-grow:1; background:#222!important; color:#fff!important; border:1px solid #444; padding:2px 4px; font-size:11px;">
+                            <button id="catta-btn-search-char" class="catta-btn-small" style="background:#2196f3; border:none; color:white; padding:2px 6px; border-radius:3px;"><i class="fa-solid fa-search"></i> ค้นหา</button>
                         </div>
                         <div id="catta-char-search-results" style="display:none; flex-direction:column; gap:5px; margin-top:5px;">
-                            <select id="catta-char-result-sel" style="flex-grow:1;"></select>
-                            <button id="catta-btn-confirm-char" class="catta-btn-small" style="padding:4px 8px; width:100%;">เพิ่มตัวละครนี้</button>
+                            <select id="catta-char-result-sel" style="flex-grow:1; background:#222!important; color:#fff!important; border:1px solid #444; padding:2px 4px; font-size:11px;"></select>
+                            <button id="catta-btn-confirm-char" class="catta-btn-small" style="background:#4caf50; border:none; color:white; padding:2px 6px; border-radius:3px; width:100%;">เพิ่มตัวละครนี้</button>
                         </div>
                     </div>
 
-                    <div id="catta-add-url-box" style="display:flex; gap:5px; padding:5px 10px;">
-                        <input type="text" id="catta-input-url" placeholder="วางลิ้งค์ .mp3 เพื่อเพิ่มเข้าเพลย์ลิสต์นี้..." style="flex-grow:1; font-size:11px; padding:4px;">
-                        <button id="catta-btn-save" class="catta-btn-small" style="padding:4px 8px;">+ Add</button>
+                    <div id="catta-add-url-box" style="display:flex; gap:5px; padding:6px 8px; background:#111;">
+                        <input type="text" id="catta-input-url" placeholder="วางลิ้งค์ .mp3 เพื่อเพิ่มเข้าเพลย์ลิสต์นี้..." style="flex-grow:1; font-size:11px; padding:3px 5px; background:#222!important; color:#fff!important; border:1px solid #444; border-radius:3px;">
+                        <button id="catta-btn-save" class="catta-btn-small" style="background:var(--catta-main, #ff9800); border:none; color:white; padding:3px 8px; border-radius:3px;">+ Add</button>
                     </div>
                     
-                    <div id="catta-list-display" class="catta-scroll-list"></div>
+                    <div id="catta-list-display" class="catta-scroll-list" style="max-height: 150px; overflow-y: auto; padding: 0 8px 8px 8px; background:#111;"></div>
                 </div>
             </div>`;
         $("body").append(html);
@@ -527,7 +528,7 @@
         }
         
         $("#catta-cover-title").text(title);
-        $("#catta-banner-container").css("background-image", `url('${img}')`);
+        $("#catta-cover-img").attr("src", img);
     }
 
     function togglePlayerSmart() {
