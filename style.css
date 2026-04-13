@@ -531,17 +531,9 @@
 }
 
 /* === ANIMATIONS === */
-@keyframes slideInDown {
-    from { opacity: 0; transform: translateY(-16px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
-}
-
-#cattamusic-player-window[style*="block"] {
-    animation: slideInDown 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
 
 /* === MOBILE RESPONSIVE === */
@@ -588,14 +580,17 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* === MINIMIZED STATE === */
+@keyframes cattaSpin { 100% { transform: rotate(360deg); } }
 #cattamusic-player-window.minimized {
-    width: auto !important;
-    min-width: 260px !important;
-    border-radius: 50px !important;
-    padding: 4px !important;
-    background: rgba(10, 10, 10, 0.85) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+    width: fit-content !important;
+    min-width: 180px !important;
+    max-width: 250px !important;
+    border-radius: 40px !important;
+    padding: 0 !important;
+    background: rgba(18, 18, 24, 0.9) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4) !important;
 }
 #cattamusic-player-window.minimized .cattamusic-header {
     display: none !important;
@@ -603,19 +598,42 @@ input[type=range]::-webkit-slider-thumb {
 #cattamusic-player-window.minimized #catta-mini-bar {
     border-top: none !important;
     background: transparent !important;
-    padding: 4px 10px 4px 4px !important;
+    padding: 5px 12px 5px 5px !important;
     cursor: grab !important;
     display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
 }
 #cattamusic-player-window.minimized #catta-mini-bar:active {
     cursor: grabbing !important;
 }
 #cattamusic-player-window.minimized #catta-mini-img {
-    width: 44px !important;
-    height: 44px !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 50% !important;
     object-fit: cover !important;
     flex-shrink: 0 !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5) !important;
     cursor: pointer;
+    animation: cattaSpin 10s linear infinite;
+    animation-play-state: paused;
+}
+#cattamusic-player-window.minimized.playing #catta-mini-img {
+    animation-play-state: running;
+}
+#cattamusic-player-window.minimized .catta-mini-progress-row {
+    display: none !important;
+}
+#cattamusic-player-window.minimized #catta-mini-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+}
+#cattamusic-player-window.minimized button {
+    padding: 2px 4px !important;
+    font-size: 13px !important;
+}
+#cattamusic-player-window.minimized #catta-mini-play {
+    font-size: 16px !important;
+    padding: 2px 6px !important;
 }
