@@ -1,6 +1,6 @@
 /**
- * Catta Music Player Extension - Secured Version (Shell)
- * 🔒 Brain & Logic moved to Casa VPS Backend
+ * Catta Music Player Extension - Commercial Hard-Locked Version
+ * 🔒 ไม่อนุญาตให้ใช้งานหากไม่มีการล็อกอินผ่าน Catta Cafe / Dante
  */
 
 (function() {
@@ -14,25 +14,11 @@
     const ICON_URL = "https://file.garden/aZx9zS2e7UEiSmfr/cattamusic.png";
     const CASA_API = "https://st-cattacafe.casa:2096/v1/music/scan";
 
-    let settings = {
-        showBubble: true,
-        isEnabled: true,
-        autoMood: true,
-        theme: 'orange',
-        currentTab: 'user',
-        posBubble: { top: '80%', left: '10%' },
-        posWin: { top: '20%', left: '50%' }
-    };
-
-    let userPlaylist = [];
-    let charPlaylist = [];
-    let currentTrackIndex = -1;
-    let activeSource = 'user';
-    let audioPlayer = new Audio();
-    let isPlaying = false;
-    let volume = 3;
-    let loopMode = 0;
-    let isAuthorized = false;
+    let settings = { showBubble: true, isEnabled: true, autoMood: true, theme: 'orange', currentTab: 'user', posBubble: { top: '80%', left: '10%' }, posWin: { top: '20%', left: '50%' } };
+    let userPlaylist = [], charPlaylist = [];
+    let currentTrackIndex = -1, activeSource = 'user';
+    let audioPlayer = new Audio(), isPlaying = false, volume = 3, loopMode = 0;
+    let isAuthorized = false; // ตัวแปรสถานะการล็อกอินหลัก
 
     const themes = {
         orange: { main: '#ff9800', bg: '#fffaf0', screen: '#e0f2f1', text: '#333' },
@@ -42,7 +28,6 @@
         purple: { main: '#9c27b0', bg: '#f3e5f5', screen: '#e1bee7', text: '#4a148c' }
     };
 
-    // --- Helper: Load/Save ---
     function loadData() {
         const s = localStorage.getItem(LS_SETTINGS);
         if (s) settings = { ...settings, ...JSON.parse(s) };
@@ -55,19 +40,62 @@
         localStorage.setItem(LS_USER_PLAYLIST, JSON.stringify(userPlaylist));
     }
 
-    // --- 🧠 CASA BRAIN CONNECTOR (ยิงไปประมวลผลหลังบ้าน) ---
-    async function syncWithCasaBrain() {
-        if (!settings.isEnabled || typeof window.SillyTavern === 'undefined') return;
+    // --- 🔒 Check Global Auth (เช็ก Token จากระบบ Catta ทั้งหมด) ---
+    function getCattaAuth() {
+        return {
+            uid: localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid'),
+            token: localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token') || localStorage.getItem('catta_token')
+        };
+    }
 
-        const uid = localStorage.getItem('catta_uid');
-        const token = localStorage.getItem('catta_auth_token');
-
-        if (!uid || !token) {
+    async function verifyAccess() {
+        const auth = getCattaAuth();
+        if (!auth.uid || !auth.token) {
             isAuthorized = false;
-            updateAuthStatus("❌ โปรด Login Catta Cafe");
-            return;
+            showLockedUI();
+            return false;
         }
 
+        try {
+            // ยิงไปเช็คกับ VPS ว่า Token ยังใช้งานได้ไหม
+            const res = await fetch(CASA_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: auth.uid, token: auth.token, check_only: true })
+            });
+            const data = await res.json();
+            isAuthorized = data.success === true;
+            
+            if (isAuthorized) {
+                hideLockedUI();
+                return true;
+            } else {
+                showLockedUI();
+                return false;
+            }
+        } catch (e) {
+            console.error("[Catta Music] Auth Connection Error");
+            return false;
+        }
+    }
+
+    function showLockedUI() {
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css('filter', 'blur(4px) grayscale(1)');
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css('pointer-events', 'none');
+        $("#catta-display-name").html("<span style='color:red;'>🔒 LOCK: Please Login Catta Cafe</span>");
+        if (isPlaying) { audioPlayer.pause(); isPlaying = false; }
+    }
+
+    function hideLockedUI() {
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css('filter', 'none');
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css('pointer-events', 'auto');
+    }
+
+    // --- 🧠 CASA BRAIN SYNC (สแกนเพลงเฉพาะเมื่อล็อกอินแล้ว) ---
+    async function syncWithCasaBrain() {
+        if (!settings.isEnabled || !isAuthorized) return;
+
+        const auth = getCattaAuth();
         let sourceText = "";
         const context = window.SillyTavern.getContext();
         if (context.character) sourceText += context.character.description + " " + context.character.first_mes;
@@ -83,12 +111,10 @@
             const res = await fetch(CASA_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid, token, source_text: sourceText, chat_text: chatText })
+                body: JSON.stringify({ uid: auth.uid, token: auth.token, source_text: sourceText, chat_text: chatText })
             });
-
             const data = await res.json();
             if (data.success) {
-                isAuthorized = true;
                 charPlaylist = data.playlist || [];
                 if (data.auto_play_track && settings.autoMood) {
                     const idx = charPlaylist.findIndex(t => t.url === data.auto_play_track.url);
@@ -97,22 +123,80 @@
                 renderPlaylist();
             } else {
                 isAuthorized = false;
-                updateAuthStatus("❌ สิทธิ์การใช้งานถูกปฏิเสธ");
+                showLockedUI();
             }
-        } catch (e) {
-            console.error("[Catta Music] Casa Connection Failed", e);
-        }
+        } catch (e) { console.error("[Catta Music] Sync Error"); }
     }
 
-    function updateAuthStatus(msg) {
-        $("#catta-display-name").text(msg);
-        $("#catta-list-display").html(`<div style="text-align:center; padding:20px; font-size:10px; color:red;">${msg}</div>`);
+    // --- UI Builders ---
+    function buildPlayerWindow() {
+        if (document.getElementById(WIN_ID)) return;
+        const html = `
+            <div id="${WIN_ID}" style="display: none; position: fixed; z-index: 10000;">
+                <div class="cattamusic-header"><span>🐾 Catta Music Player</span><button id="catta-close-win">×</button></div>
+                <div class="cattamusic-screen">
+                    <div class="cattamusic-status-bar"><span id="catta-time">00:00</span><span id="catta-vol">Vol: 3</span><span id="catta-track-count">0 tracks</span></div>
+                    <div class="cattamusic-marquee-container"><div id="catta-display-name" class="cattamusic-marquee">Checking System License...</div></div>
+                </div>
+                <div class="cattamusic-controls">
+                    <button id="catta-btn-loop"><i class="fa-solid fa-arrow-right"></i></button>
+                    <button id="catta-btn-prev"><i class="fa-solid fa-backward-step"></i></button>
+                    <button id="catta-btn-play"><i class="fa-solid fa-play"></i></button>
+                    <button id="catta-btn-next"><i class="fa-solid fa-forward-step"></i></button>
+                    <button id="catta-btn-voldown"><i class="fa-solid fa-volume-low"></i></button>
+                    <button id="catta-btn-volup"><i class="fa-solid fa-volume-high"></i></button>
+                </div>
+                <div class="cattamusic-tabs">
+                    <button id="catta-tab-user">👤 ส่วนตัว</button>
+                    <button id="catta-tab-char">🐱 ตัวละคร</button>
+                </div>
+                <div class="cattamusic-playlist">
+                    <div id="catta-user-input">
+                        <input type="text" id="catta-input-url" placeholder="วางลิ้งค์ .mp3 ...">
+                        <button id="catta-btn-save" class="catta-btn-small">Add Music</button>
+                    </div>
+                    <div id="catta-list-display" class="catta-scroll-list"></div>
+                </div>
+            </div>`;
+        $("body").append(html);
+        
+        const win = document.getElementById(WIN_ID);
+        win.style.top = settings.posWin.top;
+        win.style.left = settings.posWin.left;
+
+        // บังคับสลับแท็บตามที่เซฟไว้
+        switchTab(settings.currentTab);
+
+        // Bind Events
+        $(`#${WIN_ID}`).on('mousedown touchstart', () => verifyAccess()); // เช็คทุกครั้งที่มีการกดใช้งานหน้าต่าง
+        $('#catta-tab-user').on('click', () => switchTab('user'));
+        $('#catta-tab-char').on('click', () => switchTab('char'));
+        $("#catta-btn-play").on('click', () => isAuthorized && togglePlay());
+        $("#catta-btn-next").on('click', () => isAuthorized && playNext());
+        $("#catta-btn-prev").on('click', () => isAuthorized && playPrev());
+        $("#catta-btn-volup").on('click', () => isAuthorized && changeVolume(1));
+        $("#catta-btn-voldown").on('click', () => isAuthorized && changeVolume(-1));
+        $("#catta-btn-loop").on('click', () => isAuthorized && changeLoopMode());
+        $("#catta-close-win").on('click', () => $(`#${WIN_ID}`).fadeOut(200));
+        $("#catta-btn-save").on('click', () => {
+            if (!isAuthorized) return;
+            const url = $("#catta-input-url").val().trim();
+            if (url) { userPlaylist.push({ name: url.split('/').pop(), url }); $("#catta-input-url").val(""); saveData(); renderPlaylist(); }
+        });
+
+        applyTheme(settings.theme);
+        makeDraggable(win, '.cattamusic-header');
+        
+        setInterval(() => {
+            const n = new Date();
+            $("#catta-time").text(n.getHours().toString().padStart(2, '0') + ":" + n.getMinutes().toString().padStart(2, '0'));
+        }, 1000);
     }
 
-    // --- UI Logic (Draggable, Builder, etc.) ---
+    // --- ระบบลาก ---
     function makeDraggable(el, handleSelector, isBubble = false) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        const handle = handleSelector ? el.querySelector(handleSelector) : el;
+        const handle = el.querySelector(handleSelector) || el;
         const dragStart = (e) => {
             const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
@@ -136,74 +220,6 @@
         handle.onmousedown = handle.ontouchstart = dragStart;
     }
 
-    function buildPlayerWindow() {
-        if (document.getElementById(WIN_ID)) return;
-        const html = `
-            <div id="${WIN_ID}" style="display: none; position: fixed; top: ${settings.posWin.top}; left: ${settings.posWin.left}; z-index: 10000;">
-                <div class="cattamusic-header">
-                    <span>🐾 Catta Music</span>
-                    <button id="catta-close-win">×</button>
-                </div>
-                <div class="cattamusic-screen">
-                    <div class="cattamusic-status-bar">
-                        <span id="catta-time">00:00</span>
-                        <span id="catta-vol">Vol: 3</span>
-                        <span id="catta-track-count">0 tracks</span>
-                    </div>
-                    <div class="cattamusic-marquee-container">
-                        <div id="catta-display-name" class="cattamusic-marquee">Checking license...</div>
-                    </div>
-                </div>
-                <div class="cattamusic-controls">
-                    <button id="catta-btn-loop"><i class="fa-solid fa-arrow-right"></i></button>
-                    <button id="catta-btn-prev"><i class="fa-solid fa-backward-step"></i></button>
-                    <button id="catta-btn-play"><i class="fa-solid fa-play"></i></button>
-                    <button id="catta-btn-next"><i class="fa-solid fa-forward-step"></i></button>
-                    <button id="catta-btn-voldown"><i class="fa-solid fa-volume-low"></i></button>
-                    <button id="catta-btn-volup"><i class="fa-solid fa-volume-high"></i></button>
-                </div>
-                <div class="cattamusic-tabs">
-                    <button id="catta-tab-user" class="${settings.currentTab==='user'?'active':''}">👤 ส่วนตัว</button>
-                    <button id="catta-tab-char" class="${settings.currentTab==='char'?'active':''}">🐱 ตัวละคร</button>
-                </div>
-                <div class="cattamusic-playlist">
-                    <div id="catta-user-input" style="display: ${settings.currentTab==='user'?'block':'none'};">
-                        <input type="text" id="catta-input-url" placeholder="วางลิ้งค์ .mp3 ...">
-                        <button id="catta-btn-save" class="catta-btn-small">Add Music</button>
-                    </div>
-                    <div id="catta-list-display" class="catta-scroll-list"></div>
-                </div>
-            </div>
-        `;
-        $("body").append(html);
-        makeDraggable(document.getElementById(WIN_ID), '.cattamusic-header');
-        
-        $('#catta-tab-user').on('click', () => switchTab('user'));
-        $('#catta-tab-char').on('click', () => switchTab('char'));
-        $("#catta-btn-play").on('click', togglePlay);
-        $("#catta-btn-next").on('click', () => playNext());
-        $("#catta-btn-prev").on('click', () => playPrev());
-        $("#catta-btn-volup").on('click', () => changeVolume(1));
-        $("#catta-btn-voldown").on('click', () => changeVolume(-1));
-        $("#catta-btn-loop").on('click', changeLoopMode);
-        $("#catta-close-win").on('click', () => $(`#${WIN_ID}`).fadeOut(200));
-        $("#catta-btn-save").on('click', () => {
-            const url = $("#catta-input-url").val().trim();
-            if (url) {
-                userPlaylist.push({ name: url.split('/').pop(), url });
-                $("#catta-input-url").val(""); saveData(); renderPlaylist();
-            }
-        });
-
-        setInterval(() => {
-            const n = new Date();
-            $("#catta-time").text(n.getHours().toString().padStart(2, '0') + ":" + n.getMinutes().toString().padStart(2, '0'));
-        }, 1000);
-
-        applyTheme(settings.theme);
-        renderPlaylist();
-    }
-
     function switchTab(tab) {
         settings.currentTab = tab;
         $('.cattamusic-tabs button').removeClass('active');
@@ -214,21 +230,13 @@
     }
 
     function renderPlaylist() {
-        if (!isAuthorized && settings.currentTab === 'char') {
-            updateAuthStatus("❌ โปรด Login Catta Cafe");
-            return;
-        }
         const container = $("#catta-list-display");
         container.empty();
         const list = settings.currentTab === 'user' ? userPlaylist : charPlaylist;
-        
         list.forEach((track, i) => {
             const isActive = (activeSource === settings.currentTab && currentTrackIndex === i);
-            const item = $(`<div class="playlist-item ${isActive?'active-track':''}">
-                <span>${i+1}. ${track.name} ${track.mood ? `<small>[${track.mood}]</small>` : ''}</span>
-                ${settings.currentTab === 'user' ? '<span class="del-btn">×</span>' : ''}
-            </div>`);
-            item.find('span:first').on('click', () => playTrack(i, settings.currentTab));
+            const item = $(`<div class="playlist-item ${isActive?'active-track':''}"><span>${i+1}. ${track.name}</span>${settings.currentTab === 'user' ? '<span class="del-btn">×</span>' : ''}</div>`);
+            item.find('span:first').on('click', () => isAuthorized && playTrack(i, settings.currentTab));
             item.find('.del-btn').on('click', (e) => { e.stopPropagation(); userPlaylist.splice(i, 1); saveData(); renderPlaylist(); });
             container.append(item);
         });
@@ -236,11 +244,9 @@
     }
 
     function playTrack(i, source) {
-        if (!isAuthorized && source === 'char') return;
         const list = source === 'user' ? userPlaylist : charPlaylist;
         if (i < 0 || i >= list.length) return;
-        currentTrackIndex = i;
-        activeSource = source;
+        currentTrackIndex = i; activeSource = source;
         audioPlayer.src = list[i].url;
         audioPlayer.volume = volume / 5;
         audioPlayer.play();
@@ -258,42 +264,23 @@
         isPlaying = !isPlaying;
     }
 
-    function playNext() { 
-        const list = activeSource === 'user' ? userPlaylist : charPlaylist;
-        if(list.length) playTrack((currentTrackIndex + 1) % list.length, activeSource); 
-    }
-    function playPrev() { 
-        const list = activeSource === 'user' ? userPlaylist : charPlaylist;
-        if(list.length) playTrack((currentTrackIndex - 1 + list.length) % list.length, activeSource); 
-    }
-
-    function changeVolume(v) {
-        volume = Math.min(5, Math.max(1, volume + v));
-        audioPlayer.volume = volume / 5;
-        $("#catta-vol").text(`Vol: ${volume}`);
-    }
-
-    function changeLoopMode() {
-        loopMode = (loopMode + 1) % 4;
-        const btn = $("#catta-btn-loop");
-        const icons = ['arrow-right', 'rotate', 'rotate', 'shuffle'];
-        btn.html(`<i class="fa-solid fa-${icons[loopMode]}"></i>${loopMode===2?'<small>1</small>':''}`);
-    }
+    function playNext() { const l = activeSource==='user'?userPlaylist:charPlaylist; if(l.length) playTrack((currentTrackIndex+1)%l.length, activeSource); }
+    function playPrev() { const l = activeSource==='user'?userPlaylist:charPlaylist; if(l.length) playTrack((currentTrackIndex-1+l.length)%l.length, activeSource); }
+    function changeVolume(v) { volume = Math.min(5, Math.max(1, volume + v)); audioPlayer.volume = volume/5; $("#catta-vol").text(`Vol: ${volume}`); }
+    function changeLoopMode() { loopMode = (loopMode + 1) % 4; const btn = $("#catta-btn-loop"); const icons = ['arrow-right', 'rotate', 'rotate', 'shuffle']; btn.html(`<i class="fa-solid fa-${icons[loopMode]}"></i>${loopMode===2?'<small>1</small>':''}`); }
 
     function applyTheme(themeName) {
         const T = themes[themeName] || themes.orange;
         const win = $(`#${WIN_ID}`);
-        if (!win.length) return;
         win.css({ 'border-color': T.main, 'background-color': T.bg, 'color': T.text });
         win.find('.cattamusic-header, .catta-btn-small, .cattamusic-tabs .active').css('background-color', T.main);
         win.find('.cattamusic-screen').css({ 'background-color': T.screen, 'border-color': T.main });
         win.find('.cattamusic-controls button, .cattamusic-tabs button').css({ 'border-color': T.main, 'color': T.main });
-        win.find('.cattamusic-tabs .active').css('color', 'white');
         settings.theme = themeName; saveData();
     }
 
     function buildBubble() {
-        if (!settings.isEnabled || document.getElementById(BUBBLE_ID)) return;
+        if (document.getElementById(BUBBLE_ID)) return;
         const bubble = document.createElement('div');
         bubble.id = BUBBLE_ID;
         bubble.style.cssText = `position:fixed; width:60px; height:60px; top:${settings.posBubble.top}; left:${settings.posBubble.left}; background:url('${ICON_URL}') no-repeat center/contain; z-index:10001; cursor:pointer; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3)); display:${settings.showBubble?'block':'none'};`;
@@ -318,34 +305,19 @@
             if (window.innerWidth < 600) win.css({ top:'15%', left:'50%', transform:'translateX(-50%)' });
             else if (bubble.length) win.css({ top: (bubble.offset().top - win.outerHeight() - 20) + "px", left: bubble.offset().left + "px", transform:'none' });
             win.fadeIn(200);
+            verifyAccess(); // เช็คสิทธิ์ทันทีที่เปิด
         }
     }
 
-    function buildSettings() {
-        if ($(`#${EXT_ID}-settings`).length) return;
-        const html = `
-            <div id="${EXT_ID}-settings" class="cattamusic-settings-block">
-                <h4>🐾 Catta Music Player</h4>
-                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-enabled" ${settings.isEnabled?'checked':''}><label for="catta-cfg-enabled">เปิดการทำงาน</label></div>
-                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-bubble" ${settings.showBubble?'checked':''}><label for="catta-cfg-bubble">แสดงไอคอนลอย</label></div>
-                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-mood" ${settings.autoMood?'checked':''}><label for="catta-cfg-mood">เล่นเพลงตามอารมณ์บอท (Mood Sync)</label></div>
-                <div style="margin-top:10px;"><label>ธีมสี:</label><div class="theme-selectors">${Object.keys(themes).map(t=>`<div class="theme-dot" data-theme="${t}" style="background:${themes[t].main}"></div>`).join('')}</div></div>
-            </div>`;
-        $('#extensions_settings').append(html);
-        $('#catta-cfg-enabled').on('change', function() { settings.isEnabled = this.checked; saveData(); location.reload(); });
-        $('#catta-cfg-bubble').on('change', function() { settings.showBubble = this.checked; $(`#${BUBBLE_ID}`).toggle(settings.showBubble); saveData(); });
-        $('#catta-cfg-mood').on('change', function() { settings.autoMood = this.checked; saveData(); });
-        $('.theme-dot').on('click', function() { applyTheme($(this).data('theme')); });
-    }
-
-    // --- ST Events ---
-    $(document).on('visual_update_event', () => {
-        syncWithCasaBrain();
-    });
+    $(document).on('visual_update_event', () => { verifyAccess().then(ok => ok && syncWithCasaBrain()); });
 
     function init() {
-        loadData(); buildSettings();
-        if (settings.isEnabled) { buildBubble(); buildPlayerWindow(); syncWithCasaBrain(); }
+        loadData();
+        if (settings.isEnabled) {
+            buildBubble();
+            buildPlayerWindow();
+            verifyAccess().then(ok => ok && syncWithCasaBrain());
+        }
     }
 
     if (window.jQuery && $("#extensions_settings").length) init();
@@ -353,11 +325,7 @@
 
     audioPlayer.onended = () => {
         if (loopMode === 2) playTrack(currentTrackIndex, activeSource);
-        else if (loopMode === 3) {
-            const list = activeSource==='user'?userPlaylist:charPlaylist;
-            playTrack(Math.floor(Math.random() * list.length), activeSource);
-        }
+        else if (loopMode === 3) { const l = activeSource==='user'?userPlaylist:charPlaylist; playTrack(Math.floor(Math.random()*l.length), activeSource); }
         else playNext();
     };
-
 })();
