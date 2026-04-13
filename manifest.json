@@ -1,11 +1,12 @@
 {
-    "display_name": "Cattagram",
-    "description": "Cattagram Social App — floating window with user & bot accounts, connects to SillyTavern API & jailbreak.",
+    "display_name": "Catta Music",
+    "description": "เครื่องเล่นเพลงแมวส้ม Catta Music Player",
     "loading_order": 110,
+    "module": true,
     "requires": [],
     "optional": [],
     "js": "index.js",
     "css": "style.css",
-    "author": "Cattagram / Catta-Cafe",
+    "author": "Catta-Cafe",
     "version": "1.0.0"
 }
