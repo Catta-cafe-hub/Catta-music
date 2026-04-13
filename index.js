@@ -1,6 +1,7 @@
 /**
- * Catta Music Player Extension - Commercial Hard-Locked Version
- * 🔒 ไม่อนุญาตให้ใช้งานหากไม่มีการล็อกอินผ่าน Catta Cafe / Dante
+ * Catta Music Player Extension - Secured Version (Top-Center Lock)
+ * 🔒 Brain & Logic moved to Casa VPS Backend
+ * 📍 Window Locked to Top-Center for Mobile accessibility
  */
 
 (function() {
@@ -14,11 +15,11 @@
     const ICON_URL = "https://file.garden/aZx9zS2e7UEiSmfr/cattamusic.png";
     const CASA_API = "https://st-cattacafe.casa:2096/v1/music/scan";
 
-    let settings = { showBubble: true, isEnabled: true, autoMood: true, theme: 'orange', currentTab: 'user', posBubble: { top: '80%', left: '10%' }, posWin: { top: '20%', left: '50%' } };
+    let settings = { showBubble: true, isEnabled: true, autoMood: true, theme: 'orange', currentTab: 'user', posBubble: { top: '80%', left: '10%' } };
     let userPlaylist = [], charPlaylist = [];
     let currentTrackIndex = -1, activeSource = 'user';
     let audioPlayer = new Audio(), isPlaying = false, volume = 3, loopMode = 0;
-    let isAuthorized = false; // ตัวแปรสถานะการล็อกอินหลัก
+    let isAuthorized = false;
 
     const themes = {
         orange: { main: '#ff9800', bg: '#fffaf0', screen: '#e0f2f1', text: '#333' },
@@ -40,7 +41,6 @@
         localStorage.setItem(LS_USER_PLAYLIST, JSON.stringify(userPlaylist));
     }
 
-    // --- 🔒 Check Global Auth (เช็ก Token จากระบบ Catta ทั้งหมด) ---
     function getCattaAuth() {
         return {
             uid: localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid'),
@@ -50,69 +50,37 @@
 
     async function verifyAccess() {
         const auth = getCattaAuth();
-        if (!auth.uid || !auth.token) {
-            isAuthorized = false;
-            showLockedUI();
-            return false;
-        }
-
+        if (!auth.uid || !auth.token) { isAuthorized = false; showLockedUI(); return false; }
         try {
-            // ยิงไปเช็คกับ VPS ว่า Token ยังใช้งานได้ไหม
-            const res = await fetch(CASA_API, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: auth.uid, token: auth.token, check_only: true })
-            });
+            const res = await fetch(CASA_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: auth.uid, token: auth.token, check_only: true }) });
             const data = await res.json();
             isAuthorized = data.success === true;
-            
-            if (isAuthorized) {
-                hideLockedUI();
-                return true;
-            } else {
-                showLockedUI();
-                return false;
-            }
-        } catch (e) {
-            console.error("[Catta Music] Auth Connection Error");
-            return false;
-        }
+            if (isAuthorized) hideLockedUI(); else showLockedUI();
+            return isAuthorized;
+        } catch (e) { return false; }
     }
 
     function showLockedUI() {
-        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css('filter', 'blur(4px) grayscale(1)');
-        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css('pointer-events', 'none');
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'blur(4px) grayscale(1)', 'pointer-events':'none'});
         $("#catta-display-name").html("<span style='color:red;'>🔒 LOCK: Please Login Catta Cafe</span>");
         if (isPlaying) { audioPlayer.pause(); isPlaying = false; }
     }
 
     function hideLockedUI() {
-        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css('filter', 'none');
-        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css('pointer-events', 'auto');
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'none', 'pointer-events':'auto'});
     }
 
-    // --- 🧠 CASA BRAIN SYNC (สแกนเพลงเฉพาะเมื่อล็อกอินแล้ว) ---
     async function syncWithCasaBrain() {
         if (!settings.isEnabled || !isAuthorized) return;
-
         const auth = getCattaAuth();
-        let sourceText = "";
         const context = window.SillyTavern.getContext();
+        let sourceText = "";
         if (context.character) sourceText += context.character.description + " " + context.character.first_mes;
         if (context.world_info) context.world_info.forEach(e => sourceText += " " + e.content);
-
-        let chatText = "";
-        if (context.chat && context.chat.length > 0) {
-            const last = context.chat[context.chat.length - 1];
-            if (last.role === 'assistant') chatText = last.mes;
-        }
+        let chatText = (context.chat && context.chat.length > 0 && context.chat[context.chat.length - 1].role === 'assistant') ? context.chat[context.chat.length - 1].mes : "";
 
         try {
-            const res = await fetch(CASA_API, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: auth.uid, token: auth.token, source_text: sourceText, chat_text: chatText })
-            });
+            const res = await fetch(CASA_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: auth.uid, token: auth.token, source_text: sourceText, chat_text: chatText }) });
             const data = await res.json();
             if (data.success) {
                 charPlaylist = data.playlist || [];
@@ -121,18 +89,14 @@
                     if (idx !== -1) playTrack(idx, 'char');
                 }
                 renderPlaylist();
-            } else {
-                isAuthorized = false;
-                showLockedUI();
             }
-        } catch (e) { console.error("[Catta Music] Sync Error"); }
+        } catch (e) {}
     }
 
-    // --- UI Builders ---
     function buildPlayerWindow() {
         if (document.getElementById(WIN_ID)) return;
         const html = `
-            <div id="${WIN_ID}" style="display: none; position: fixed; z-index: 10000;">
+            <div id="${WIN_ID}" style="display: none; position: fixed; z-index: 10000; top: 10px; left: 50%; transform: translateX(-50%);">
                 <div class="cattamusic-header"><span>🐾 Catta Music Player</span><button id="catta-close-win">×</button></div>
                 <div class="cattamusic-screen">
                     <div class="cattamusic-status-bar"><span id="catta-time">00:00</span><span id="catta-vol">Vol: 3</span><span id="catta-track-count">0 tracks</span></div>
@@ -151,24 +115,12 @@
                     <button id="catta-tab-char">🐱 ตัวละคร</button>
                 </div>
                 <div class="cattamusic-playlist">
-                    <div id="catta-user-input">
-                        <input type="text" id="catta-input-url" placeholder="วางลิ้งค์ .mp3 ...">
-                        <button id="catta-btn-save" class="catta-btn-small">Add Music</button>
-                    </div>
+                    <div id="catta-user-input"><input type="text" id="catta-input-url" placeholder="วางลิ้งค์ .mp3 ..."><button id="catta-btn-save" class="catta-btn-small">Add Music</button></div>
                     <div id="catta-list-display" class="catta-scroll-list"></div>
                 </div>
             </div>`;
         $("body").append(html);
-        
-        const win = document.getElementById(WIN_ID);
-        win.style.top = settings.posWin.top;
-        win.style.left = settings.posWin.left;
-
-        // บังคับสลับแท็บตามที่เซฟไว้
         switchTab(settings.currentTab);
-
-        // Bind Events
-        $(`#${WIN_ID}`).on('mousedown touchstart', () => verifyAccess()); // เช็คทุกครั้งที่มีการกดใช้งานหน้าต่าง
         $('#catta-tab-user').on('click', () => switchTab('user'));
         $('#catta-tab-char').on('click', () => switchTab('char'));
         $("#catta-btn-play").on('click', () => isAuthorized && togglePlay());
@@ -183,17 +135,10 @@
             const url = $("#catta-input-url").val().trim();
             if (url) { userPlaylist.push({ name: url.split('/').pop(), url }); $("#catta-input-url").val(""); saveData(); renderPlaylist(); }
         });
-
         applyTheme(settings.theme);
-        makeDraggable(win, '.cattamusic-header');
-        
-        setInterval(() => {
-            const n = new Date();
-            $("#catta-time").text(n.getHours().toString().padStart(2, '0') + ":" + n.getMinutes().toString().padStart(2, '0'));
-        }, 1000);
+        setInterval(() => { const n = new Date(); $("#catta-time").text(n.getHours().toString().padStart(2, '0') + ":" + n.getMinutes().toString().padStart(2, '0')); }, 1000);
     }
 
-    // --- ระบบลาก ---
     function makeDraggable(el, handleSelector, isBubble = false) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
         const handle = el.querySelector(handleSelector) || el;
@@ -203,8 +148,7 @@
             pos3 = cx; pos4 = cy;
             document.onmouseup = document.ontouchend = () => {
                 document.onmouseup = document.ontouchend = document.onmousemove = document.ontouchmove = null;
-                settings[isBubble ? 'posBubble' : 'posWin'] = { top: (el.offsetTop/window.innerHeight*100)+"%", left: (el.offsetLeft/window.innerWidth*100)+"%" };
-                saveData();
+                if (isBubble) { settings.posBubble = { top: (el.offsetTop/window.innerHeight*100)+"%", left: (el.offsetLeft/window.innerWidth*100)+"%" }; saveData(); }
             };
             document.onmousemove = document.ontouchmove = (e) => {
                 const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
@@ -215,6 +159,7 @@
                 nLeft = Math.max(m, Math.min(nLeft, window.innerWidth - el.offsetWidth - m));
                 nTop = Math.max(m, Math.min(nTop, window.innerHeight - el.offsetHeight - m));
                 el.style.top = nTop + "px"; el.style.left = nLeft + "px";
+                if (!isBubble) el.style.transform = "none"; // ยกเลิกการกลางจอเมื่อเริ่มลาก
             };
         };
         handle.onmousedown = handle.ontouchstart = dragStart;
@@ -225,8 +170,7 @@
         $('.cattamusic-tabs button').removeClass('active');
         $(`#catta-tab-${tab}`).addClass('active');
         $('#catta-user-input').toggle(tab === 'user');
-        saveData();
-        renderPlaylist();
+        saveData(); renderPlaylist();
     }
 
     function renderPlaylist() {
@@ -276,6 +220,7 @@
         win.find('.cattamusic-header, .catta-btn-small, .cattamusic-tabs .active').css('background-color', T.main);
         win.find('.cattamusic-screen').css({ 'background-color': T.screen, 'border-color': T.main });
         win.find('.cattamusic-controls button, .cattamusic-tabs button').css({ 'border-color': T.main, 'color': T.main });
+        win.find('.cattamusic-tabs .active').css('color', 'white');
         settings.theme = themeName; saveData();
     }
 
@@ -292,20 +237,23 @@
         const click = (e) => {
             const cX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
             const cY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
-            if (Math.abs(cX-sX)<5 && Math.abs(cY-sY)<5) togglePlayerSmart();
+            if (Math.abs(cX-sX)<5 && Math.abs(cY-sY)<5) togglePlayerTopCenter();
         };
         bubble.addEventListener('mouseup', click); bubble.addEventListener('touchend', click);
     }
 
-    function togglePlayerSmart() {
+    function togglePlayerTopCenter() {
         const win = $(`#${WIN_ID}`);
         if (win.is(':visible')) win.fadeOut(200);
         else {
-            const bubble = $(`#${BUBBLE_ID}`);
-            if (window.innerWidth < 600) win.css({ top:'15%', left:'50%', transform:'translateX(-50%)' });
-            else if (bubble.length) win.css({ top: (bubble.offset().top - win.outerHeight() - 20) + "px", left: bubble.offset().left + "px", transform:'none' });
+            // ล็อคให้เด้งขึ้นบนสุด-กลางจอเสมอ
+            win.css({
+                top: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)'
+            });
             win.fadeIn(200);
-            verifyAccess(); // เช็คสิทธิ์ทันทีที่เปิด
+            verifyAccess();
         }
     }
 
@@ -316,6 +264,7 @@
         if (settings.isEnabled) {
             buildBubble();
             buildPlayerWindow();
+            makeDraggable(document.getElementById(WIN_ID), '.cattamusic-header');
             verifyAccess().then(ok => ok && syncWithCasaBrain());
         }
     }
