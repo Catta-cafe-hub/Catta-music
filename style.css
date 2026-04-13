@@ -1,8 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
 
+/* ไอคอนลอยแมวส้ม */
+#cattamusic-bubble {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    background: url('https://file.garden/aZx9zS2e7UEiSmfr/cattamusic.png') no-repeat center/contain;
+    z-index: 10001;
+    cursor: move;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    transition: transform 0.2s;
+    touch-action: none; /* ป้องกันการเลื่อนหน้าจอกลางคันบนมือถือ */
+}
+
+#cattamusic-bubble:hover { transform: scale(1.1); }
+#cattamusic-bubble:active { transform: scale(0.9); }
+
 /* กรอบเครื่องเล่นหลัก */
 #cattamusic-player-window {
-    width: 280px;
+    width: 300px;
     border: 3px solid #ff9800;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.4);
@@ -14,116 +30,39 @@
 }
 
 .cattamusic-header {
-    color: white;
-    padding: 8px 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: move;
-    font-weight: bold;
-    font-size: 12px;
+    color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; cursor: move; font-weight: bold; font-size: 13px;
 }
 
-#catta-close-win {
-    background: none; border: none; color: white; cursor: pointer; font-size: 18px;
-}
+#catta-close-win { background: none; border: none; color: white; cursor: pointer; font-size: 20px; }
 
-.cattamusic-screen {
-    border: 2px inset rgba(0,0,0,0.1);
-    margin: 10px;
-    padding: 8px;
-    border-radius: 8px;
-}
+.cattamusic-screen { border: 2px inset rgba(0,0,0,0.1); margin: 10px; padding: 10px; border-radius: 8px; }
+.cattamusic-status-bar { display: flex; justify-content: space-between; font-size: 10px; border-bottom: 1px dashed rgba(0,0,0,0.1); margin-bottom: 5px; }
 
-.cattamusic-status-bar {
-    display: flex;
-    justify-content: space-between;
-    font-size: 9px;
-    border-bottom: 1px dashed rgba(0,0,0,0.1);
-    margin-bottom: 5px;
-}
+.cattamusic-marquee-container { overflow: hidden; white-space: nowrap; width: 100%; }
+.cattamusic-marquee { display: inline-block; font-size: 14px; font-weight: bold; padding-left: 100%; animation: catta-marquee 15s linear infinite; }
 
-.cattamusic-marquee-container {
-    overflow: hidden;
-    white-space: nowrap;
-    width: 100%;
-}
+@keyframes catta-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-.cattamusic-marquee {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: bold;
-    padding-left: 100%;
-    animation: catta-marquee 15s linear infinite;
-}
+.cattamusic-controls { display: flex; justify-content: space-between; padding: 0 10px 10px 10px; }
+.cattamusic-controls button { background: white; border: 1.5px solid #ff9800; border-radius: 50%; width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 
-@keyframes catta-marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
-}
+.cattamusic-playlist { padding: 10px; background: rgba(255,255,255,0.9); border-top: 1px solid rgba(0,0,0,0.05); }
+.cattamusic-playlist input { width: 100%; font-size: 11px; padding: 5px; border: 1px solid #ff9800; border-radius: 4px; margin-bottom: 5px; }
 
-.cattamusic-controls {
-    display: flex;
-    justify-content: space-between;
-    padding: 0 10px 10px 10px;
-}
+.catta-scroll-list { max-height: 100px; overflow-y: auto; margin-top: 8px; border-top: 1px dashed rgba(0,0,0,0.1); }
+.playlist-item { font-size: 11px; padding: 4px; border-bottom: 1px solid rgba(0,0,0,0.03); display: flex; justify-content: space-between; cursor: pointer; }
+.playlist-item:hover { background: rgba(0,0,0,0.02); }
+.active-track { font-weight: bold; color: inherit; border-left: 3px solid currentColor; padding-left: 5px; }
+.delete-track { color: #f44336; padding: 0 5px; font-weight: bold; }
 
-.cattamusic-controls button {
-    background: white;
-    border: 1.5px solid #ff9800;
-    border-radius: 50%;
-    width: 30px; height: 30px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px;
-}
+.catta-btn-small { background: #ff9800; color: white; border: none; padding: 6px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; }
 
-.cattamusic-playlist {
-    padding: 10px;
-    background: rgba(255,255,255,0.8);
-    border-top: 1px solid rgba(0,0,0,0.05);
-}
+/* Settings */
+.cattamusic-settings-block { background: rgba(128,128,128,0.05); border: 1px solid #ff9800; border-radius: 10px; padding: 15px; margin: 10px 0; }
+.theme-selectors { display: flex; gap: 8px; margin-top: 8px; }
+.theme-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.2); }
 
-.catta-scroll-list {
-    max-height: 80px;
-    overflow-y: auto;
-    margin-top: 5px;
-    border-top: 1px dashed rgba(0,0,0,0.1);
-}
-
-.catta-btn-small {
-    background: #ff9800;
-    color: white;
-    border: none;
-    padding: 4px;
-    border-radius: 4px;
-    width: 100%;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.theme-dot {
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 0 3px rgba(0,0,0,0.2);
-}
-
-.active-track {
-    font-weight: bold;
-}
-
-/* ตั้งค่าหน้า Extensions */
-.cattamusic-settings-block {
-    background: rgba(255, 152, 0, 0.1);
-    border: 1px solid #ff9800;
-    border-radius: 10px;
-    padding: 15px;
-    margin: 10px 0;
-}
-
-#cattamusic-bubble:hover {
-    transform: scale(1.1);
-    transition: transform 0.2s;
+/* Mobile Adjustments */
+@media screen and (max-width: 600px) {
+    #cattamusic-player-window { width: 90%; max-width: 320px; }
 }
