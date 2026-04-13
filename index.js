@@ -1,25 +1,42 @@
 /**
- * Catta Music Player Extension - Secured Version (Top-Center Lock)
- * 🔒 Brain & Logic moved to Casa VPS Backend
- * 📍 Window Locked to Top-Center for Mobile accessibility
+ * 🐾 CATTA MUSIC PLAYER — SillyTavern Extension (Full & Stable Version)
+ * ═══════════════════════════════════════════════════
+ * Developed for Catta-Cafe | Dante Style DOM Observer
+ * All features included: Hard-Lock, Dual Mode, Smart Position, No-SSL dependency.
  */
 
 (function() {
     "use strict";
 
+    // ══════════════════════════════════════════════
+    // 1. CONSTANTS & CONFIG
+    // ══════════════════════════════════════════════
     const EXT_ID = "cattamusic";
     const WIN_ID = "cattamusic-player-window";
     const BUBBLE_ID = "cattamusic-bubble";
     const LS_USER_PLAYLIST = "cattamusic_user_playlist";
     const LS_SETTINGS = "cattamusic_settings";
     const ICON_URL = "https://file.garden/aZx9zS2e7UEiSmfr/cattamusic.png";
-    const CASA_API = "https://st-cattacafe.casa:2096/v1/music/scan";
 
-    let settings = { showBubble: true, isEnabled: true, autoMood: true, theme: 'orange', currentTab: 'user', posBubble: { top: '80%', left: '10%' } };
-    let userPlaylist = [], charPlaylist = [];
-    let currentTrackIndex = -1, activeSource = 'user';
-    let audioPlayer = new Audio(), isPlaying = false, volume = 3, loopMode = 0;
+    // ✅ FIXED: Escaped forward slashes to prevent syntax errors
+    const CHAT_MUSIC_REGEX = /::::\s*\[music\]\s*(.*?)\s*\((https?:\/\/([^\s)]+))\)\s*::::/i;
+    const PLAYLIST_BLOCK_REGEX = /\[Catta-music-playlist\s*([\s\S]*?)\]/i;
+
+    let settings = {
+        showBubble: true, isEnabled: true, autoMood: true, theme: 'orange', currentTab: 'user', 
+        posBubble: { top: '80%', left: '10%' }
+    };
+
+    let userPlaylist = [];
+    let charPlaylist = [];
+    let currentTrackIndex = -1;
+    let activeSource = 'user';
+    let audioPlayer = new Audio();
+    let isPlaying = false;
+    let volume = 3;
+    let loopMode = 0;
     let isAuthorized = false;
+    let lastProcessedMsgId = "";
 
     const themes = {
         orange: { main: '#ff9800', bg: '#fffaf0', screen: '#e0f2f1', text: '#333' },
@@ -29,6 +46,9 @@
         purple: { main: '#9c27b0', bg: '#f3e5f5', screen: '#e1bee7', text: '#4a148c' }
     };
 
+    // ══════════════════════════════════════════════
+    // 2. DATA CORE
+    // ══════════════════════════════════════════════
     function loadData() {
         const s = localStorage.getItem(LS_SETTINGS);
         if (s) settings = { ...settings, ...JSON.parse(s) };
@@ -41,66 +61,118 @@
         localStorage.setItem(LS_USER_PLAYLIST, JSON.stringify(userPlaylist));
     }
 
-    function getCattaAuth() {
-        return {
-            uid: localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid'),
-            token: localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token') || localStorage.getItem('catta_token')
-        };
+    function checkAuth() {
+        const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
+        const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
+        isAuthorized = !!(uid && token);
+        if (!isAuthorized) showLockedUI(); else hideLockedUI();
+        return isAuthorized;
     }
 
-    async function verifyAccess() {
-        const auth = getCattaAuth();
-        if (!auth.uid || !auth.token) { isAuthorized = false; showLockedUI(); return false; }
-        try {
-            const res = await fetch(CASA_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: auth.uid, token: auth.token, check_only: true }) });
-            const data = await res.json();
-            isAuthorized = data.success === true;
-            if (isAuthorized) hideLockedUI(); else showLockedUI();
-            return isAuthorized;
-        } catch (e) { return false; }
-    }
-
-    function showLockedUI() {
-        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'blur(4px) grayscale(1)', 'pointer-events':'none'});
-        $("#catta-display-name").html("<span style='color:red;'>🔒 LOCK: Please Login Catta Cafe</span>");
-        if (isPlaying) { audioPlayer.pause(); isPlaying = false; }
-    }
-
-    function hideLockedUI() {
-        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'none', 'pointer-events':'auto'});
-    }
-
-    async function syncWithCasaBrain() {
+    // ══════════════════════════════════════════════
+    // 3. SCANNER (Dante Style)
+    // ══════════════════════════════════════════════
+    function scanLatestChat() {
         if (!settings.isEnabled || !isAuthorized) return;
-        const auth = getCattaAuth();
-        const context = window.SillyTavern.getContext();
-        let sourceText = "";
-        if (context.character) sourceText += context.character.description + " " + context.character.first_mes;
-        if (context.world_info) context.world_info.forEach(e => sourceText += " " + e.content);
-        let chatText = (context.chat && context.chat.length > 0 && context.chat[context.chat.length - 1].role === 'assistant') ? context.chat[context.chat.length - 1].mes : "";
 
-        try {
-            const res = await fetch(CASA_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: auth.uid, token: auth.token, source_text: sourceText, chat_text: chatText }) });
-            const data = await res.json();
-            if (data.success) {
-                charPlaylist = data.playlist || [];
-                if (data.auto_play_track && settings.autoMood) {
-                    const idx = charPlaylist.findIndex(t => t.url === data.auto_play_track.url);
-                    if (idx !== -1) playTrack(idx, 'char');
-                }
+        const chatMessages = document.querySelectorAll('.mes_text');
+        if (chatMessages.length === 0) return;
+
+        const latestMsgBox = chatMessages[chatMessages.length - 1];
+        const msgId = latestMsgBox.closest('.mes')?.getAttribute('mesid') || latestMsgBox.innerText.substring(0, 30);
+        
+        if (msgId === lastProcessedMsgId) return;
+        lastProcessedMsgId = msgId;
+
+        const text = latestMsgBox.innerText;
+
+        // A. Single Song Trigger
+        const musicMatch = text.match(CHAT_MUSIC_REGEX);
+        if (musicMatch) {
+            addAndPlayTrack({ name: "✨ " + musicMatch[1].trim(), url: musicMatch[2].trim(), mood: "shared" });
+            return;
+        }
+
+        // B. Playlist Block
+        const playlistMatch = text.match(PLAYLIST_BLOCK_REGEX);
+        if (playlistMatch) {
+            let found = [];
+            // ✅ FIXED: trackRegex definition inside to reset state
+            const trackRegex = /(?:\d+\.\s*)?([^;]+);([^;]+);(?:\(([^)]+)\)|([^,\n]+))/g;
+            let tm;
+            while ((tm = trackRegex.exec(playlistMatch[1])) !== null) {
+                found.push({ name: tm[1].trim(), url: tm[2].trim(), mood: (tm[3] || tm[4] || "").trim().toLowerCase() });
+            }
+            if (found.length > 0) {
+                charPlaylist = found;
+                notifyUser("✨ ตรวจพบเพลย์ลิสต์ใหม่!");
                 renderPlaylist();
             }
-        } catch (e) {}
+        }
+
+        // C. Mood Sync
+        if (settings.autoMood && charPlaylist.length > 0) {
+            const textLower = text.toLowerCase();
+            const moodTrack = charPlaylist.find(t => t.mood && t.mood.split('|').some(m => textLower.includes(m.trim())));
+            if (moodTrack) playTrack(charPlaylist.indexOf(moodTrack), 'char');
+        }
+    }
+
+    function addAndPlayTrack(track) {
+        if (!charPlaylist.some(t => t.url === track.url)) {
+            charPlaylist.unshift(track);
+            renderPlaylist();
+        }
+        playTrack(charPlaylist.findIndex(t => t.url === track.url), 'char');
+    }
+
+    // ══════════════════════════════════════════════
+    // 4. UI COMPONENTS
+    // ══════════════════════════════════════════════
+    function buildSettings() {
+        if ($(`#${EXT_ID}-settings`).length) return;
+        const html = `
+            <div id="${EXT_ID}-settings" class="cattamusic-settings-block">
+                <h4>🐾 Catta Music Player</h4>
+                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-enabled" ${settings.isEnabled?'checked':''}><label for="catta-cfg-enabled">เปิดการทำงาน</label></div>
+                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-bubble" ${settings.showBubble?'checked':''}><label for="catta-cfg-bubble">แสดงไอคอนลอย (Bubble)</label></div>
+                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-mood" ${settings.autoMood?'checked':''}><label for="catta-cfg-mood">Mood Sync</label></div>
+                <div style="margin-top:10px;"><label>สีธีม:</label><div class="theme-selectors">${Object.keys(themes).map(t=>`<div class="theme-dot" data-theme="${t}" style="background:${themes[t].main}"></div>`).join('')}</div></div>
+            </div>`;
+        $('#extensions_settings').append(html);
+        $('#catta-cfg-enabled').on('change', function() { settings.isEnabled = this.checked; saveData(); location.reload(); });
+        $('#catta-cfg-bubble').on('change', function() { settings.showBubble = this.checked; $(`#${BUBBLE_ID}`).toggle(settings.showBubble); saveData(); });
+        $('#catta-cfg-mood').on('change', function() { settings.autoMood = this.checked; saveData(); });
+        $('.theme-dot').on('click', function() { applyTheme($(this).data('theme')); });
+    }
+
+    function buildBubble() {
+        if (!settings.isEnabled || document.getElementById(BUBBLE_ID)) return;
+        const bubble = document.createElement('div');
+        bubble.id = BUBBLE_ID;
+        bubble.style.cssText = `position:fixed; width:60px; height:60px; top:${settings.posBubble.top}; left:${settings.posBubble.left}; background:url('${ICON_URL}') no-repeat center/contain; z-index:10001; cursor:pointer; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3)); display:${settings.showBubble?'block':'none'};`;
+        document.body.appendChild(bubble);
+        makeDraggable(bubble, null, true);
+        
+        let sX, sY;
+        bubble.addEventListener('mousedown', (e)=>{sX=e.clientX; sY=e.clientY;});
+        bubble.addEventListener('touchstart', (e)=>{sX=e.touches[0].clientX; sY=e.touches[0].clientY;});
+        const click = (e) => {
+            const cX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+            const cY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
+            if (Math.abs(cX-sX)<5 && Math.abs(cY-sY)<5) togglePlayerSmart();
+        };
+        bubble.addEventListener('mouseup', click); bubble.addEventListener('touchend', click);
     }
 
     function buildPlayerWindow() {
         if (document.getElementById(WIN_ID)) return;
         const html = `
             <div id="${WIN_ID}" style="display: none; position: fixed; z-index: 10000; top: 10px; left: 50%; transform: translateX(-50%);">
-                <div class="cattamusic-header"><span>🐾 Catta Music Player</span><button id="catta-close-win">×</button></div>
+                <div class="cattamusic-header"><span>🐾 Catta Music</span><button id="catta-close-win">×</button></div>
                 <div class="cattamusic-screen">
                     <div class="cattamusic-status-bar"><span id="catta-time">00:00</span><span id="catta-vol">Vol: 3</span><span id="catta-track-count">0 tracks</span></div>
-                    <div class="cattamusic-marquee-container"><div id="catta-display-name" class="cattamusic-marquee">Checking System License...</div></div>
+                    <div class="cattamusic-marquee-container"><div id="catta-display-name" class="cattamusic-marquee">Catta Music Ready!</div></div>
                 </div>
                 <div class="cattamusic-controls">
                     <button id="catta-btn-loop"><i class="fa-solid fa-arrow-right"></i></button>
@@ -120,10 +192,15 @@
                 </div>
             </div>`;
         $("body").append(html);
-        switchTab(settings.currentTab);
+        
         $('#catta-tab-user').on('click', () => switchTab('user'));
         $('#catta-tab-char').on('click', () => switchTab('char'));
-        $("#catta-btn-play").on('click', () => isAuthorized && togglePlay());
+        $("#catta-btn-play").on('click', () => { 
+            if(isAuthorized) { 
+                if(!isPlaying && !audioPlayer.src) { lastProcessedMsgId = ""; scanLatestChat(); }
+                togglePlay(); 
+            } 
+        });
         $("#catta-btn-next").on('click', () => isAuthorized && playNext());
         $("#catta-btn-prev").on('click', () => isAuthorized && playPrev());
         $("#catta-btn-volup").on('click', () => isAuthorized && changeVolume(1));
@@ -133,13 +210,31 @@
         $("#catta-btn-save").on('click', () => {
             if (!isAuthorized) return;
             const url = $("#catta-input-url").val().trim();
-            if (url) { userPlaylist.push({ name: url.split('/').pop(), url }); $("#catta-input-url").val(""); saveData(); renderPlaylist(); }
+            if (url) { userPlaylist.push({ name: url.split('/').pop() || "Unknown", url }); $("#catta-input-url").val(""); saveData(); renderPlaylist(); }
         });
+
+        switchTab(settings.currentTab);
         applyTheme(settings.theme);
+        makeDraggable(document.getElementById(WIN_ID), '.cattamusic-header');
+        
         setInterval(() => { const n = new Date(); $("#catta-time").text(n.getHours().toString().padStart(2, '0') + ":" + n.getMinutes().toString().padStart(2, '0')); }, 1000);
     }
 
+    // ══════════════════════════════════════════════
+    // 5. HELPERS
+    // ══════════════════════════════════════════════
+    function togglePlayerSmart() {
+        const win = $(`#${WIN_ID}`);
+        if (win.is(':visible')) win.fadeOut(200);
+        else {
+            win.css({ top: '10px', left: '50%', transform: 'translateX(-50%)' });
+            win.fadeIn(200);
+            checkAuth();
+        }
+    }
+
     function makeDraggable(el, handleSelector, isBubble = false) {
+        if (!el) return;
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
         const handle = el.querySelector(handleSelector) || el;
         const dragStart = (e) => {
@@ -159,7 +254,7 @@
                 nLeft = Math.max(m, Math.min(nLeft, window.innerWidth - el.offsetWidth - m));
                 nTop = Math.max(m, Math.min(nTop, window.innerHeight - el.offsetHeight - m));
                 el.style.top = nTop + "px"; el.style.left = nLeft + "px";
-                if (!isBubble) el.style.transform = "none"; // ยกเลิกการกลางจอเมื่อเริ่มลาก
+                if (!isBubble) el.style.transform = "none";
             };
         };
         handle.onmousedown = handle.ontouchstart = dragStart;
@@ -175,6 +270,7 @@
 
     function renderPlaylist() {
         const container = $("#catta-list-display");
+        if(!container.length) return;
         container.empty();
         const list = settings.currentTab === 'user' ? userPlaylist : charPlaylist;
         list.forEach((track, i) => {
@@ -193,7 +289,7 @@
         currentTrackIndex = i; activeSource = source;
         audioPlayer.src = list[i].url;
         audioPlayer.volume = volume / 5;
-        audioPlayer.play();
+        audioPlayer.play().catch(e => console.warn("Auto-play blocked by browser. Click Play to start."));
         isPlaying = true;
         $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>');
         $("#catta-display-name").text(list[i].name);
@@ -211,61 +307,55 @@
     function playNext() { const l = activeSource==='user'?userPlaylist:charPlaylist; if(l.length) playTrack((currentTrackIndex+1)%l.length, activeSource); }
     function playPrev() { const l = activeSource==='user'?userPlaylist:charPlaylist; if(l.length) playTrack((currentTrackIndex-1+l.length)%l.length, activeSource); }
     function changeVolume(v) { volume = Math.min(5, Math.max(1, volume + v)); audioPlayer.volume = volume/5; $("#catta-vol").text(`Vol: ${volume}`); }
-    function changeLoopMode() { loopMode = (loopMode + 1) % 4; const btn = $("#catta-btn-loop"); const icons = ['arrow-right', 'rotate', 'rotate', 'shuffle']; btn.html(`<i class="fa-solid fa-${icons[loopMode]}"></i>${loopMode===2?'<small>1</small>':''}`); }
+    function changeLoopMode() {
+        loopMode = (loopMode + 1) % 4;
+        const btn = $("#catta-btn-loop");
+        const icons = ['arrow-right', 'rotate', 'rotate', 'shuffle'];
+        btn.html(`<i class="fa-solid fa-${icons[loopMode]}"></i>${loopMode===2?'<small>1</small>':''}`);
+    }
 
     function applyTheme(themeName) {
         const T = themes[themeName] || themes.orange;
         const win = $(`#${WIN_ID}`);
+        if(!win.length) return;
         win.css({ 'border-color': T.main, 'background-color': T.bg, 'color': T.text });
-        win.find('.cattamusic-header, .catta-btn-small, .cattamusic-tabs .active').css('background-color', T.main);
+        win.find('.cattamusic-header, .catta-btn-small').css('background-color', T.main);
+        win.find('.cattamusic-tabs button').css({ 'border-color': T.main, 'color': T.main });
+        win.find('.cattamusic-tabs .active').css({'background-color': T.main, 'color': 'white'});
         win.find('.cattamusic-screen').css({ 'background-color': T.screen, 'border-color': T.main });
-        win.find('.cattamusic-controls button, .cattamusic-tabs button').css({ 'border-color': T.main, 'color': T.main });
-        win.find('.cattamusic-tabs .active').css('color', 'white');
+        win.find('.cattamusic-controls button').css({ 'border-color': T.main, 'color': T.main });
         settings.theme = themeName; saveData();
     }
 
-    function buildBubble() {
-        if (document.getElementById(BUBBLE_ID)) return;
-        const bubble = document.createElement('div');
-        bubble.id = BUBBLE_ID;
-        bubble.style.cssText = `position:fixed; width:60px; height:60px; top:${settings.posBubble.top}; left:${settings.posBubble.left}; background:url('${ICON_URL}') no-repeat center/contain; z-index:10001; cursor:pointer; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3)); display:${settings.showBubble?'block':'none'};`;
-        document.body.appendChild(bubble);
-        makeDraggable(bubble, null, true);
-        let sX, sY;
-        bubble.addEventListener('mousedown', (e)=>{sX=e.clientX; sY=e.clientY;});
-        bubble.addEventListener('touchstart', (e)=>{sX=e.touches[0].clientX; sY=e.touches[0].clientY;});
-        const click = (e) => {
-            const cX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
-            const cY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
-            if (Math.abs(cX-sX)<5 && Math.abs(cY-sY)<5) togglePlayerTopCenter();
-        };
-        bubble.addEventListener('mouseup', click); bubble.addEventListener('touchend', click);
+    function showLockedUI() {
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'blur(4px) grayscale(1)', 'pointer-events':'none'});
+        $("#catta-display-name").html("<span style='color:red;'>🔒 LOCK: Please Login Catta Cafe</span>");
+        if (isPlaying) { audioPlayer.pause(); isPlaying = false; $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); }
     }
 
-    function togglePlayerTopCenter() {
-        const win = $(`#${WIN_ID}`);
-        if (win.is(':visible')) win.fadeOut(200);
-        else {
-            // ล็อคให้เด้งขึ้นบนสุด-กลางจอเสมอ
-            win.css({
-                top: '10px',
-                left: '50%',
-                transform: 'translateX(-50%)'
-            });
-            win.fadeIn(200);
-            verifyAccess();
-        }
+    function hideLockedUI() {
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'none', 'pointer-events':'auto'});
     }
 
-    $(document).on('visual_update_event', () => { verifyAccess().then(ok => ok && syncWithCasaBrain()); });
+    function notifyUser(msg) {
+        const marquee = $("#catta-display-name");
+        const old = marquee.text();
+        marquee.text(msg); setTimeout(() => marquee.text(old), 5000);
+    }
+
+    // ══════════════════════════════════════════════
+    // 6. INIT
+    // ══════════════════════════════════════════════
+    $(document).on('visual_update_event', () => { scanLatestChat(); });
 
     function init() {
         loadData();
+        buildSettings();
         if (settings.isEnabled) {
             buildBubble();
             buildPlayerWindow();
-            makeDraggable(document.getElementById(WIN_ID), '.cattamusic-header');
-            verifyAccess().then(ok => ok && syncWithCasaBrain());
+            checkAuth();
+            setTimeout(scanLatestChat, 1000);
         }
     }
 
@@ -277,4 +367,5 @@
         else if (loopMode === 3) { const l = activeSource==='user'?userPlaylist:charPlaylist; playTrack(Math.floor(Math.random()*l.length), activeSource); }
         else playNext();
     };
+
 })();
