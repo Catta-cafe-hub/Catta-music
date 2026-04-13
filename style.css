@@ -1,576 +1,160 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Kanit:wght@300;400;500;600&display=swap');
 
-/* ═══════════════════════════════════════════════════
-   🐾 CATTA MUSIC PLAYER — REDESIGNED UI v3.0
-   Premium gradient design | Catta Cafe
-   ═══════════════════════════════════════════════════ */
-
-/* === ROOT & THEME VARIABLES === */
 :root {
     --catta-main: #ff6b9d;
     --catta-accent2: #ff9a56;
-    --catta-accent3: #ffd93d;
     --catta-dark: #1a0a2e;
     --catta-card: #2d1b54;
-    --catta-card2: #3d2570;
     --catta-text: #f0e8ff;
     --catta-muted: #a88bc8;
-    --catta-glow: rgba(255, 107, 157, 0.35);
-    --catta-bg: linear-gradient(160deg, #1a0a2e 0%, #2d1b54 50%, #1a0a2e 100%);
     --catta-font: 'Nunito', 'Kanit', sans-serif;
-    --catta-radius: 18px;
-    --catta-radius-sm: 12px;
-    --catta-border: rgba(255, 107, 157, 0.3);
-    font-family: var(--catta-font);
 }
 
-/* === THEME OVERRIDES === */
-[data-theme="pink"] { --catta-main:#ff6b9d; --catta-accent2:#f06292; --catta-dark:#1a0520; --catta-card:#2d1040; --catta-glow:rgba(255,107,157,0.35); }
-[data-theme="orange"] { --catta-main:#ff9a56; --catta-accent2:#ff6b9d; --catta-dark:#1f0e00; --catta-card:#2e1a00; --catta-glow:rgba(255,154,86,0.35); }
-[data-theme="blue"] { --catta-main:#4d96ff; --catta-accent2:#6bcb77; --catta-dark:#050f2e; --catta-card:#0d1f5c; --catta-glow:rgba(77,150,255,0.35); }
-[data-theme="mint"] { --catta-main:#6bcb77; --catta-accent2:#4d96ff; --catta-dark:#041a0a; --catta-card:#082e14; --catta-glow:rgba(107,203,119,0.35); }
-[data-theme="purple"] { --catta-main:#b388ff; --catta-accent2:#ff6b9d; --catta-dark:#0d0025; --catta-card:#1a0040; --catta-glow:rgba(179,136,255,0.4); }
-[data-theme="midnight"] { --catta-main:#4fc3f7; --catta-accent2:#81d4fa; --catta-dark:#050a12; --catta-card:#0d1525; --catta-glow:rgba(79,195,247,0.35); }
-[data-theme="latte"] { --catta-main:#d4a574; --catta-accent2:#ff9a56; --catta-dark:#1a1008; --catta-card:#2e1c0c; --catta-glow:rgba(212,165,116,0.35); }
-[data-theme="dark"] { --catta-main:#e0e0e0; --catta-accent2:#9e9e9e; --catta-dark:#0a0a0a; --catta-card:#1a1a1a; --catta-glow:rgba(224,224,224,0.2); }
-[data-theme="blood"] { --catta-main:#ef5350; --catta-accent2:#ff7043; --catta-dark:#1a0505; --catta-card:#2d0808; --catta-glow:rgba(239,83,80,0.4); }
-[data-theme="green"] { --catta-main:#4caf50; --catta-accent2:#66bb6a; --catta-dark:#051a05; --catta-card:#0a2e0a; --catta-glow:rgba(76,175,80,0.35); }
-
-/* === BUBBLE (ไอคอนลอย) === */
+/* === BUBBLE === */
 #cattamusic-bubble {
-    position: fixed;
-    width: 60px; height: 60px;
-    z-index: 10001;
-    cursor: move;
-    filter: drop-shadow(0 4px 16px var(--catta-glow));
-    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.2s;
-    touch-action: none;
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
     border-radius: 50%;
 }
-#cattamusic-bubble:hover {
-    transform: scale(1.12) rotate(-5deg);
-    filter: drop-shadow(0 8px 24px var(--catta-glow));
-}
+#cattamusic-bubble:hover { transform: scale(1.12) rotate(-5deg); }
 
-/* === PLAYER WINDOW === */
-#cattamusic-player-window {
+/* === MAIN WINDOW === */
+.cattamusic-window {
     width: 290px;
     background: var(--catta-dark);
-    border: 1.5px solid var(--catta-border);
-    border-radius: 24px;
-    box-shadow:
-        0 24px 64px rgba(0,0,0,0.6),
-        0 0 0 0.5px rgba(255,255,255,0.05) inset,
-        0 0 40px var(--catta-glow);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
     font-family: var(--catta-font);
-    display: flex;
-    flex-direction: column;
-    user-select: none;
     overflow: hidden;
-    backdrop-filter: blur(20px);
+    transition: width 0.3s, border-radius 0.3s;
 }
 
-/* === HEADER === */
-.cattamusic-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 14px 8px;
-    cursor: grab;
-    background: rgba(0,0,0,0.2);
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+/* === ULTRA MINIMAL MODE (THE PILL) === */
+.catta-ultra-minimal {
+    width: auto !important;
+    border-radius: 40px !important;
+    background: rgba(20, 10, 30, 0.85) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--catta-main);
+    padding: 6px 12px 6px 6px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 15px rgba(255,107,157,0.3);
 }
-.cattamusic-header:active { cursor: grabbing; }
-.catta-header-title {
-    font-size: 13px;
-    font-weight: 800;
-    background: linear-gradient(90deg, var(--catta-main), var(--catta-accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 0.3px;
-}
-#catta-close-win {
-    background: rgba(255,255,255,0.08);
-    border: none;
-    color: var(--catta-muted);
-    cursor: pointer;
-    font-size: 16px;
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-    line-height: 1;
-}
-#catta-close-win:hover { background: rgba(255,107,157,0.25); color: var(--catta-main); }
-
-/* === COVER ART SECTION === */
-#catta-banner-container {
-    padding: 14px 16px 10px;
+#catta-ultra-mini-container {
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
-    background: linear-gradient(180deg, rgba(255,107,157,0.05) 0%, transparent 100%);
+    cursor: grab; /* ลากจากตรงนี้ได้ */
 }
-#catta-cover-img {
-    width: 56px; height: 56px;
-    border-radius: 14px;
+#catta-ultra-mini-container:active { cursor: grabbing; }
+
+#catta-mini-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.08);
-    transition: transform 0.3s ease;
+    border: 2px solid var(--catta-main);
 }
-#catta-cover-img:hover { transform: scale(1.04) rotate(-2deg); }
-.catta-cover-text { flex-grow: 1; overflow: hidden; }
-#catta-cover-title {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--catta-text);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    margin-bottom: 3px;
-    letter-spacing: -0.2px;
-}
-.cattamusic-marquee-wrapper {
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    position: relative;
-}
-.cattamusic-marquee-wrapper::after {
-    content: '';
-    position: absolute; right: 0; top: 0;
-    width: 20px; height: 100%;
-    background: linear-gradient(to right, transparent, var(--catta-card, #2d1b54));
-}
-.cattamusic-marquee {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--catta-main);
-    letter-spacing: 0.3px;
-    padding-left: 100%;
-    animation: cattaScroll 14s linear infinite;
-}
-@keyframes cattaScroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
-}
-
-/* === STATUS BAR === */
-.cattamusic-screen {
-    background: rgba(0,0,0,0.25);
-    border: none;
-    padding: 5px 14px;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--catta-muted);
-    letter-spacing: 0.5px;
-}
-.cattamusic-status-bar {
+.catta-mini-info {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.catta-status-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--catta-main);
-    animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse {
-    0%,100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.7); }
-}
-
-/* === PROGRESS BAR === */
-.catta-progress-wrap {
-    padding: 6px 14px 2px;
-}
-.catta-progress-bar {
-    height: 3px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 3px;
-    position: relative;
-    cursor: pointer;
-    overflow: visible;
-}
-.catta-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--catta-main), var(--catta-accent2));
-    border-radius: 3px;
-    position: relative;
-    transition: width 0.3s;
-}
-.catta-progress-fill::after {
-    content: '';
-    position: absolute; right: -5px; top: -4px;
-    width: 11px; height: 11px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--catta-glow);
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-.catta-progress-bar:hover .catta-progress-fill::after { opacity: 1; }
-
-/* === CONTROLS === */
-.cattamusic-controls {
-    padding: 10px 14px 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
-}
-.cattamusic-controls button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--catta-muted);
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
-}
-.cattamusic-controls button:hover {
-    background: rgba(255,107,157,0.12);
-    color: var(--catta-main);
-    transform: scale(1.1);
-}
-.cattamusic-controls button:active { transform: scale(0.92); }
-
-#catta-btn-play {
-    width: 48px !important;
-    height: 48px !important;
-    background: linear-gradient(135deg, var(--catta-main), var(--catta-accent2)) !important;
-    color: white !important;
-    font-size: 16px !important;
-    box-shadow: 0 8px 24px var(--catta-glow), 0 4px 12px rgba(0,0,0,0.3) !important;
-}
-#catta-btn-play:hover {
-    transform: scale(1.08) !important;
-    box-shadow: 0 12px 32px var(--catta-glow) !important;
-    background: rgba(255,107,157,0.12) !important;
-    color: unset !important;
-}
-
-.catta-btn-active { color: var(--catta-main) !important; }
-
-/* === VOLUME ROW === */
-.catta-volume-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 14px 8px;
-}
-.catta-vol-icon { font-size: 12px; color: var(--catta-muted); }
-.catta-vol-track {
-    flex: 1;
-    height: 3px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 3px;
-    position: relative;
-    cursor: pointer;
-}
-.catta-vol-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4d96ff, #6bcb77);
-    border-radius: 3px;
-    transition: width 0.2s;
-}
-
-/* === TABS === */
-.cattamusic-tabs {
-    display: flex;
-    padding: 0 10px;
+    flex-direction: column;
+    justify-content: center;
+    width: 85px;
     gap: 4px;
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
-    background: rgba(0,0,0,0.15);
 }
-.cattamusic-tabs button {
-    flex: 1;
-    border: none;
-    padding: 8px 4px;
+#catta-mini-title {
+    color: #fff;
     font-size: 11px;
-    cursor: pointer;
-    font-family: var(--catta-font);
-    font-weight: 800;
-    background: transparent;
-    color: var(--catta-muted);
-    transition: all 0.2s;
-    border-bottom: 2px solid transparent;
-    letter-spacing: 0.2px;
-    margin-bottom: -0.5px;
-}
-.cattamusic-tabs button:hover { color: var(--catta-text); }
-.cattamusic-tabs .active {
-    color: var(--catta-main) !important;
-    border-bottom-color: var(--catta-main);
-}
-
-/* === TOOLS TOGGLE === */
-#catta-btn-toggle-tools {
-    background: none !important;
-    border: none !important;
-    color: var(--catta-muted) !important;
-    cursor: pointer;
-    padding: 0 12px !important;
-    font-size: 14px;
-    border-left: 0.5px solid rgba(255,255,255,0.08) !important;
-    border-radius: 0 !important;
-    transition: color 0.2s !important;
-}
-#catta-btn-toggle-tools:hover { color: var(--catta-main) !important; }
-
-/* === PLAYLIST AREA === */
-.cattamusic-playlist {
-    background: transparent;
-    max-height: 130px;
-    overflow-y: auto;
-}
-.cattamusic-playlist::-webkit-scrollbar { width: 3px; }
-.cattamusic-playlist::-webkit-scrollbar-track { background: transparent; }
-.cattamusic-playlist::-webkit-scrollbar-thumb { background: rgba(255,107,157,0.4); border-radius: 3px; }
-
-.playlist-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 7px 14px;
-    font-size: 11px;
-    cursor: pointer;
-    color: var(--catta-muted);
-    transition: all 0.18s;
-    border-left: 2px solid transparent;
-    font-weight: 600;
-    gap: 6px;
-}
-.playlist-item:hover {
-    background: rgba(255,107,157,0.06);
-    color: var(--catta-text);
-}
-.playlist-item.active-track {
-    background: linear-gradient(90deg, rgba(255,107,157,0.15), transparent);
-    color: var(--catta-text);
-    border-left-color: var(--catta-main);
-    font-weight: 800;
-}
-.playlist-item .track-num-badge {
-    min-width: 18px;
-    text-align: center;
-    font-size: 10px;
-    color: var(--catta-muted);
-}
-.playlist-item.active-track .track-num-badge { color: var(--catta-main); }
-.playlist-item .track-name-text {
-    flex: 1;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.playlist-item .del-btn {
-    color: rgba(255,255,255,0.2);
+#catta-mini-prog-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
     cursor: pointer;
-    font-weight: bold;
-    padding: 0 4px;
-    font-size: 14px;
-    transition: color 0.2s;
-    flex-shrink: 0;
 }
-.playlist-item .del-btn:hover { color: var(--catta-main); }
-
-/* EQ bars for playing track */
-.catta-eq {
-    display: inline-flex;
-    align-items: flex-end;
-    gap: 2px;
-    height: 14px;
-}
-.catta-eq span {
-    width: 3px;
-    border-radius: 2px;
+#catta-mini-prog-fill {
+    height: 100%;
     background: var(--catta-main);
-    animation: eq-anim 0.6s ease-in-out infinite alternate;
-}
-.catta-eq span:nth-child(1) { height: 8px; animation-delay: 0s; }
-.catta-eq span:nth-child(2) { height: 12px; animation-delay: 0.15s; }
-.catta-eq span:nth-child(3) { height: 5px; animation-delay: 0.3s; }
-@keyframes eq-anim { to { height: 3px; } }
-
-/* === TOOLS CONTAINER === */
-#catta-tools-container {
-    background: rgba(0,0,0,0.2);
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
-}
-.catta-manager-row { display: flex; flex-direction: column; gap: 5px; }
-.catta-manager-row input,
-.catta-manager-row select {
-    background: rgba(255,255,255,0.07) !important;
-    color: var(--catta-text) !important;
-    border: 0.5px solid rgba(255,255,255,0.15) !important;
-    border-radius: 10px !important;
-    padding: 6px 10px !important;
-    font-size: 11px !important;
-    font-family: var(--catta-font) !important;
-    font-weight: 600 !important;
-    outline: none !important;
-    transition: border-color 0.2s;
-}
-.catta-manager-row input:focus,
-.catta-manager-row select:focus {
-    border-color: var(--catta-main) !important;
-}
-.catta-manager-row input::placeholder { color: var(--catta-muted) !important; }
-
-/* === BUTTONS (SMALL) === */
-.catta-btn-small {
-    border: none;
-    color: white !important;
-    padding: 6px 10px;
-    border-radius: 10px;
-    font-weight: 800;
-    cursor: pointer;
-    font-size: 11px;
-    font-family: var(--catta-font);
-    transition: all 0.2s;
-    white-space: nowrap;
-}
-.catta-btn-small:hover { filter: brightness(1.15); transform: translateY(-1px); }
-.catta-btn-small:active { transform: scale(0.96); }
-
-#catta-btn-save {
-    background: linear-gradient(135deg, var(--catta-main), var(--catta-accent2)) !important;
-    box-shadow: 0 4px 12px var(--catta-glow);
+    border-radius: 3px;
+    transition: width 0.1s linear;
 }
 
-/* === INLINE MUSIC PILL (in chat) === */
-.catta-inline-music {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: linear-gradient(135deg, rgba(255,107,157,0.15), rgba(255,154,86,0.1));
-    border: 1px solid rgba(255,107,157,0.35);
-    color: #fff !important;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-family: var(--catta-font);
-    font-size: 13px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(255,255,255,0.05) inset;
-    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
-    margin: 5px 0;
-    backdrop-filter: blur(8px);
+#catta-ultra-mini-container button {
+    background: none; border: none; color: #fff;
+    font-size: 14px; cursor: pointer; padding: 4px;
+    transition: transform 0.2s, color 0.2s;
 }
-.catta-inline-music:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.3), 0 0 24px var(--catta-glow);
-    border-color: var(--catta-main);
-    background: linear-gradient(135deg, rgba(255,107,157,0.25), rgba(255,154,86,0.15));
-}
-.catta-inline-music .music-icon {
-    font-size: 18px;
-    color: var(--catta-main);
-    filter: drop-shadow(0 0 6px var(--catta-glow));
-}
-.catta-inline-music .music-info { display: flex; flex-direction: column; line-height: 1.3; }
-.catta-inline-music .music-title { font-weight: 800; color: #fff; font-size: 13px; }
-.catta-inline-music .music-status { font-size: 9px; color: var(--catta-main); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+#catta-ultra-mini-container button:hover { transform: scale(1.15); color: var(--catta-main); }
+#catta-mini-play { font-size: 18px !important; color: var(--catta-main) !important; }
+#catta-btn-expand { margin-left: 5px; opacity: 0.7; }
 
-/* === SETTINGS PANEL === */
-.cattamusic-settings-block {
-    background: rgba(255,255,255,0.03);
-    border: 0.5px solid var(--catta-border);
-    border-radius: 16px;
-    padding: 16px;
-    margin: 10px 0;
-    font-family: var(--catta-font);
+/* === FULL PLAYER STYLES === */
+.cattamusic-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; background: rgba(0,0,0,0.3); cursor: grab;
 }
-.cattamusic-settings-block h4 {
-    font-size: 14px;
-    font-weight: 800;
-    background: linear-gradient(90deg, var(--catta-main), var(--catta-accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 10px;
+.cattamusic-header:active { cursor: grabbing; }
+.catta-header-title { font-size: 13px; font-weight: 800; color: var(--catta-main); }
+.catta-icon-btn { background: none; border: none; color: #fff; cursor: pointer; font-size: 16px; opacity: 0.7; }
+.catta-icon-btn:hover { opacity: 1; transform: scale(1.1); }
+
+/* --- Cover & Image Upload --- */
+#catta-banner-container { display: flex; align-items: center; gap: 12px; padding: 14px; }
+.catta-cover-wrapper {
+    position: relative; width: 55px; height: 55px; border-radius: 12px; overflow: hidden; flex-shrink: 0;
 }
-.theme-selectors { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.theme-dot {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid rgba(255,255,255,0.2);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
-    position: relative;
-}
-.theme-dot:hover {
-    transform: scale(1.2);
-    border-color: #fff;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-}
-.theme-dot.selected::after {
-    content: '✓';
-    position: absolute; inset: 0;
+#catta-cover-img { width: 100%; height: 100%; object-fit: cover; }
+.catta-cover-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.6);
     display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 900; color: #fff;
+    color: #fff; font-size: 20px; opacity: 0; transition: opacity 0.2s;
 }
+.can-upload:hover .catta-cover-overlay { opacity: 1; cursor: pointer; }
 
-/* === CHAR SEARCH RESULTS === */
-#catta-char-search-results {
-    background: rgba(255,255,255,0.04);
-    border-radius: 10px;
-    padding: 4px 0;
-}
+.catta-cover-text { flex: 1; overflow: hidden; }
+#catta-cover-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.cattamusic-marquee { font-size: 11px; color: var(--catta-main); white-space: nowrap; }
 
-/* === LOCK OVERLAY === */
-.catta-lock-blur {
-    filter: blur(5px) grayscale(0.8);
-    pointer-events: none;
-    transition: filter 0.3s;
-}
+/* --- Progress --- */
+.catta-progress-wrap { padding: 0 14px 10px; }
+#catta-prog-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; }
+#catta-prog-fill { height: 100%; background: linear-gradient(90deg, var(--catta-main), var(--catta-accent2)); border-radius: 4px; }
 
-/* === ANIMATIONS === */
-@keyframes slideInDown {
-    from { opacity: 0; transform: translateY(-16px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+/* --- Controls --- */
+.cattamusic-controls { display: flex; justify-content: space-around; align-items: center; padding: 0 14px 14px; }
+.cattamusic-controls button { background: none; border: none; color: var(--catta-text); font-size: 15px; cursor: pointer; transition: 0.2s; }
+.cattamusic-controls button:hover { color: var(--catta-main); transform: scale(1.1); }
+.play-btn-large { width: 45px; height: 45px; border-radius: 50%; background: var(--catta-main) !important; color: #fff !important; font-size: 18px !important; box-shadow: 0 4px 15px rgba(255,107,157,0.4); }
+.play-btn-large:hover { transform: scale(1.08) !important; filter: brightness(1.1); }
 
-#cattamusic-player-window[style*="block"] {
-    animation: slideInDown 0.3s cubic-bezier(0.34,1.56,0.64,1);
-}
+/* --- Tabs --- */
+.cattamusic-tabs { display: flex; background: rgba(0,0,0,0.2); }
+.cattamusic-tabs button { flex: 1; padding: 8px; background: none; border: none; color: var(--catta-muted); cursor: pointer; font-family: var(--catta-font); font-weight: 600; font-size: 12px; border-bottom: 2px solid transparent; }
+.cattamusic-tabs button.active { color: var(--catta-main); border-bottom-color: var(--catta-main); }
+#catta-btn-toggle-tools { flex: 0 0 40px; border-left: 1px solid rgba(255,255,255,0.1); }
 
-/* === MOBILE RESPONSIVE === */
-@media screen and (max-width: 600px) {
-    #cattamusic-player-window {
-        width: 92vw;
-        max-width: 320px;
-    }
-}
+/* --- Playlist --- */
+.cattamusic-playlist { max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.1); }
+.cattamusic-playlist::-webkit-scrollbar { width: 4px; }
+.cattamusic-playlist::-webkit-scrollbar-thumb { background: var(--catta-main); border-radius: 4px; }
+.playlist-item { display: flex; gap: 8px; padding: 8px 14px; font-size: 12px; color: var(--catta-text); cursor: pointer; transition: 0.2s; border-left: 2px solid transparent;}
+.playlist-item:hover { background: rgba(255,255,255,0.05); }
+.playlist-item.active-track { background: rgba(255,107,157,0.1); border-left-color: var(--catta-main); font-weight: 700;}
+.track-num-badge { width: 20px; color: var(--catta-muted); font-size: 10px; text-align: center; }
+.track-name-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.del-btn { color: rgba(255,255,255,0.2); font-weight: bold; }
+.del-btn:hover { color: #ff5252; }
 
-/* === MINIMIZE BUTTON === */
-#catta-btn-minimize:hover {
-    background: rgba(255, 107, 157, 0.2) !important;
-    color: var(--catta-main) !important;
-}
+/* --- Inline Chat --- */
+.catta-inline-music { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,107,157,0.1); border: 1px solid var(--catta-main); color: #fff; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: var(--catta-font); font-size: 12px; margin: 5px 0; transition: transform 0.2s; }
+.catta-inline-music:hover { transform: translateY(-2px); background: rgba(255,107,157,0.2); }
+.catta-inline-music .music-icon { color: var(--catta-main); font-size: 16px; }
+.catta-inline-music .music-info { display: flex; flex-direction: column; }
+.catta-inline-music .music-title { font-weight: 700; }
+.catta-inline-music .music-status { font-size: 9px; color: var(--catta-main); text-transform: uppercase; }
 
-/* === MINI BAR === */
-#catta-mini-bar {
-    border-top: 0.5px solid rgba(255, 255, 255, 0.06);
-    background: rgba(0, 0, 0, 0.15);
-}
-#catta-mini-prev:hover, #catta-mini-next:hover {
-    color: var(--catta-text) !important;
-}
-#catta-mini-play:hover {
-    transform: scale(1.15) !important;
-}
-
-/* เมื่อย่อแล้ว ให้ border-radius ดูนุ่มนวล */
-#cattamusic-player-window.minimized {
-    border-radius: 18px;
-}
+/* Inputs */
+.catta-manager-row input, .catta-manager-row select, #catta-input-url { background: rgba(255,255,255,0.1); border: none; padding: 6px 10px; border-radius: 8px; color: #fff; font-family: var(--catta-font); outline: none; width: 100%;}
+.catta-btn-small { border: none; padding: 6px 10px; border-radius: 8px; color: #fff; cursor: pointer; background: var(--catta-main); font-family: var(--catta-font); font-weight: 600; white-space: nowrap;}
