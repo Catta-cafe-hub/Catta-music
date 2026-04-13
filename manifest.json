@@ -1,0 +1,11 @@
+{
+    "display_name": "Cattagram",
+    "description": "Cattagram Social App — floating window with user & bot accounts, connects to SillyTavern API & jailbreak.",
+    "loading_order": 110,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "Cattagram / Catta-Cafe",
+    "version": "1.0.0"
+}

@@ -1,0 +1,174 @@
+/* =====================================================
+   CATTAGRAM ST EXTENSION — Floating Window Styles
+   ===================================================== */
+
+/* ── Floating toggle button (bottom-right) ── */
+#cattagram-toggle-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #FF6B35, #FF4081);
+    border: none;
+    cursor: pointer;
+    z-index: 9997;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 6px 24px rgba(255, 107, 53, 0.5);
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: sans-serif;
+}
+#cattagram-toggle-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.65);
+}
+#cattagram-toggle-btn .notif-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #FF3B30;
+    border: 2px solid #1a1a1a;
+    display: none;
+}
+
+/* ── Main floating window ── */
+#cattagram-window {
+    position: fixed;
+    bottom: 92px;
+    right: 24px;
+    width: 390px;
+    height: 720px;
+    max-height: 88vh;
+    border-radius: 28px;
+    overflow: hidden;
+    z-index: 9998;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.08);
+    display: none;
+    flex-direction: column;
+    background: #080808;
+    font-family: 'Kanit', 'Segoe UI', sans-serif;
+    transition: opacity 0.2s, transform 0.2s;
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+}
+#cattagram-window.cg-open {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Draggable header handle */
+#cattagram-drag-handle {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 32px;
+    cursor: grab;
+    z-index: 10;
+    border-radius: 28px 28px 0 0;
+}
+#cattagram-drag-handle:active { cursor: grabbing; }
+
+/* Window control bar */
+#cattagram-titlebar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    z-index: 11;
+    pointer-events: none;
+}
+#cattagram-titlebar .cg-wdots {
+    display: flex; gap: 6px;
+    pointer-events: all;
+}
+#cattagram-titlebar .cg-wdot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.1s;
+}
+#cattagram-titlebar .cg-wdot:hover { opacity: 0.7; }
+.cg-dot-close { background: #FF5F57; }
+.cg-dot-min   { background: #FEBC2E; }
+.cg-dot-max   { background: #28C840; }
+
+/* ── iframe content area ── */
+#cattagram-frame {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 28px;
+    background: #080808;
+    padding-top: 32px;
+    box-sizing: border-box;
+}
+
+/* ── Resize handle ── */
+#cattagram-resize {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 8px;
+    cursor: ns-resize;
+    z-index: 12;
+}
+#cattagram-resize-corner {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 18px; height: 18px;
+    cursor: sw-resize;
+    z-index: 13;
+}
+
+/* ── Toast inside window ── */
+.cg-toast {
+    position: absolute;
+    bottom: 88px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(20,20,20,0.92);
+    backdrop-filter: blur(20px);
+    color: #fff;
+    padding: 9px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+}
+.cg-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ── Scrollbar hide ── */
+#cattagram-window ::-webkit-scrollbar { display: none; }
+
+/* ── Responsive: mobile ── */
+@media (max-width: 480px) {
+    #cattagram-window {
+        bottom: 0; right: 0;
+        width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+    #cattagram-toggle-btn {
+        bottom: 16px;
+        right: 16px;
+    }
+}
