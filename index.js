@@ -67,7 +67,9 @@
         cotton:   { main:'#ffb6c1', accent:'#a7c7e7', dark:'#1a0a1a', card:'#2a152a', text:'#ffe0e9', muted:'#d4a0b3', glow:'rgba(255,182,193,0.4)',  dot:'rgba(255,182,193,0.9)'  },
         peach:    { main:'#ffdab9', accent:'#ffb347', dark:'#1a100a', card:'#2a1a12', text:'#ffefe0', muted:'#d4aa8a', glow:'rgba(255,218,185,0.4)',  dot:'rgba(255,218,185,0.9)'  },
         sakura:   { main:'#f4a460', accent:'#ffc0cb', dark:'#1a0d0a', card:'#2a1812', text:'#ffe8e0', muted:'#d4a090', glow:'rgba(244,164,96,0.4)',   dot:'rgba(244,164,96,0.9)'   },
-        sky:      { main:'#87cefa', accent:'#e0ffff', dark:'#050a1a', card:'#0d122a', text:'#e0f4ff', muted:'#8aa9c4', glow:'rgba(135,206,250,0.4)',  dot:'rgba(135,206,250,0.9)'  }
+        sky:      { main:'#87cefa', accent:'#e0ffff', dark:'#050a1a', card:'#0d122a', text:'#e0f4ff', muted:'#8aa9c4', glow:'rgba(135,206,250,0.4)',  dot:'rgba(135,206,250,0.9)'  },
+        vanilla:  { main:'#ff6b9d', accent:'#ff9a56', dark:'#ffffff', card:'#f5f5f5', text:'#333333', muted:'#888888', glow:'rgba(255,107,157,0.2)',  dot:'rgba(255,107,157,0.9)'  },
+        snow:     { main:'#4d96ff', accent:'#87cefa', dark:'#f8f9fa', card:'#eef2f5', text:'#222222', muted:'#777777', glow:'rgba(77,150,255,0.2)',   dot:'rgba(77,150,255,0.9)'   }
     };
 
     // ══════════════════════════════════════════════
@@ -387,17 +389,25 @@
             border: 1px solid rgba(255,255,255,0.08) !important;
             box-shadow: 0 10px 25px rgba(0,0,0,0.4) !important;
         }
-        #cattamusic-player-window.minimized .cattamusic-header {
+        #cattamusic-player-window.minimized .cattamusic-header,
+        #cattamusic-player-window.minimized #catta-banner-container,
+        #cattamusic-player-window.minimized .cattamusic-screen,
+        #cattamusic-player-window.minimized .cattamusic-controls,
+        #cattamusic-player-window.minimized .cattamusic-tabs,
+        #cattamusic-player-window.minimized .cattamusic-playlist {
+            display: none !important;
+        }
+        #cattamusic-player-window:not(.minimized) #catta-mini-bar {
             display: none !important;
         }
         #cattamusic-player-window.minimized #catta-mini-bar {
-            border-top: none !important;
             background: transparent !important;
             padding: 5px 12px 5px 5px !important;
             cursor: grab !important;
             display: flex !important;
             gap: 8px !important;
             align-items: center !important;
+            border-top: none !important;
         }
         #cattamusic-player-window.minimized #catta-mini-bar:active {
             cursor: grabbing !important;
@@ -766,7 +776,7 @@
             cnt:  `font-size:9px;color:${T.muted};font-family:'Itim',cursive;`,
             minB: `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0;box-shadow:none!important;background:rgba(255,255,255,.09);color:${T.muted};transition:all .2s;`,
             cls:  `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;box-shadow:none!important;background:rgba(255,255,255,.06);color:${T.muted};transition:all .2s;`,
-            mini: `display:none;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.07);`,
+            mini: `align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.07);`,
             mImg: `width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.5);`,
             mTtl: `font-size:11px;font-family:'Itim',cursive;color:${T.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`,
             mSub: `font-size:9px;font-family:'Itim',cursive;color:${T.muted};margin-top:1px;`,
@@ -884,24 +894,20 @@
         
         // ══ MINIMIZE LOGIC ══
         let isMinimized = false;
-        const fullSections = ['#catta-banner-container', '.cattamusic-screen', '.cattamusic-controls', '.cattamusic-tabs', '.cattamusic-playlist'];
         
         function setMinimized(mini) {
             isMinimized = mini;
             const win = $(`#${WIN_ID}`);
             if (mini) {
                 win.addClass('minimized');
-                fullSections.forEach(sel => win.find(sel).hide());
-                $('#catta-mini-bar').css('display','flex');
-                
                 // sync mini bar info
                 $('#catta-mini-img').attr('src', $('#catta-cover-img').attr('src'));
-                $('#catta-mini-title').text($('#catta-cover-title').text());
+                let songName = $('#catta-display-name').text();
+                if (songName === '✨ Ready to play!') songName = 'Catta Music';
+                $('#catta-mini-title').text(songName);
                 $('#catta-mini-play').html(isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>');
             } else {
                 win.removeClass('minimized');
-                fullSections.forEach(sel => win.find(sel).show());
-                $('#catta-mini-bar').hide();
             }
         }
         
@@ -1310,11 +1316,8 @@
         $("#catta-play-dot").css('opacity','1');
         
         // sync mini bar
-        if ($('#catta-mini-bar').is(':visible')) {
-            $('#catta-mini-title').text(list[i].name);
-            $('#catta-mini-sub').text('▶ กำลังเล่น');
-            $('#catta-mini-play').text('⏸');
-        }
+        $('#catta-mini-title').text(list[i].name);
+        $('#catta-mini-play').html('<i class="fa-solid fa-pause"></i>');
         
         // แสดง mood pills
         if (list[i].mood) {
