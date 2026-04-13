@@ -2,7 +2,6 @@
     "display_name": "Catta Music",
     "description": "เครื่องเล่นเพลงแมวส้ม Catta Music Player",
     "loading_order": 110,
-    "module": true,
     "requires": [],
     "optional": [],
     "js": "index.js",
