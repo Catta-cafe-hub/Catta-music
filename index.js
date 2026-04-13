@@ -117,6 +117,12 @@
         const s = localStorage.getItem(LS_SETTINGS);
         if (s) settings = { ...settings, ...JSON.parse(s) };
         
+        // บังคับเปลี่ยน localhost เป็น URL จริง (ป้องกันการจำค่าเก่าผิดๆ ใน LocalStorage)
+        if (settings.apiUrl === 'http://localhost:2096') {
+            settings.apiUrl = 'https://st-cattacafe.casa/casa_api';
+            saveData();
+        }
+        
         const up = localStorage.getItem(LS_USER_PLAYLISTS);
         if (up) userPlaylists = JSON.parse(up);
         if (!userPlaylists["default"]) userPlaylists["default"] = { name: "เพลย์ลิสต์ส่วนตัวของฉัน", tracks: [] };
