@@ -876,6 +876,7 @@ function saveData() {
                     <span id="catta-track-count" style="${S.cnt}">0 tracks</span>
                     <button id="catta-btn-font" style="${S.minB}; font-weight:bold; font-size:10px;" title="เปลี่ยนฟอนต์"><i class="fa-solid fa-font"></i></button>
                     <button id="catta-btn-lang" style="${S.minB}; font-weight:bold; font-size:10px;">${(settings.lang || 'th').toUpperCase()}</button>
+                    <button id="catta-btn-minimize" style="${S.minB}" title="ย่อหน้าต่าง"><i class="fa-solid fa-compress"></i></button>
                     <button id="catta-close-win" style="${S.cls}">×</button>            
                 </div>
             </div>
