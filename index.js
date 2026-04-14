@@ -1620,83 +1620,28 @@ function saveData() {
         marquee.text(msg); setTimeout(() => marquee.text(old), 5000);
     }
 
-    $(document).on('visual_update_event', () => { scanLatestChat(); });
-    $(document).on('chat_opened', () => { setTimeout(() => scanCharacterCard(false), 2000); });
 
-    if (typeof eventSource !== 'undefined') {
-        try {
-            eventSource.on(event_types.MESSAGE_RECEIVED, () => scanLatestChat());
-            eventSource.on(event_types.GENERATION_STOPPED, () => scanLatestChat());
-        } catch(e) {
-            console.warn("[CattaMusic] ไม่สามารถผูก EventSource ได้ จะใช้ visual_update แทน");
-        }
-    }
+    function setupChatRadar() {
 
-    async function scanCharacterCard(manual = false) {
-        if (!settings.isEnabled || !isAuthorized) return;
-        
-        let sourceText = "";
-        let targetId = "chat";
-        let targetName = "Unknown";
-        let targetAvatar = ICON_URL;
-
-        const stChar = getCurrentSTCharacter();
-        
-        if (stChar) {
-            const charData = stChar.data;
-            sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\\n\\n');
-            targetId = stChar.id.toString();
-            targetName = charData.name;
-            targetAvatar = charData.avatar ? `/characters/${charData.avatar}` : ICON_URL;
-        } else if (manual) {
-            alert("⚠️ ตอนนี้คุณไม่ได้เปิดห้องแชทของตัวละครใดๆ อยู่ครับ (หรือไม่สามารถดึงข้อมูลจาก SillyTavern ได้)");
-            return;
-        } else {
-            return;
+        if (typeof eventSource !== 'undefined' && typeof event_types !== 'undefined') {
+            eventSource.on(event_types.MESSAGE_RECEIVED, () => { console.log("[CattaMusic] 🔔 Event: MESSAGE_RECEIVED"); scanLatestChat(); });
+            eventSource.on(event_types.GENERATION_STOPPED, () => { console.log("[CattaMusic] 🔔 Event: GENERATION_STOPPED"); scanLatestChat(); });
+            eventSource.on(event_types.MESSAGE_EDITED, () => { console.log("[CattaMusic] 🔔 Event: MESSAGE_EDITED"); scanLatestChat(); });
         }
 
-        if (manual) {
-            const btn = $("#catta-btn-scan-card");
-            btn.data('oldHtml', btn.html()).html('<i class="fa-solid fa-spinner fa-spin"></i> กำลังสแกน...');
-        }
 
-        const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
-        try {
-            const res = await fetch(`${settings.apiUrl}/v1/music/scan`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: uid, source_text: sourceText, chat_text: "" })
+        const chatBox = document.getElementById('chat');
+        if (chatBox) {
+            const observer = new MutationObserver(() => {
+                // ไม่ต้องกลัวเครื่องหน่วง เพราะเรามีระบบนับถอยหลัง (Debounce 1.5 วิ) ใน scanLatestChat ดักไว้แล้ว
+                scanLatestChat();
             });
-            const data = await res.json();
-            
-            if (data.success && data.playlist && data.playlist.length > 0) {
-                if (!charPlaylists[targetId]) charPlaylists[targetId] = { name: targetName, avatar: targetAvatar, tracks: [] };
-                let added = 0;
-                
-                data.playlist.forEach(track => {
-                    if (!charPlaylists[targetId].tracks.some(t => t.url === track.url)) {
-                        charPlaylists[targetId].tracks.push(track);
-                        added++;
-                    }
-                });
-
-                if (added > 0) {
-                    saveData();
-                    if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
-                    else if (manual) switchTab('char', targetId);
-                    notifyUser(`✅ ดึงเพลงในการ์ดสำเร็จ ${added} เพลง!`);
-                } else if (manual) {
-                    notifyUser(`⚠️ เพลงทั้งหมดในการ์ดมีอยู่ในลิสต์แล้ว`);
-                }
-            } else if (manual) {
-                notifyUser(`❌ ไม่พบโค้ดเพลย์ลิสต์ในการ์ดนี้`);
-            }
-        } catch (e) {
-            console.error("CattaMusic Scan Card Error:", e);
-            if (manual) notifyUser(`❌ เชื่อมต่อระบบสแกนล้มเหลว`);
+            observer.observe(chatBox, { childList: true, subtree: true });
+            console.log("[CattaMusic] 📡 ติดตั้ง Visual Radar สำเร็จ!");
         }
-
-        if (manual) $("#catta-btn-scan-card").html($("#catta-btn-scan-card").data('oldHtml'));
     }
+
+    $(document).on('chat_opened', () => { setTimeout(() => scanCharacterCard(false), 2000); });
 
     async function init() {
         loadData();
@@ -1725,6 +1670,9 @@ function saveData() {
                     }
                 } catch(e) { console.warn("Cloud Sync Load Error:", e); }
             }
+
+
+            setupChatRadar();
 
             setTimeout(scanLatestChat, 1000);
         }
