@@ -474,6 +474,14 @@
         localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
         localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
         localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
+        const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
+        const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
+        if (uid && token) {
+            fetch(`${settings.apiUrl}/v1/music/save_playlist`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: uid, token: token, user_playlists: userPlaylists, char_playlists: charPlaylists })
+            }).catch(e => console.warn("Cloud Sync Error:", e));
+        }
     }
 
     function checkAuth() {
@@ -1557,13 +1565,35 @@
     // ══════════════════════════════════════════════
     $(document).on('visual_update_event', () => { scanLatestChat(); });
 
-    function init() {
+    async function init() {
         loadData();
         buildSettings();
         if (settings.isEnabled) {
             buildBubble();
             buildPlayerWindow();
-            checkAuth();
+            const isAuth = checkAuth();
+            
+            // ระบบ Cloud Sync: ดึงข้อมูลจาก Casa DB เมื่อล็อกอินแล้ว
+            if (isAuth) {
+                const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
+                const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
+                try {
+                    const res = await fetch(`${settings.apiUrl}/v1/music/load_playlist`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uid, token })
+                    });
+                    const data = await res.json();
+                    if (data.success && (data.user_playlists || data.char_playlists)) {
+                        if (data.user_playlists) userPlaylists = data.user_playlists;
+                        if (data.char_playlists) charPlaylists = data.char_playlists;
+                        // บันทึกลง Local กันเหนียวอีกรอบ
+                        localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
+                        localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
+                        updateListSelectors(); updateCoverUI(); renderPlaylist();
+                    }
+                } catch(e) { console.warn("Cloud Sync Load Error:", e); }
+            }
+
             setTimeout(scanLatestChat, 1000);
         }
     }
