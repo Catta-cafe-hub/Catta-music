@@ -769,8 +769,10 @@
     function buildPlayerWindow() {
         if (document.getElementById(WIN_ID)) return;
         const T = themes[settings.theme] || themes.pink;
+        const winPosStyle = settings.posWindow ? `top:${settings.posWindow.top};left:${settings.posWindow.left};transform:none;` : `top:12px;left:50%;transform:translateX(-50%);`;
+        
         const S = {
-            win:  `display:none;position:fixed!important;z-index:10000!important;top:12px;left:50%;transform:translateX(-50%);width:270px;border-radius:22px;overflow:hidden;font-family:'Itim',cursive;background:${T.dark};border:1.5px solid ${T.main}44;box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset;`,
+            win:  `display:none;position:fixed!important;z-index:10000!important;${winPosStyle}width:270px;border-radius:22px;overflow:hidden;font-family:'Itim',cursive;background:${T.dark};border:1.5px solid ${T.main}44;box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset;`,
             hdr:  `display:flex;justify-content:space-between;align-items:center;padding:10px 12px 8px;cursor:grab;background:var(--c-bg-2, rgba(0,0,0,.25));border-bottom:1px solid var(--c-bd, rgba(255,255,255,.07));`,
             ttl:  `font-size:14px;font-family:'Itim',cursive;background:linear-gradient(90deg,${T.main},${T.accent});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;`,
             hdR:  `display:flex;align-items:center;gap:5px;`,
@@ -1003,10 +1005,12 @@
         $('#catta-tab-user').on('click', () => switchTab('user'));
         $('#catta-tab-char').on('click', () => switchTab('char'));
         
-        let isToolsOpen = false;
         $("#catta-btn-toggle-tools").on('click', function() {
-            isToolsOpen = !isToolsOpen;
-            if(isToolsOpen) {
+            let isOpen = $(this).data('isOpen') || false;
+            isOpen = !isOpen;
+            $(this).data('isOpen', isOpen);
+            
+            if(isOpen) {
                 $("#catta-tools-container").slideDown(200);
                 $(this).css('color', 'var(--catta-text, #fff)');
                 $(this).css('background', 'var(--c-bg-inp, rgba(255,255,255,0.1))');
@@ -1328,7 +1332,12 @@
             pos3 = cx; pos4 = cy;
             document.onmouseup = document.ontouchend = () => {
                 document.onmouseup = document.ontouchend = document.onmousemove = document.ontouchmove = null;
-                if (isBubble) { settings.posBubble = { top: (el.offsetTop/window.innerHeight*100)+"%", left: (el.offsetLeft/window.innerWidth*100)+"%" }; saveData(); }
+                if (isBubble) { 
+                    settings.posBubble = { top: (el.offsetTop/window.innerHeight*100)+"%", left: (el.offsetLeft/window.innerWidth*100)+"%" }; 
+                } else {
+                    settings.posWindow = { top: el.style.top, left: el.style.left };
+                }
+                saveData();
             };
             document.onmousemove = document.ontouchmove = (e) => {
                 const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
@@ -1366,9 +1375,16 @@
         $(`#catta-tab-${tab}`).css({ color: T.main, borderBottom: `2px solid ${T.main}` }).addClass('active');
         $(`#catta-tab-${tab === 'user' ? 'char' : 'user'}`).removeClass('active');
         
-        isToolsOpen = false;
-        $("#catta-tools-container").hide();
-        $("#catta-btn-toggle-tools").css('color', 'var(--catta-text-muted, #999)').css('background', 'none');
+        // Hide tools to prevent UI clutter and sync toggle state
+        const toolsBtn = $("#catta-btn-toggle-tools");
+        if(toolsBtn.length) {
+            toolsBtn.css('color', 'var(--catta-text-muted, #999)').css('background', 'none');
+            // Trigger a clean close if it was open
+            if ($("#catta-tools-container").is(':visible')) {
+                 $("#catta-tools-container").hide();
+                 toolsBtn.data('isOpen', false);
+            }
+        }
         
         $("#catta-user-sel").toggle(tab === 'user');
         $("#catta-char-sel").toggle(tab === 'char');
