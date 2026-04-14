@@ -592,8 +592,7 @@ function saveData() {
         if (chatMessages.length === 0) return;
 
         const latestMsgBox = chatMessages[chatMessages.length - 1];
-        const msgId = latestMsgBox.closest('.mes')?.getAttribute('mesid') || latestMsgBox.innerText.substring(0, 30);
-        
+
         const originalText = latestMsgBox.innerText;
 
 
@@ -612,141 +611,133 @@ function saveData() {
             }
         });
 
-        if (msgId === lastProcessedMsgId) return;
-        lastProcessedMsgId = msgId;
 
+        if (originalText === lastProcessedMsgId) return;
+        lastProcessedMsgId = originalText; 
 
-        let foundAnyAudio = false;
-        let firstAudioUrl = null;
+        clearTimeout(window.cattaScanTimer);
+        window.cattaScanTimer = setTimeout(async () => {
 
-        const musicMatch = originalText.match(CHAT_MUSIC_REGEX);
-        if (musicMatch) {
-            let targetId = addTrackToActiveChar(musicMatch[1], musicMatch[2], "shared");
-            firstAudioUrl = musicMatch[2].trim();
-            foundAnyAudio = true;
-        } else {
+ 
+            let foundAnyAudio = false;
+            let firstAudioUrl = null;
 
-            const audioRegex = /(https?:\/\/[^\s\)]+\.(?:mp3|wav|ogg|m4a))/gi;
-            let audioMatches;
-            let extractedTracks = [];
-            
-            while ((audioMatches = audioRegex.exec(originalText)) !== null) {
-                extractedTracks.push(audioMatches[1]);
-            }
-
-            if (extractedTracks.length > 0) {
-                firstAudioUrl = extractedTracks[0];
+            const musicMatch = originalText.match(CHAT_MUSIC_REGEX);
+            if (musicMatch) {
+                let targetId = addTrackToActiveChar(musicMatch[1], musicMatch[2], "shared");
+                firstAudioUrl = musicMatch[2].trim();
                 foundAnyAudio = true;
+            } else {
+                const audioRegex = /(https?:\/\/[^\s\)]+\.(?:mp3|wav|ogg|m4a))/gi;
+                let audioMatches;
+                let extractedTracks = [];
                 
-
-                for (let i = extractedTracks.length - 1; i >= 0; i--) {
-                    let url = extractedTracks[i];
-                    let filename = url.split('/').pop();
-                    try { filename = decodeURIComponent(filename); } catch(e) {}
-                    filename = filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
-                    
-                    addTrackToActiveChar(filename, url, "auto-detect");
-                }
-            }
-        }
-
-
-        if (foundAnyAudio && firstAudioUrl) {
-            let target = getTargetChar();
-            let targetId = target.id;
-            
-            const win = $(`#${WIN_ID}`);
-            if (!win.is(':visible') && settings.showBubble) {
-                win.fadeIn(200);
-                $(`#${BUBBLE_ID}`).fadeOut(200);
-            }
-            
-            switchTab('char', targetId);
-            playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === firstAudioUrl), 'char', targetId);
-            notifyUser("📥 ดึงเพลงจากแชทและเริ่มเล่นทันที!");
-        }
-
-        let sourceText = "";
-        try {
-            const stChar = getCurrentSTCharacter();
-            if (stChar) {
-                const charData = stChar.data;
-                sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\\n\\n');
-            }
-        } catch (e) {
-            console.warn("CattaMusic: ไม่สามารถเข้าถึงข้อมูลตัวละครได้", e);
-        }
-
-        const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
-        const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
-
-
-        console.log("[CattaMusic] 🚀 Sending POST to Casa Scan API:", `${settings.apiUrl}/v1/music/scan`);
-        console.log("[CattaMusic] 📦 Payload:", { uid, token: token ? "HAS_TOKEN" : "NO_TOKEN", source_text_length: sourceText.length, chat_text_length: originalText.length });
-        
-        try {
-            const res = await fetch(`${settings.apiUrl}/v1/music/scan`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    uid: uid, 
-                    token: token,
-                    source_text: sourceText,
-                    chat_text: originalText 
-                })
-            });
-            
-            console.log("[CattaMusic] 📥 Scan Response Status:", res.status);
-            const data = await res.json();
-            console.log("[CattaMusic] 📄 Scan Response Data:", data);
-
-            if (data.success) {
-                let target = getTargetChar();
-                let targetId = target.id;
-                
-                if (!charPlaylists[targetId]) {
-                    charPlaylists[targetId] = { name: target.name, avatar: target.avatar, tracks: [] };
+                while ((audioMatches = audioRegex.exec(originalText)) !== null) {
+                    extractedTracks.push(audioMatches[1]);
                 }
 
-                let hasNewTracks = false;
-
-
-                if (data.playlist && data.playlist.length > 0) {
-                    data.playlist.forEach(track => {
-                        if (!charPlaylists[targetId].tracks.some(t => t.url === track.url)) {
-                            if (track.name.startsWith('✨')) {
-                                charPlaylists[targetId].tracks.unshift(track); 
-                            } else {
-                                charPlaylists[targetId].tracks.push(track);
-                            }
-                            hasNewTracks = true;
-                        }
-                    });
-                }
-
-                if (hasNewTracks) {
-                    saveData();
-                    updateListSelectors();
-                    if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
-                }
-
-
-                if (settings.autoMood && data.auto_play_track) {
-                    const trackToPlay = charPlaylists[targetId].tracks.findIndex(t => t.url === data.auto_play_track.url);
-                    if (trackToPlay !== -1) {
-
-                        if (isPlaying && playingTab === 'char' && playingId === targetId && currentTrackIndex === trackToPlay) {
-                            console.log("[CattaMusic] 🎵 เล่นเพลงอารมณ์นี้อยู่แล้ว ข้ามการเปลี่ยนเพลง");
-                        } else {
-                            playTrack(trackToPlay, 'char', targetId);
-                            notifyUser(`🎭 เปลี่ยนอารมณ์เพลง: ${data.auto_play_track.mood.split('|')[0]}`);
-                        }
+                if (extractedTracks.length > 0) {
+                    firstAudioUrl = extractedTracks[0];
+                    foundAnyAudio = true;
+                    for (let i = extractedTracks.length - 1; i >= 0; i--) {
+                        let url = extractedTracks[i];
+                        let filename = url.split('/').pop();
+                        try { filename = decodeURIComponent(filename); } catch(e) {}
+                        filename = filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
+                        addTrackToActiveChar(filename, url, "auto-detect");
                     }
                 }
-            }                
-        } catch (e) {
-            console.error("CattaMusic API Error (Casa Scan):", e);
-        }
+            }
+
+            if (foundAnyAudio && firstAudioUrl) {
+                let target = getTargetChar();
+                let targetId = target.id;
+                const win = $(`#${WIN_ID}`);
+                if (!win.is(':visible') && settings.showBubble) {
+                    win.fadeIn(200);
+                    $(`#${BUBBLE_ID}`).fadeOut(200);
+                }
+                switchTab('char', targetId);
+                playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === firstAudioUrl), 'char', targetId);
+                notifyUser("📥 ดึงเพลงจากแชทและเริ่มเล่นทันที!");
+            }
+
+    
+            let sourceText = "";
+            try {
+                const stChar = getCurrentSTCharacter();
+                if (stChar) {
+                    const charData = stChar.data;
+                    sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\\n\\n');
+                }
+            } catch (e) {
+                console.warn("CattaMusic: ไม่สามารถเข้าถึงข้อมูลตัวละครได้", e);
+            }
+
+            const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
+            const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
+
+     
+            try {
+                const res = await fetch(`${settings.apiUrl}/v1/music/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        uid: uid, 
+                        token: token,
+                        source_text: sourceText,
+                        chat_text: originalText 
+                    })
+                });
+                
+                const data = await res.json();
+
+                if (data.success) {
+                    let target = getTargetChar();
+                    let targetId = target.id;
+                    
+                    if (!charPlaylists[targetId]) {
+                        charPlaylists[targetId] = { name: target.name, avatar: target.avatar, tracks: [] };
+                    }
+
+                    let hasNewTracks = false;
+
+                    if (data.playlist && data.playlist.length > 0) {
+                        data.playlist.forEach(track => {
+                            if (!charPlaylists[targetId].tracks.some(t => t.url === track.url)) {
+                                if (track.name.startsWith('✨')) {
+                                    charPlaylists[targetId].tracks.unshift(track); 
+                                } else {
+                                    charPlaylists[targetId].tracks.push(track);
+                                }
+                                hasNewTracks = true;
+                            }
+                        });
+                    }
+
+                    if (hasNewTracks) {
+                        saveData();
+                        updateListSelectors();
+                        if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
+                    }
+
+              
+                    if (settings.autoMood && data.auto_play_track) {
+                        const trackToPlay = charPlaylists[targetId].tracks.findIndex(t => t.url === data.auto_play_track.url);
+                        if (trackToPlay !== -1) {
+                            if (isPlaying && playingTab === 'char' && playingId === targetId && currentTrackIndex === trackToPlay) {
+                       
+                            } else {
+                                playTrack(trackToPlay, 'char', targetId);
+                                notifyUser(`🎭 เปลี่ยนอารมณ์เพลง: ${data.auto_play_track.mood.split('|')[0]}`);
+                            }
+                        }
+                    }
+                }                
+            } catch (e) {
+                console.error("CattaMusic API Error (Casa Scan):", e);
+            }
+        }, 1500); 
     }
 
 
