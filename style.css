@@ -186,37 +186,6 @@
     50% { opacity: 0.5; transform: scale(0.7); }
 }
 
-/* === PROGRESS BAR === */
-.catta-progress-wrap {
-    padding: 6px 14px 2px;
-}
-.catta-progress-bar {
-    height: 3px;
-    background: var(--c-bd, rgba(255,255,255,0.1));
-    border-radius: 3px;
-    position: relative;
-    cursor: pointer;
-    overflow: visible;
-}
-.catta-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--catta-main), var(--catta-accent2));
-    border-radius: 3px;
-    position: relative;
-    transition: width 0.3s;
-}
-.catta-progress-fill::after {
-    content: '';
-    position: absolute; right: -5px; top: -4px;
-    width: 11px; height: 11px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--catta-glow);
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-.catta-progress-bar:hover .catta-progress-fill::after { opacity: 1; }
-
 /* === CONTROLS === */
 .cattamusic-controls {
     padding: 10px 14px 8px;
@@ -453,9 +422,9 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: linear-gradient(135deg, rgba(255,107,157,0.15), rgba(255,154,86,0.1));
-    border: 1px solid rgba(255,107,157,0.35);
-    color: #fff !important;
+    background: var(--c-bg-2, linear-gradient(135deg, rgba(255,107,157,0.15), rgba(255,154,86,0.1)));
+    border: 1px solid var(--c-bd, rgba(255,107,157,0.35));
+    color: var(--catta-text, #fff) !important;
     padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
@@ -470,7 +439,7 @@
     transform: translateY(-3px);
     box-shadow: 0 10px 28px rgba(0,0,0,0.3), 0 0 24px var(--catta-glow);
     border-color: var(--catta-main);
-    background: linear-gradient(135deg, rgba(255,107,157,0.25), rgba(255,154,86,0.15));
+    background: var(--c-bg-inp, linear-gradient(135deg, rgba(255,107,157,0.25), rgba(255,154,86,0.15)));
 }
 .catta-inline-music .music-icon {
     font-size: 18px;
@@ -478,7 +447,7 @@
     filter: drop-shadow(0 0 6px var(--catta-glow));
 }
 .catta-inline-music .music-info { display: flex; flex-direction: column; line-height: 1.3; }
-.catta-inline-music .music-title { font-weight: 800; color: #fff; font-size: 13px; }
+.catta-inline-music .music-title { font-weight: 800; color: var(--catta-text, #fff); font-size: 13px; }
 .catta-inline-music .music-status { font-size: 9px; color: var(--catta-main); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
 
 /* === SETTINGS PANEL === */
