@@ -586,15 +586,17 @@ function saveData() {
     }
 
     async function scanLatestChat() {
-        if (!settings.isEnabled || !isAuthorized) return;
+        console.log("[CattaMusic] 🔍 เริ่มต้นการสแกนแชท...");
+        if (!settings.isEnabled) { console.log("[CattaMusic] ❌ ปิดการทำงานอยู่"); return; }
+        if (!isAuthorized) { console.log("[CattaMusic] 🔒 ข้ามการสแกน: ยังไม่ได้ Login (Token ไม่มี)"); return; }
 
         const chatMessages = document.querySelectorAll('.mes_text');
-        if (chatMessages.length === 0) return;
+        if (chatMessages.length === 0) { console.log("[CattaMusic] ❌ ไม่พบกล่องข้อความ"); return; }
 
         const latestMsgBox = chatMessages[chatMessages.length - 1];
-
         const originalText = latestMsgBox.innerText;
 
+        console.log("[CattaMusic] 📝 ข้อความล่าสุด:", originalText.substring(0, 30) + "...");
 
         chatMessages.forEach(msgBox => {
             if (msgBox.innerHTML.includes('::::') && msgBox.innerHTML.includes('[music]')) {
@@ -611,14 +613,17 @@ function saveData() {
             }
         });
 
+        if (originalText === lastProcessedMsgId) {
 
-        if (originalText === lastProcessedMsgId) return;
-        lastProcessedMsgId = originalText; 
+            return;
+        }
+        lastProcessedMsgId = originalText;
 
+        console.log("[CattaMusic] ⏱️ เริ่มนับถอยหลัง 1.5 วินาที...");
         clearTimeout(window.cattaScanTimer);
         window.cattaScanTimer = setTimeout(async () => {
+            console.log("[CattaMusic] 🚀 ครบเวลา! เริ่มส่งให้ Casa วิเคราะห์อารมณ์");
 
- 
             let foundAnyAudio = false;
             let firstAudioUrl = null;
 
@@ -631,11 +636,9 @@ function saveData() {
                 const audioRegex = /(https?:\/\/[^\s\)]+\.(?:mp3|wav|ogg|m4a))/gi;
                 let audioMatches;
                 let extractedTracks = [];
-                
                 while ((audioMatches = audioRegex.exec(originalText)) !== null) {
                     extractedTracks.push(audioMatches[1]);
                 }
-
                 if (extractedTracks.length > 0) {
                     firstAudioUrl = extractedTracks[0];
                     foundAnyAudio = true;
@@ -662,7 +665,6 @@ function saveData() {
                 notifyUser("📥 ดึงเพลงจากแชทและเริ่มเล่นทันที!");
             }
 
-    
             let sourceText = "";
             try {
                 const stChar = getCurrentSTCharacter();
@@ -677,20 +679,15 @@ function saveData() {
             const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
             const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
 
-     
             try {
                 const res = await fetch(`${settings.apiUrl}/v1/music/scan`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        uid: uid, 
-                        token: token,
-                        source_text: sourceText,
-                        chat_text: originalText 
-                    })
+                    body: JSON.stringify({ uid: uid, token: token, source_text: sourceText, chat_text: originalText })
                 });
                 
                 const data = await res.json();
+                console.log("[CattaMusic] 📥 Casa ตอบกลับมาว่า:", data);
 
                 if (data.success) {
                     let target = getTargetChar();
@@ -721,23 +718,25 @@ function saveData() {
                         if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
                     }
 
-              
                     if (settings.autoMood && data.auto_play_track) {
                         const trackToPlay = charPlaylists[targetId].tracks.findIndex(t => t.url === data.auto_play_track.url);
                         if (trackToPlay !== -1) {
                             if (isPlaying && playingTab === 'char' && playingId === targetId && currentTrackIndex === trackToPlay) {
-                       
+                                console.log("[CattaMusic] 🎵 เพลงนี้เล่นอยู่แล้ว ข้ามการเปลี่ยนเพลง");
                             } else {
+                                console.log("[CattaMusic] 🎭 สั่งเล่นเพลง:", data.auto_play_track.name);
                                 playTrack(trackToPlay, 'char', targetId);
                                 notifyUser(`🎭 เปลี่ยนอารมณ์เพลง: ${data.auto_play_track.mood.split('|')[0]}`);
                             }
+                        } else {
+                            console.log("[CattaMusic] ⚠️ หาเพลงไม่เจอใน Playlist:", data.auto_play_track.url);
                         }
                     }
                 }                
             } catch (e) {
                 console.error("CattaMusic API Error (Casa Scan):", e);
             }
-        }, 1500); 
+        }, 1500);
     }
 
 
@@ -1622,8 +1621,16 @@ function saveData() {
     }
 
     $(document).on('visual_update_event', () => { scanLatestChat(); });
-
     $(document).on('chat_opened', () => { setTimeout(() => scanCharacterCard(false), 2000); });
+
+    if (typeof eventSource !== 'undefined') {
+        try {
+            eventSource.on(event_types.MESSAGE_RECEIVED, () => scanLatestChat());
+            eventSource.on(event_types.GENERATION_STOPPED, () => scanLatestChat());
+        } catch(e) {
+            console.warn("[CattaMusic] ไม่สามารถผูก EventSource ได้ จะใช้ visual_update แทน");
+        }
+    }
 
     async function scanCharacterCard(manual = false) {
         if (!settings.isEnabled || !isAuthorized) return;
