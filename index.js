@@ -83,15 +83,6 @@ const i18n = {
     let lastProcessedMsgId = "";
 
     const themes = {
-        pink:     { main:'#ff6b9d', accent:'#ff9a56', dark:'#1a0a2e', card:'#2d1b54', text:'#f0e8ff', muted:'#b08ecf', glow:'rgba(255,107,157,0.4)',  dot:'rgba(255,107,157,0.8)'  },
-        orange:   { main:'#ff9a56', accent:'#ffd93d', dark:'#1f0e00', card:'#2e1a00', text:'#fff0e0', muted:'#c4956b', glow:'rgba(255,154,86,0.4)',   dot:'rgba(255,154,86,0.9)'   },
-        blue:     { main:'#4d96ff', accent:'#6bcb77', dark:'#050f2e', card:'#0d1f5c', text:'#e8f0ff', muted:'#7a9fd4', glow:'rgba(77,150,255,0.4)',   dot:'rgba(77,150,255,0.9)'   },
-        mint:     { main:'#6bcb77', accent:'#4d96ff', dark:'#041a0a', card:'#082e14', text:'#e8ffe8', muted:'#7cb882', glow:'rgba(107,203,119,0.4)',  dot:'rgba(107,203,119,0.9)'  },
-        purple:   { main:'#b388ff', accent:'#ff6b9d', dark:'#0d0025', card:'#1a0040', text:'#f0e8ff', muted:'#9b78d4', glow:'rgba(179,136,255,0.45)', dot:'rgba(179,136,255,0.9)'  },
-        midnight: { main:'#4fc3f7', accent:'#81d4fa', dark:'#050a12', card:'#0d1525', text:'#e0f4ff', muted:'#6a9fb5', glow:'rgba(79,195,247,0.4)',   dot:'rgba(79,195,247,0.9)'   },
-        latte:    { main:'#d4a574', accent:'#ff9a56', dark:'#1a1008', card:'#2e1c0c', text:'#fff0dc', muted:'#b08c6a', glow:'rgba(212,165,116,0.4)',  dot:'rgba(212,165,116,0.9)'  },
-        dark:     { main:'#aaaaaa', accent:'#888888', dark:'#0a0a0a', card:'#1a1a1a', text:'#e0e0e0', muted:'#707070', glow:'rgba(180,180,180,0.2)',  dot:'rgba(200,200,200,0.7)'  },
-        blood:    { main:'#ef5350', accent:'#ff7043', dark:'#1a0505', card:'#2d0808', text:'#ffe0e0', muted:'#b07070', glow:'rgba(239,83,80,0.45)',    dot:'rgba(239,83,80,0.9)'    },
         peach:    { main:'#ff8a80', accent:'#ffd180', dark:'#1e1515', card:'#2a1c1c', text:'#fff0e6', muted:'#d4a39b', glow:'rgba(255,138,128,0.4)',  dot:'rgba(255,138,128,0.9)'  },
         sunflower:{ main:'#ffd54f', accent:'#ff8f00', dark:'#1a1a1c', card:'#242428', text:'#fffde7', muted:'#bcaaa4', glow:'rgba(255,213,79,0.35)', dot:'rgba(255,213,79,0.9)' },
         cloud:    { type:'light', main:'#64b5f6', accent:'#e1bee7', dark:'#f0f4f8', card:'#ffffff', text:'#37474f', muted:'#78909c', glow:'rgba(100,181,246,0.25)', dot:'rgba(100,181,246,0.9)' },
@@ -104,17 +95,18 @@ const i18n = {
         cyberpunk:{ main:'#ff007f', accent:'#00f0ff', dark:'#0b0014', card:'#150024', text:'#e0f7fa', muted:'#b39ddb', glow:'rgba(255,0,127,0.5)',    dot:'rgba(255,0,127,0.9)'   },
         snow:     { type:'light', main:'#81d4fa', accent:'#b2dfdb', dark:'#f5f9ff', card:'#e8f0f8', text:'#2c3e50', muted:'#90a4ae', glow:'rgba(129,212,250,0.3)',  dot:'rgba(129,212,250,0.9)' },
         dark:     { main:'#aaaaaa', accent:'#ffffff', dark:'#0a0a0a', card:'#141414', text:'#e0e0e0', muted:'#707070', glow:'rgba(170,170,170,0.2)',  dot:'rgba(170,170,170,0.7)' },
+        pink:     { main:'#ff6b9d', accent:'#ff9a56', dark:'#1a0a2e', card:'#2d1b54', text:'#f0e8ff', muted:'#b08ecf', glow:'rgba(255,107,157,0.4)',  dot:'rgba(255,107,157,0.8)'  },
+        orange:   { main:'#ff9a56', accent:'#ffd93d', dark:'#1f0e00', card:'#2e1a00', text:'#fff0e0', muted:'#c4956b', glow:'rgba(255,154,86,0.4)',   dot:'rgba(255,154,86,0.9)'   },
+        blue:     { main:'#4d96ff', accent:'#6bcb77', dark:'#050f2e', card:'#0d1f5c', text:'#e8f0ff', muted:'#7a9fd4', glow:'rgba(77,150,255,0.4)',   dot:'rgba(77,150,255,0.9)'   },
+        purple:   { main:'#b388ff', accent:'#ff6b9d', dark:'#0d0025', card:'#1a0040', text:'#f0e8ff', muted:'#9b78d4', glow:'rgba(179,136,255,0.45)', dot:'rgba(179,136,255,0.9)'  },
+        midnight: { main:'#4fc3f7', accent:'#81d4fa', dark:'#050a12', card:'#0d1525', text:'#e0f4ff', muted:'#6a9fb5', glow:'rgba(79,195,247,0.4)',   dot:'rgba(79,195,247,0.9)'   },
+        latte:    { main:'#d4a574', accent:'#ff9a56', dark:'#1a1008', card:'#2e1c0c', text:'#fff0dc', muted:'#b08c6a', glow:'rgba(212,165,116,0.4)',  dot:'rgba(212,165,116,0.9)'  },
+        green:    { main:'#66bb6a', accent:'#a5d6a7', dark:'#051a05', card:'#0a2e0a', text:'#e0ffe0', muted:'#7cb87e', glow:'rgba(102,187,106,0.4)',  dot:'rgba(102,187,106,0.9)'  },
         cotton:   { main:'#ffb6c1', accent:'#a7c7e7', dark:'#1a0a1a', card:'#2a152a', text:'#ffe0e9', muted:'#d4a0b3', glow:'rgba(255,182,193,0.4)',  dot:'rgba(255,182,193,0.9)'  },
-        peach:    { main:'#ffdab9', accent:'#ffb347', dark:'#1a100a', card:'#2a1a12', text:'#ffefe0', muted:'#d4aa8a', glow:'rgba(255,218,185,0.4)',  dot:'rgba(255,218,185,0.9)'  },
-        sakura:   { main:'#f4a460', accent:'#ffc0cb', dark:'#1a0d0a', card:'#2a1812', text:'#ffe8e0', muted:'#d4a090', glow:'rgba(244,164,96,0.4)',   dot:'rgba(244,164,96,0.9)'   },
         sky:      { main:'#87cefa', accent:'#e0ffff', dark:'#050a1a', card:'#0d122a', text:'#e0f4ff', muted:'#8aa9c4', glow:'rgba(135,206,250,0.4)',  dot:'rgba(135,206,250,0.9)'  },
-        vanilla:  { type:'light', main:'#ff75a0', accent:'#fbc2eb', dark:'#ffffff', card:'#fff0f5', text:'#5c4b51', muted:'#a89098', glow:'rgba(255,117,160,0.25)',  dot:'rgba(255,117,160,0.9)'  },
-        snow:     { type:'light', main:'#64b5f6', accent:'#8fd9a8', dark:'#faffff', card:'#e8f4f8', text:'#4a5d6e', muted:'#8ca3b5', glow:'rgba(100,181,246,0.25)',   dot:'rgba(100,181,246,0.9)'   }
+        vanilla:  { type:'light', main:'#ff75a0', accent:'#fbc2eb', dark:'#ffffff', card:'#fff0f5', text:'#5c4b51', muted:'#a89098', glow:'rgba(255,117,160,0.25)',  dot:'rgba(255,117,160,0.9)'  }
     };
 
-    // ══════════════════════════════════════════════
-    // 2. CSS STYLES — SillyTavern-safe, all !important
-    // ══════════════════════════════════════════════
     if (!$('#cattamusic-inline-css').length) {
         const inlineCSS = `
         <link id="cattamusic-font" href="https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@300;400&display=swap" rel="stylesheet">
@@ -894,7 +886,9 @@ function saveData() {
             <div id="catta-mini-bar" style="${S.mini}">
                 <img id="catta-mini-img" src="${ICON_URL}" style="${S.mImg}">
                 <div style="flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;">
-                    <div id="catta-mini-title" style="${S.mTtl}">Catta Music</div>
+                    <div class="cattamusic-marquee-wrapper" style="width:100%;overflow:hidden;white-space:nowrap;">
+                        <div id="catta-mini-title" class="cattamusic-marquee" style="display:inline-block;padding-left:100%;font-size:11px;font-family:'Itim',cursive;color:${T.text};animation:cattaScroll 12s linear infinite;">Catta Music</div>
+                    </div>
                     <div class="catta-mini-progress-row" style="display:flex;align-items:center;gap:5px;margin-top:2px;">
                         <span id="catta-mini-time" style="font-size:8px;color:${T.muted};">00:00</span>
                         <input type="range" id="catta-mini-progress" min="0" max="100" value="0" style="flex:1;height:3px;">
@@ -988,11 +982,18 @@ function saveData() {
             const win = $(`#${WIN_ID}`);
             if (mini) {
                 win.addClass('minimized');
-
                 $('#catta-mini-img').attr('src', $('#catta-cover-img').attr('src'));
-                let songName = $('#catta-display-name').text();
-                if (songName === '✨ Ready to play!') songName = 'Catta Music';
-                $('#catta-mini-title').text(songName);
+
+                let actualSongName = "Catta Music";
+                if (currentTrackIndex >= 0) {
+                    const list = getPlayingArray();
+                    if (list[currentTrackIndex]) actualSongName = list[currentTrackIndex].name;
+                } else {
+                    const t = i18n[settings.lang] || i18n.th;
+                    actualSongName = t.ready;
+                }
+                
+                $('#catta-mini-title').text(actualSongName);
                 $('#catta-mini-play').html(isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>');
             } else {
                 win.removeClass('minimized');
