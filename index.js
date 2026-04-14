@@ -908,6 +908,7 @@ function saveData() {
                             <select id="catta-char-result-sel" style="${S.sel}width:100%;"></select>
                             <button id="catta-btn-confirm-char" class="catta-btn-small" style="${S.sB}background:#1b5e20;width:100%;"><i class="fa-solid fa-user-plus"></i> เพิ่มตัวละครนี้</button>
                         </div>
+                        <button id="catta-btn-scan-card" class="catta-btn-small" style="${S.sB}background:#6a1b9a;width:100%;margin-bottom:5px;" title="สแกนหา [Catta-music-playlist] ในการ์ด"><i class="fa-solid fa-radar"></i> ดึงเพลงจากการ์ดตัวละครนี้</button>
                         <button id="catta-btn-del-char" class="catta-btn-small" style="${S.sB}background:#b71c1c;width:100%;" title="ลบตัวละครที่เลือกอยู่"><i class="fa-solid fa-trash"></i> ลบตัวละครปัจจุบัน</button>
                     </div>
 
@@ -1157,6 +1158,11 @@ function saveData() {
                 if(playingTab === 'char' && playingId === viewingId) playingId = 'chat';
                 saveData(); updateListSelectors(); updateCoverUI(); renderPlaylist();
             }
+        });
+
+        $("#catta-btn-scan-card").on('click', () => {
+            if (!isAuthorized) { alert("🔒 เข้าสู่ระบบก่อนครับ"); return; }
+            scanCharacterCard(true);
         });
 
         // Add URLs (Supports multiple URLs pasted directly)
@@ -1618,6 +1624,73 @@ function saveData() {
     // 7. INIT
     // ══════════════════════════════════════════════
     $(document).on('visual_update_event', () => { scanLatestChat(); });
+
+    $(document).on('chat_opened', () => { setTimeout(() => scanCharacterCard(false), 2000); });
+
+    async function scanCharacterCard(manual = false) {
+        if (!settings.isEnabled || !isAuthorized) return;
+        
+        let sourceText = "";
+        let targetId = "chat";
+        let targetName = "Unknown";
+        let targetAvatar = ICON_URL;
+
+        // เช็คว่าเปิดการ์ดตัวละครไหนอยู่
+        if (window.characters && window.this_chid !== undefined && window.characters[window.this_chid]) {
+            const charData = window.characters[window.this_chid];
+            sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\\n\\n');
+            targetId = window.this_chid.toString();
+            targetName = charData.name;
+            targetAvatar = charData.avatar ? `/characters/${charData.avatar}` : ICON_URL;
+        } else if (manual) {
+            alert("⚠️ ตอนนี้คุณไม่ได้เปิดห้องแชทของตัวละครใดๆ อยู่ครับ");
+            return;
+        } else {
+            return;
+        }
+
+        if (manual) {
+            const btn = $("#catta-btn-scan-card");
+            btn.data('oldHtml', btn.html()).html('<i class="fa-solid fa-spinner fa-spin"></i> กำลังสแกน...');
+        }
+
+        const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
+        try {
+            const res = await fetch(`${settings.apiUrl}/v1/music/scan`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: uid, source_text: sourceText, chat_text: "" })
+            });
+            const data = await res.json();
+            
+            if (data.success && data.playlist && data.playlist.length > 0) {
+                if (!charPlaylists[targetId]) charPlaylists[targetId] = { name: targetName, avatar: targetAvatar, tracks: [] };
+                let added = 0;
+                
+                data.playlist.forEach(track => {
+                    if (!charPlaylists[targetId].tracks.some(t => t.url === track.url)) {
+                        charPlaylists[targetId].tracks.push(track);
+                        added++;
+                    }
+                });
+
+                if (added > 0) {
+                    saveData();
+                    if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
+                    else if (manual) switchTab('char', targetId);
+                    notifyUser(`✅ ดึงเพลงในการ์ดสำเร็จ ${added} เพลง!`);
+                } else if (manual) {
+                    notifyUser(`⚠️ เพลงทั้งหมดในการ์ดมีอยู่ในลิสต์แล้ว`);
+                }
+            } else if (manual) {
+                notifyUser(`❌ ไม่พบโค้ดเพลย์ลิสต์ในการ์ดนี้`);
+            }
+        } catch (e) {
+            console.error("CattaMusic Scan Card Error:", e);
+            if (manual) notifyUser(`❌ เชื่อมต่อระบบสแกนล้มเหลว`);
+        }
+
+        if (manual) $("#catta-btn-scan-card").html($("#catta-btn-scan-card").data('oldHtml'));
+    }
 
     async function init() {
         loadData();
