@@ -21,9 +21,30 @@
     const PLAYLIST_BLOCK_REGEX = /\[Catta-music-playlist\s*([\s\S]*?)\]/i;
 
     let settings = {
-        showBubble: true, isEnabled: true, autoMood: true, theme: 'orange', 
+        showBubble: true, isEnabled: true, autoMood: true, theme: 'orange',
+        lang: 'th',
         apiUrl: 'https://st-cattacafe.casa/casa_api', 
-        posBubble: { top: '80%', left: '10%' }
+        posBubble: { top: '80%', left: '10%' },
+        fontFamily: 'Kanit',
+    };
+
+    const i18n = {
+        th: {
+            userTab: "👤 ส่วนตัว", charTab: "🐱 ตัวละคร", tools: "จัดการ",
+            searchPlace: "ID หรือชื่อตัวละคร...", searchBtn: " ค้นหา",
+            addUrlPlace: "วางลิงก์ (.mp3, .ogg)...",
+            cloudBtn: " ดึงข้อมูล", confirmChar: " เพิ่มตัวละครนี้",
+            delPlaylist: "ลบเพลย์ลิสต์ปัจจุบัน", scanCard: " ดึงเพลงจากการ์ดตัวละครนี้",
+            ready: "✨ พร้อมเล่นแล้ว!", autoSave: "☁️ อัปเดตคลาวด์แล้ว!"
+        },
+        en: {
+            userTab: "👤 Personal", charTab: "🐱 Character", tools: "Manage",
+            searchPlace: "ID or Char Name...", searchBtn: " Search",
+            addUrlPlace: "Paste link (.mp3, .ogg)...",
+            cloudBtn: " Cloud Sync", confirmChar: " Add this character",
+            delPlaylist: "Delete Current Playlist", scanCard: " Extract from Card",
+            ready: "✨ Ready to play!", autoSave: "☁️ Auto-Saved to Cloud"
+        }
     };
 
 
@@ -74,7 +95,7 @@
     // ══════════════════════════════════════════════
     if (!$('#cattamusic-inline-css').length) {
         const inlineCSS = `
-        <link id="cattamusic-font" href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+        <link id="cattamusic-font" href="https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@300;400&display=swap" rel="stylesheet">
         <style id="cattamusic-inline-css">
 
         /* ── KEYFRAMES ── */
@@ -89,7 +110,7 @@
             position:fixed!important; z-index:10000!important;
             width:270px!important; border-radius:22px!important;
             overflow:hidden!important; user-select:none!important;
-            font-family:'Itim',cursive!important;
+            font-family:var(--catta-font)!important;
             box-shadow:0 20px 60px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.06) inset!important;
         }
 
@@ -102,13 +123,13 @@
         #cattamusic-player-window .cattamusic-header:active { cursor:grabbing!important; }
         #cattamusic-player-window .catta-header-title {
             font-size:14px!important; font-weight:400!important;
-            font-family:'Itim',cursive!important; letter-spacing:.3px!important;
+            font-family:var(--catta-font)!important; letter-spacing:.3px!important;
         }
         #cattamusic-player-window .hdr-right {
             display:flex!important; align-items:center!important; gap:5px!important;
         }
         #catta-track-count {
-            font-size:9px!important; font-family:'Itim',cursive!important;
+            font-size:9px!important; font-family:var(--catta-font)!important;
             font-weight:400!important; letter-spacing:.5px!important;
         }
         #catta-btn-minimize, #catta-close-win {
@@ -137,14 +158,14 @@
         }
         #catta-cover-img:hover { transform:scale(1.05) rotate(-2deg)!important; }
         #catta-cover-title {
-            font-size:13px!important; font-weight:400!important; font-family:'Itim',cursive!important;
+            font-size:13px!important; font-weight:400!important; font-family:var(--catta-font)!important;
             white-space:nowrap!important; overflow:hidden!important; text-overflow:ellipsis!important;
             margin-bottom:2px!important;
         }
         #catta-mood-row { display:flex!important; gap:4px!important; margin-top:4px!important; flex-wrap:wrap!important; }
         #catta-mood-row span {
             font-size:9px!important; padding:2px 8px!important; border-radius:20px!important;
-            font-family:'Itim',cursive!important; border:1px solid!important;
+            font-family:var(--catta-font)!important; border:1px solid!important;
         }
 
         /* Marquee */
@@ -153,7 +174,7 @@
         }
         .cattamusic-marquee {
             display:inline-block!important; padding-left:100%!important; font-size:10px!important;
-            font-family:'Itim',cursive!important; font-weight:400!important; letter-spacing:.3px!important;
+            font-family:var(--catta-font)!important; font-weight:400!important; letter-spacing:.3px!important;
             animation:cattaScroll 14s linear infinite!important;
         }
 
@@ -164,7 +185,7 @@
         }
         #cattamusic-player-window .cattamusic-status-bar {
             display:flex!important; justify-content:space-between!important; align-items:center!important;
-            width:100%!important; font-size:9px!important; font-family:'Itim',cursive!important; font-weight:400!important;
+            width:100%!important; font-size:9px!important; font-family:var(--catta-font)!important; font-weight:400!important;
         }
         #catta-play-dot {
             width:6px!important; height:6px!important; border-radius:50%!important;
@@ -200,7 +221,7 @@
         #cattamusic-player-window .cattamusic-tabs button {
             flex:1!important; border:none!important; padding:7px 3px!important;
             font-size:11px!important; cursor:pointer!important;
-            font-family:'Itim',cursive!important; font-weight:400!important;
+            font-family:var(--catta-font)!important; font-weight:400!important;
             background:transparent!important; transition:all .2s!important;
             border-bottom:2px solid transparent!important; margin-bottom:-1px!important;
             box-shadow:none!important;
@@ -225,7 +246,7 @@
         .playlist-item {
             display:flex!important; align-items:center!important; gap:8px!important;
             padding:6px 12px!important; cursor:pointer!important;
-            font-family:'Itim',cursive!important; font-size:11px!important; font-weight:400!important;
+            font-family:var(--catta-font)!important; font-size:11px!important; font-weight:400!important;
             transition:all .15s!important; border-left:2px solid transparent!important;
             border-radius:0!important; margin:0!important; color:var(--catta-text, #fff)!important;
         }
@@ -233,12 +254,12 @@
         .playlist-item.active-track { border-left-width:2px!important; border-left-style:solid!important; }
         .playlist-item .track-num-badge {
             width:16px!important; text-align:center!important;
-            font-size:10px!important; flex-shrink:0!important; font-family:'Itim',cursive!important;
+            font-size:10px!important; flex-shrink:0!important; font-family:var(--catta-font)!important;
         }
         .playlist-item .track-name-text {
             flex:1!important; white-space:nowrap!important;
             overflow:hidden!important; text-overflow:ellipsis!important;
-            font-family:'Itim',cursive!important;
+            font-family:var(--catta-font)!important;
         }
         .playlist-item .del-btn {
             color:var(--c-bd, rgba(255,255,255,.18))!important; cursor:pointer!important;
@@ -271,7 +292,7 @@
             background:rgba(255,255,255,.08)!important; color:#f0e8ff!important;
             border:1px solid rgba(255,255,255,.15)!important; border-radius:10px!important;
             padding:6px 10px!important; font-size:11px!important;
-            font-family:'Itim',cursive!important; outline:none!important;
+            font-family:var(--catta-font)!important; outline:none!important;
             transition:border-color .2s!important; width:auto!important;
             box-shadow:none!important;
         }
@@ -281,7 +302,7 @@
 
         .catta-btn-small {
             border:none!important; color:#fff!important; padding:6px 10px!important;
-            border-radius:10px!important; font-family:'Itim',cursive!important;
+            border-radius:10px!important; font-family:var(--catta-font)!important;
             font-size:11px!important; cursor:pointer!important;
             transition:all .2s!important; white-space:nowrap!important;
             box-shadow:none!important;
@@ -299,11 +320,11 @@
             object-fit:cover!important; flex-shrink:0!important;
         }
         #catta-mini-title {
-            font-size:11px!important; font-family:'Itim',cursive!important;
+            font-size:11px!important; font-family:var(--catta-font)!important;
             white-space:nowrap!important; overflow:hidden!important; text-overflow:ellipsis!important;
         }
         #catta-mini-sub {
-            font-size:9px!important; font-family:'Itim',cursive!important;
+            font-size:9px!important; font-family:var(--catta-font)!important;
             letter-spacing:.3px!important; margin-top:1px!important;
         }
         #catta-mini-prev, #catta-mini-next, #catta-mini-play {
@@ -320,7 +341,7 @@
             display:inline-flex!important; align-items:center!important; gap:10px!important;
             background:rgba(20,10,40,.9)!important; border:1px solid rgba(255,107,157,.4)!important;
             color:#fff!important; padding:8px 16px!important; border-radius:20px!important;
-            cursor:pointer!important; font-family:'Itim',cursive!important; font-size:13px!important;
+            cursor:pointer!important; font-family:var(--catta-font)!important; font-size:13px!important;
             box-shadow:0 4px 16px rgba(0,0,0,.35)!important;
             transition:all .25s cubic-bezier(.34,1.56,.64,1)!important; margin:5px 0!important;
         }
@@ -330,16 +351,16 @@
         }
         .catta-inline-music .music-icon { font-size:18px!important; }
         .catta-inline-music .music-info { display:flex!important; flex-direction:column!important; line-height:1.3!important; }
-        .catta-inline-music .music-title { font-weight:400!important; color:#fff!important; font-family:'Itim',cursive!important; }
-        .catta-inline-music .music-status { font-size:9px!important; text-transform:uppercase!important; letter-spacing:1px!important; font-family:'Itim',cursive!important; }
+        .catta-inline-music .music-title { font-weight:400!important; color:#fff!important; font-family:var(--catta-font)!important; }
+        .catta-inline-music .music-status { font-size:9px!important; text-transform:uppercase!important; letter-spacing:1px!important; font-family:var(--catta-font)!important; }
 
         /* ── SETTINGS ── */
         .cattamusic-settings-block {
             border-radius:14px!important; padding:14px!important; margin:10px 0!important;
-            font-family:'Itim',cursive!important;
+            font-family:var(--catta-font)!important;
         }
-        .cattamusic-settings-block h4 { font-size:14px!important; font-family:'Itim',cursive!important; margin-bottom:8px!important; }
-        .cattamusic-settings-block label { font-family:'Itim',cursive!important; font-size:13px!important; }
+        .cattamusic-settings-block h4 { font-size:14px!important; font-family:var(--catta-font)!important; margin-bottom:8px!important; }
+        .cattamusic-settings-block label { font-family:var(--catta-font)!important; font-size:13px!important; }
         .theme-selectors { display:flex!important; gap:7px!important; flex-wrap:wrap!important; margin-top:8px!important; }
         .theme-dot {
             width:24px!important; height:24px!important; border-radius:50%!important;
@@ -842,8 +863,9 @@ function saveData() {
                 <span class="catta-header-title" style="${S.ttl}">🐾 Catta Music</span>
                 <div style="${S.hdR}">
                     <span id="catta-track-count" style="${S.cnt}">0 tracks</span>
-                    <button id="catta-btn-minimize" style="${S.minB}" title="ย่อ"><i class="fa-solid fa-compress"></i></button>
+                    <button id="catta-btn-font" style="${S.minB}; font-weight:bold; font-size:10px;" title="เปลี่ยนฟอนต์"><i class="fa-solid fa-font"></i></button>
                     <button id="catta-close-win" style="${S.cls}">×</button>
+                    <button id="catta-btn-lang" style="${S.minB}; font-weight:bold; font-size:10px;">${settings.lang === 'th' ? 'EN' : 'TH'}</button>
                 </div>
             </div>
             <div id="catta-mini-bar" style="${S.mini}">
@@ -953,6 +975,39 @@ function saveData() {
                 win.removeClass('minimized');
             }
         }
+
+        function applyLanguage() {
+            const t = i18n[settings.lang];
+            $('#catta-tab-user').text(t.userTab);
+            $('#catta-tab-char').text(t.charTab);
+            $('#catta-btn-toggle-tools').attr('title', t.tools);
+            $('#catta-search-char').attr('placeholder', t.searchPlace);
+            $('#catta-btn-search-char').html(`<i class="fa-solid fa-search"></i>${t.searchBtn}`);
+            $('#catta-input-url').attr('placeholder', t.addUrlPlace);
+            $('#catta-btn-cloud-sync').html(`<i class="fa-solid fa-cloud-arrow-down"></i>${t.cloudBtn}`);
+            $('#catta-btn-confirm-char').html(`<i class="fa-solid fa-user-plus"></i>${t.confirmChar}`);
+            $('#catta-btn-del-user, #catta-btn-del-char').html(`<i class="fa-solid fa-trash"></i> ${t.delPlaylist}`);
+            $('#catta-btn-scan-card').html(`<i class="fa-solid fa-radar"></i>${t.scanCard}`);
+            if ($('#catta-display-name').text().includes('✨')) {
+                $('#catta-display-name').text(t.ready);
+            }
+            $('#catta-btn-lang').text(settings.lang === 'th' ? 'EN' : 'TH');
+        }
+
+        $('#catta-btn-lang').on('click', function() {
+            settings.lang = settings.lang === 'th' ? 'en' : 'th';
+            saveData();
+            applyLanguage();
+        });
+        applyLanguage();
+
+
+        $('#catta-btn-font').on('click', function() {
+            settings.fontFamily = settings.fontFamily === 'Kanit' ? 'Itim' : 'Kanit';
+            saveData();
+            applyTheme(settings.theme);
+            notifyUser("📝 เปลี่ยนฟอนต์เป็น: " + settings.fontFamily);
+        });
         
         $('#catta-btn-minimize').on('click', () => setMinimized(true));
         $('#catta-btn-maximize').on('click', () => setMinimized(false));
@@ -1278,7 +1333,7 @@ function saveData() {
             
             const btn = $("#catta-btn-cloud-sync");
             const oldHtml = btn.html();
-            btn.html('<i class="fa-solid fa-spinner fa-spin"></i>'); // เปลี่ยนไอคอนเป็นกำลังโหลด
+            btn.html('<i class="fa-solid fa-spinner fa-spin"></i>');
 
             const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
             try {
@@ -1561,6 +1616,7 @@ function saveData() {
     function applyTheme(themeName) {
         const T = themes[themeName] || themes.pink;
         const win = $(`#${WIN_ID}`);
+        win.css('--catta-font', settings.fontFamily === 'Kanit' ? "'Kanit', sans-serif" : "'Itim', cursive"); // เพิ่มบรรทัดนี้
         if(!win.length) return;
 
         const isLight = T.type === 'light';
@@ -1633,7 +1689,7 @@ function saveData() {
         const chatBox = document.getElementById('chat');
         if (chatBox) {
             const observer = new MutationObserver(() => {
-                // ไม่ต้องกลัวเครื่องหน่วง เพราะเรามีระบบนับถอยหลัง (Debounce 1.5 วิ) ใน scanLatestChat ดักไว้แล้ว
+
                 scanLatestChat();
             });
             observer.observe(chatBox, { childList: true, subtree: true });
@@ -1649,6 +1705,7 @@ function saveData() {
         if (settings.isEnabled) {
             buildBubble();
             buildPlayerWindow();
+            applyTheme(settings.theme);
             const isAuth = checkAuth();
 
             if (isAuth) {
