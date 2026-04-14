@@ -68,8 +68,8 @@
         peach:    { main:'#ffdab9', accent:'#ffb347', dark:'#1a100a', card:'#2a1a12', text:'#ffefe0', muted:'#d4aa8a', glow:'rgba(255,218,185,0.4)',  dot:'rgba(255,218,185,0.9)'  },
         sakura:   { main:'#f4a460', accent:'#ffc0cb', dark:'#1a0d0a', card:'#2a1812', text:'#ffe8e0', muted:'#d4a090', glow:'rgba(244,164,96,0.4)',   dot:'rgba(244,164,96,0.9)'   },
         sky:      { main:'#87cefa', accent:'#e0ffff', dark:'#050a1a', card:'#0d122a', text:'#e0f4ff', muted:'#8aa9c4', glow:'rgba(135,206,250,0.4)',  dot:'rgba(135,206,250,0.9)'  },
-        vanilla:  { main:'#ff6b9d', accent:'#ff9a56', dark:'#ffffff', card:'#f5f5f5', text:'#333333', muted:'#888888', glow:'rgba(255,107,157,0.2)',  dot:'rgba(255,107,157,0.9)'  },
-        snow:     { main:'#4d96ff', accent:'#87cefa', dark:'#f8f9fa', card:'#eef2f5', text:'#222222', muted:'#777777', glow:'rgba(77,150,255,0.2)',   dot:'rgba(77,150,255,0.9)'   }
+        vanilla:  { type:'light', main:'#ff6b9d', accent:'#ff9a56', dark:'#ffffff', card:'#f5f5f5', text:'#333333', muted:'#777777', glow:'rgba(255,107,157,0.2)',  dot:'rgba(255,107,157,0.9)'  },
+        snow:     { type:'light', main:'#4d96ff', accent:'#87cefa', dark:'#f8f9fa', card:'#eef2f5', text:'#222222', muted:'#666666', glow:'rgba(77,150,255,0.2)',   dot:'rgba(77,150,255,0.9)'   }
     };
 
     // ══════════════════════════════════════════════
@@ -230,7 +230,7 @@
             padding:6px 12px!important; cursor:pointer!important;
             font-family:'Itim',cursive!important; font-size:11px!important; font-weight:400!important;
             transition:all .15s!important; border-left:2px solid transparent!important;
-            border-radius:0!important; margin:0!important;
+            border-radius:0!important; margin:0!important; color:var(--catta-text, #fff)!important;
         }
         .playlist-item:hover { background:rgba(255,107,157,.07)!important; }
         .playlist-item.active-track { border-left-width:2px!important; border-left-style:solid!important; }
@@ -244,7 +244,7 @@
             font-family:'Itim',cursive!important;
         }
         .playlist-item .del-btn {
-            color:rgba(255,255,255,.18)!important; cursor:pointer!important;
+            color:var(--c-bd, rgba(255,255,255,.18))!important; cursor:pointer!important;
             font-size:14px!important; padding:0 3px!important;
             transition:color .2s!important; flex-shrink:0!important;
             font-family:sans-serif!important;
@@ -362,7 +362,7 @@
         /* RANGE SLIDER */
         input[type=range] {
             -webkit-appearance: none!important;
-            background: rgba(255,255,255,0.2)!important;
+            background: var(--c-bd, rgba(255,255,255,0.2))!important;
             border-radius: 2px!important;
             outline: none!important;
         }
@@ -371,9 +371,9 @@
             width: 10px!important;
             height: 10px!important;
             border-radius: 50%!important;
-            background: #fff!important;
+            background: var(--catta-text, #fff)!important;
             cursor: pointer!important;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5)!important;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2)!important;
         }
 
         /* MINIMIZED STATE */
@@ -384,10 +384,10 @@
             max-width: 250px !important;
             border-radius: 40px !important;
             padding: 0 !important;
-            background: rgba(18, 18, 24, 0.9) !important;
+            background: var(--c-min-bg, rgba(18, 18, 24, 0.9)) !important;
             backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(255,255,255,0.08) !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4) !important;
+            border: 1px solid var(--c-bd, rgba(255,255,255,0.08)) !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
         }
         #cattamusic-player-window.minimized .cattamusic-header,
         #cattamusic-player-window.minimized #catta-banner-container,
@@ -770,34 +770,34 @@
         const T = themes[settings.theme] || themes.pink;
         const S = {
             win:  `display:none;position:fixed!important;z-index:10000!important;top:12px;left:50%;transform:translateX(-50%);width:270px;border-radius:22px;overflow:hidden;font-family:'Itim',cursive;background:${T.dark};border:1.5px solid ${T.main}44;box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset;`,
-            hdr:  `display:flex;justify-content:space-between;align-items:center;padding:10px 12px 8px;cursor:grab;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.07);`,
+            hdr:  `display:flex;justify-content:space-between;align-items:center;padding:10px 12px 8px;cursor:grab;background:var(--c-bg-2, rgba(0,0,0,.25));border-bottom:1px solid var(--c-bd, rgba(255,255,255,.07));`,
             ttl:  `font-size:14px;font-family:'Itim',cursive;background:linear-gradient(90deg,${T.main},${T.accent});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;`,
             hdR:  `display:flex;align-items:center;gap:5px;`,
             cnt:  `font-size:9px;color:${T.muted};font-family:'Itim',cursive;`,
-            minB: `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0;box-shadow:none!important;background:rgba(255,255,255,.09);color:${T.muted};transition:all .2s;`,
-            cls:  `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;box-shadow:none!important;background:rgba(255,255,255,.06);color:${T.muted};transition:all .2s;`,
-            mini: `align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.07);`,
+            minB: `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0;box-shadow:none!important;background:var(--c-bg-inp, rgba(255,255,255,.09));color:var(--catta-text, ${T.muted});transition:all .2s;`,
+            cls:  `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;box-shadow:none!important;background:var(--c-bg-1, rgba(255,255,255,.06));color:var(--catta-text, ${T.muted});transition:all .2s;`,
+            mini: `align-items:center;gap:8px;padding:8px 12px;background:var(--c-bg-2, rgba(0,0,0,.2));border-top:1px solid var(--c-bd, rgba(255,255,255,.07));`,
             mImg: `width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.5);`,
             mTtl: `font-size:11px;font-family:'Itim',cursive;color:${T.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`,
             mSub: `font-size:9px;font-family:'Itim',cursive;color:${T.muted};margin-top:1px;`,
-            mBtn: `background:none;border:none!important;cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .2s;box-shadow:none!important;font-size:13px;color:${T.muted};`,
+            mBtn: `background:none;border:none!important;cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .2s;box-shadow:none!important;font-size:13px;color:var(--catta-text, ${T.muted});`,
             mPlay:`background:none;border:none!important;cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .2s;box-shadow:none!important;font-size:17px;color:${T.main};`,
-            ban:  `display:flex;align-items:center;gap:11px;padding:11px 13px 9px;border-bottom:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,${T.main}12,transparent);`,
+            ban:  `display:flex;align-items:center;gap:11px;padding:11px 13px 9px;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.06));background:linear-gradient(180deg,${T.main}12,transparent);`,
             cov:  `width:52px;height:52px;border-radius:13px;object-fit:cover;flex-shrink:0;box-shadow:0 6px 20px rgba(0,0,0,.5);cursor:pointer;`,
-            cTtl: `font-size:13px;font-family:'Itim',cursive;color:${T.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;`,
-            scr:  `padding:4px 13px;display:flex;background:rgba(0,0,0,.22);`,
-            sBar: `display:flex;justify-content:space-between;align-items:center;width:100%;font-size:9px;font-family:'Itim',cursive;color:${T.muted};`,
+            cTtl: `font-size:13px;font-family:'Itim',cursive;color:var(--catta-text, ${T.text});white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;`,
+            scr:  `padding:4px 13px;display:flex;background:var(--c-bg-2, rgba(0,0,0,.22));`,
+            sBar: `display:flex;justify-content:space-between;align-items:center;width:100%;font-size:9px;font-family:'Itim',cursive;color:var(--catta-text, ${T.muted});`,
             dot:  `width:6px;height:6px;border-radius:50%;background:${T.main};opacity:0;`,
-            ctrl: `display:flex;align-items:center;justify-content:space-around;padding:9px 12px 7px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.12);`,
-            cBtn: `background:none!important;border:none!important;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;padding:0;box-shadow:none!important;color:${T.muted};`,
+            ctrl: `display:flex;align-items:center;justify-content:space-around;padding:9px 12px 7px;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.06));background:var(--c-bg-2, rgba(0,0,0,.12));`,
+            cBtn: `background:none!important;border:none!important;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;padding:0;box-shadow:none!important;color:var(--catta-text, ${T.muted});`,
             pBtn: `border:none!important;cursor:pointer;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;padding:0;color:#fff!important;background:linear-gradient(135deg,${T.main},${T.accent});box-shadow:0 6px 20px ${T.glow};`,
-            tabs: `display:flex;border-bottom:1px solid rgba(255,255,255,.06);padding:0 8px;gap:2px;background:rgba(0,0,0,.15);`,
-            tab:  `flex:1;border:none!important;padding:7px 3px;font-size:11px;cursor:pointer;font-family:'Itim',cursive;background:transparent!important;color:${T.muted};transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-1px;box-shadow:none!important;`,
-            tTl:  `flex:none;background:none!important;border:none!important;cursor:pointer;padding:0 10px;font-size:13px;border-left:1px solid rgba(255,255,255,.07);color:${T.muted};transition:color .2s;box-shadow:none!important;`,
-            pl:   `background:${T.dark};`,
-            tool: `display:none;padding:8px 10px;flex-direction:column;gap:5px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.2);`,
-            inp:  `background:rgba(255,255,255,.08)!important;color:${T.text}!important;border:1px solid rgba(255,255,255,.15)!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;`,
-            sel:  `background:rgba(255,255,255,.08)!important;color:${T.text}!important;border:1px solid rgba(255,255,255,.15)!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;flex-grow:1;`,
+            tabs: `display:flex;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.06));padding:0 8px;gap:2px;background:var(--c-bg-2, rgba(0,0,0,.15));`,
+            tab:  `flex:1;border:none!important;padding:7px 3px;font-size:11px;cursor:pointer;font-family:'Itim',cursive;background:transparent!important;color:var(--catta-text, ${T.muted});transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-1px;box-shadow:none!important;`,
+            tTl:  `flex:none;background:none!important;border:none!important;cursor:pointer;padding:0 10px;font-size:13px;border-left:1px solid var(--c-bd, rgba(255,255,255,.07));color:var(--catta-text, ${T.muted});transition:color .2s;box-shadow:none!important;`,
+            pl:   `background:transparent;`,
+            tool: `display:none;padding:8px 10px;flex-direction:column;gap:5px;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.07));background:var(--c-bg-2, rgba(0,0,0,.2));`,
+            inp:  `background:var(--c-bg-inp, rgba(255,255,255,.08))!important;color:var(--catta-text, ${T.text})!important;border:1px solid var(--c-bd, rgba(255,255,255,.15))!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;`,
+            sel:  `background:var(--c-bg-inp, rgba(255,255,255,.08))!important;color:var(--catta-text, ${T.text})!important;border:1px solid var(--c-bd, rgba(255,255,255,.15))!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;flex-grow:1;`,
             sB:   `border:none!important;color:#fff!important;padding:6px 10px;border-radius:10px;font-family:'Itim',cursive;font-size:11px;cursor:pointer;box-shadow:none!important;white-space:nowrap;flex-shrink:0;`,
             lst:  `max-height:120px;overflow-y:auto;padding:4px 0;`,
         };
@@ -882,14 +882,17 @@
                         </div>
                     </div>
                     <div style="display:flex;gap:5px;margin-top:2px;">
-                        <input type="text" id="catta-input-url" placeholder="วางลิงก์ .mp3 ที่นี่..." style="${S.inp}flex-grow:1;">
+                        <input type="text" id="catta-input-url" placeholder="วางลิงก์ หรือหลายลิงก์..." style="${S.inp}flex-grow:1;min-width:0;">
                         <button id="catta-btn-save" class="catta-btn-small" style="${S.sB}background:linear-gradient(135deg,${T.main},${T.accent});">+ เพิ่ม</button>
+                        <button id="catta-btn-import-txt" class="catta-btn-small" style="${S.sB}background:var(--c-bg-inp, rgba(255,255,255,0.1));color:var(--catta-text, #fff)!important;" title="นำเข้าเพลย์ลิสต์ (.txt)"><i class="fa-solid fa-file-import"></i></button>
+                        <button id="catta-btn-export-txt" class="catta-btn-small" style="${S.sB}background:var(--c-bg-inp, rgba(255,255,255,0.1));color:var(--catta-text, #fff)!important;" title="ส่งออกเพลย์ลิสต์ (.txt)"><i class="fa-solid fa-file-export"></i></button>
                     </div>
                 </div>
                 <div id="catta-list-display" style="${S.lst}"></div>
             </div>
         </div>
-        <input type="file" id="catta-cover-upload" accept="image/*" style="display:none;">`;
+        <input type="file" id="catta-cover-upload" accept="image/*" style="display:none;">
+        <input type="file" id="catta-txt-upload" accept=".txt" style="display:none;">`;
         $("body").append(html);
         
         // ══ MINIMIZE LOGIC ══
@@ -1115,20 +1118,106 @@
             }
         });
 
-        // Add URL
+        // Add URLs (Supports multiple URLs pasted directly)
         $("#catta-btn-save").on('click', () => {
             if (!isAuthorized) return;
-            const url = $("#catta-input-url").val().trim();
-            if (url) { 
-                if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                    alert("❌ ระบบไม่รองรับลิงก์ YouTube ครับ\nกรุณาใช้ลิงก์ตรงของไฟล์เสียงเท่านั้น (เช่น .mp3, .ogg, .wav)");
-                    return;
+            const inputVal = $("#catta-input-url").val().trim();
+            if (!inputVal) return;
+            
+            const urlRegex = /(https?:\/\/[^\s]+)/gi;
+            let matches;
+            let addedCount = 0;
+            let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
+            let ytFound = false;
+            
+            while ((matches = urlRegex.exec(inputVal)) !== null) {
+                const url = matches[1];
+                if (url.includes('youtube.com') || url.includes('youtu.be')) { ytFound = true; continue; }
+                
+                if (!listObj[viewingId].tracks.some(t => t.url === url)) {
+                    let name = url.split('/').pop() || "Unknown";
+                    try { name = decodeURIComponent(name); } catch(e){}
+                    name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
+                    listObj[viewingId].tracks.push({ name, url });
+                    addedCount++;
                 }
-                let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
-                listObj[viewingId].tracks.push({ name: url.split('/').pop() || "Unknown", url }); 
-                $("#catta-input-url").val(""); 
-                saveData(); renderPlaylist(); 
             }
+            
+            if (addedCount > 0) {
+                $("#catta-input-url").val(""); 
+                saveData(); renderPlaylist();
+                notifyUser(`✅ เพิ่ม ${addedCount} เพลง`);
+            } else if (ytFound) {
+                alert("❌ ระบบไม่รองรับลิงก์ YouTube ครับ\nกรุณาใช้ลิงก์ตรงของไฟล์เสียงเท่านั้น");
+            } else {
+                alert("⚠️ ไม่พบลิงก์ที่รองรับ หรือมีเพลงนี้อยู่แล้ว");
+            }
+        });
+
+        // 📥 นำเข้า TXT
+        $("#catta-btn-import-txt").on('click', () => { if(isAuthorized) $("#catta-txt-upload").click(); });
+        $("#catta-txt-upload").on('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e2) {
+                const text = e2.target.result;
+                const lines = text.split('\n');
+                let addedCount = 0;
+                let ytFound = false;
+                const urlRegex = /(https?:\/\/[^\s]+)/i;
+                let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
+                
+                lines.forEach(line => {
+                    const match = line.match(urlRegex);
+                    if (match) {
+                        const url = match[1].trim();
+                        if (url.includes('youtube.com') || url.includes('youtu.be')) { ytFound = true; return; }
+                        
+                        if (!listObj[viewingId].tracks.some(t => t.url === url)) {
+                            let name = url.split('/').pop() || "Unknown";
+                            try { name = decodeURIComponent(name); } catch(e){}
+                            name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
+                            listObj[viewingId].tracks.push({ name, url });
+                            addedCount++;
+                        }
+                    }
+                });
+                
+                if (addedCount > 0) {
+                    saveData(); renderPlaylist();
+                    alert(`✅ นำเข้าสำเร็จ ${addedCount} เพลง`);
+                } else if (ytFound) {
+                    alert("⚠️ พบลิงก์ YouTube ที่ระบบไม่รองรับ จึงถูกข้ามไป");
+                } else {
+                    alert("⚠️ ไม่พบลิงก์เพลงที่สามารถเพิ่มได้เลย");
+                }
+                
+                $("#catta-txt-upload").val(""); // reset
+            };
+            reader.readAsText(file);
+        });
+
+        // 📤 ส่งออก TXT
+        $("#catta-btn-export-txt").on('click', () => {
+            if (!isAuthorized) return;
+            let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
+            const tracks = listObj[viewingId].tracks;
+            
+            if(tracks.length === 0) return alert("❌ เพลย์ลิสต์ว่างเปล่า ไม่มีอะไรให้ส่งออก");
+            
+            // Format: ชื่อเพลง ตามด้วยบรรทัดลิงก์ ให้ดูเป็นระเบียบ
+            let content = `🐾 Catta Music Playlist: ${listObj[viewingId].name}\n═══════════════════════════════════════════════════\n`;
+            content += tracks.map(t => `${t.name}\n- ${t.url}`).join('\n\n');
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `CattaMusic_${listObj[viewingId].name.replace(/\s+/g, '_')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         });
 
         updateListSelectors();
@@ -1289,7 +1378,7 @@
             const numBadge = isActive && isPlaying
                 ? `<div class="catta-eq" style="display:inline-flex;align-items:flex-end;gap:2px;height:14px;flex-shrink:0;width:16px;"><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:8px;animation:cattaEQ .55s ease-in-out infinite alternate;"></span><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:12px;animation:cattaEQ .55s ease-in-out infinite alternate .15s;"></span><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:5px;animation:cattaEQ .55s ease-in-out infinite alternate .3s;"></span></div>`
                 : `<span class="track-num-badge" style="width:16px;text-align:center;font-size:10px;flex-shrink:0;font-family:'Itim',cursive;color:${T.muted};">${i+1}</span>`;
-            const item = $(`<div class="playlist-item ${isActive?'active-track':''}" style="${baseStyle}${isActive?activeStyle:normalStyle}">${numBadge}<span class="track-name-text" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Itim',cursive;">${track.name}</span>${track.mood?`<span style="font-size:9px;color:${T.muted};margin-right:2px;flex-shrink:0;max-width:55px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${track.mood.split('|')[0]}</span>`:''}<span class="del-btn" style="color:rgba(255,255,255,.18);cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0;line-height:1;">×</span></div>`);
+            const item = $(`<div class="playlist-item ${isActive?'active-track':''}" style="${baseStyle}${isActive?activeStyle:normalStyle}">${numBadge}<span class="track-name-text" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Itim',cursive;color:var(--catta-text);">${track.name}</span>${track.mood?`<span style="font-size:9px;color:var(--catta-text, ${T.muted});margin-right:2px;flex-shrink:0;max-width:55px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${track.mood.split('|')[0]}</span>`:''}<span class="del-btn" style="color:var(--c-bd, rgba(255,255,255,.18));cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0;line-height:1;">×</span></div>`);
             item.find('.track-name-text').on('click', () => isAuthorized && playTrack(i, viewingTab, viewingId));
             item.find('.del-btn').on('click', (e) => { e.stopPropagation(); list.splice(i, 1); saveData(); renderPlaylist(); });
             container.append(item);
@@ -1371,9 +1460,19 @@
         const win = $(`#${WIN_ID}`);
         if(!win.length) return;
 
-        // Re-apply all color-dependent inline styles
-        win.css({ background: T.dark, borderColor: T.main + '44',
-            boxShadow: `0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset` });
+        const isLight = T.type === 'light';
+
+        win.css({ 
+            background: T.dark, 
+            borderColor: T.main + '44',
+            boxShadow: `0 20px 60px rgba(0,0,0,.${isLight ? '2' : '8'}),0 0 40px ${T.glow},0 0 0 1px ${isLight ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.05)'} inset`,
+            '--c-bg-1': isLight ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.06)',
+            '--c-bg-2': isLight ? 'rgba(0,0,0,.03)' : 'rgba(0,0,0,.2)',
+            '--c-bg-inp': isLight ? 'rgba(0,0,0,.04)' : 'rgba(255,255,255,.08)',
+            '--c-bd': isLight ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)',
+            '--c-min-bg': isLight ? 'rgba(250, 250, 250, 0.9)' : 'rgba(18, 18, 24, 0.9)',
+            '--catta-text': T.text
+        });
 
         win.find('#catta-display-name').css('color', T.main);
         win.find('#catta-play-dot').css('background', T.main);
