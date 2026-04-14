@@ -519,14 +519,37 @@ function saveData() {
 
     function generateId() { return Math.random().toString(36).substr(2, 9); }
 
-    function getActiveCharInfo() {
-        const charList = (typeof characters !== 'undefined') ? characters : window.characters;
-        const activeId = (typeof this_chid !== 'undefined') ? this_chid : window.this_chid;
+    // ฟังก์ชันใหม่: กวาดหาข้อมูลตัวละครจาก ST ทุกเวอร์ชั่น
+    function getCurrentSTCharacter() {
+        if (typeof getContext === 'function') {
+            try {
+                const ctx = getContext();
+                if (ctx.characterId !== undefined && ctx.characters && ctx.characters[ctx.characterId]) {
+                    return { id: ctx.characterId, data: ctx.characters[ctx.characterId] };
+                }
+            } catch(e) {}
+        }
+        if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
+            try {
+                const ctx = SillyTavern.getContext();
+                if (ctx.characterId !== undefined && ctx.characters && ctx.characters[ctx.characterId]) {
+                    return { id: ctx.characterId, data: ctx.characters[ctx.characterId] };
+                }
+            } catch(e) {}
+        }
+        if (typeof window.this_chid !== 'undefined' && window.characters && window.characters[window.this_chid]) {
+            return { id: window.this_chid, data: window.characters[window.this_chid] };
+        }
+        return null;
+    }
 
-        if (activeId !== undefined && charList && charList[activeId]) {
-            const charData = charList[activeId];
+    // แก้ไขฟังก์ชันเดิม ให้มาดึงข้อมูลจากฟังก์ชันใหม่แทน
+    function getActiveCharInfo() {
+        const stChar = getCurrentSTCharacter();
+        if (stChar) {
+            const charData = stChar.data;
             return {
-                id: activeId.toString(),
+                id: stChar.id.toString(),
                 name: charData.name,
                 avatar: charData.avatar ? `/characters/${charData.avatar}` : ICON_URL
             };
@@ -1641,18 +1664,16 @@ function saveData() {
         let targetName = "Unknown";
         let targetAvatar = ICON_URL;
 
-        const charList = (typeof characters !== 'undefined') ? characters : window.characters;
-        const activeId = (typeof this_chid !== 'undefined') ? this_chid : window.this_chid;
-
-        // เช็คว่าเปิดการ์ดตัวละครไหนอยู่
-        if (window.characters && window.this_chid !== undefined && window.characters[window.this_chid]) {
-            const charData = window.characters[window.this_chid];
+        const stChar = getCurrentSTCharacter();
+        
+        if (stChar) {
+            const charData = stChar.data;
             sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\\n\\n');
-            targetId = window.this_chid.toString();
+            targetId = stChar.id.toString();
             targetName = charData.name;
             targetAvatar = charData.avatar ? `/characters/${charData.avatar}` : ICON_URL;
         } else if (manual) {
-            alert("⚠️ ตอนนี้คุณไม่ได้เปิดห้องแชทของตัวละครใดๆ อยู่ครับ");
+            alert("⚠️ ตอนนี้คุณไม่ได้เปิดห้องแชทของตัวละครใดๆ อยู่ครับ (หรือไม่สามารถดึงข้อมูลจาก SillyTavern ได้)");
             return;
         } else {
             return;
