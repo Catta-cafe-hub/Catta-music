@@ -28,22 +28,33 @@
         fontFamily: 'Kanit',
     };
 
-    const i18n = {
+const i18n = {
         th: {
             userTab: "👤 ส่วนตัว", charTab: "🐱 ตัวละคร", tools: "จัดการ",
             searchPlace: "ID หรือชื่อตัวละคร...", searchBtn: " ค้นหา",
             addUrlPlace: "วางลิงก์ (.mp3, .ogg)...",
             cloudBtn: " ดึงข้อมูล", confirmChar: " เพิ่มตัวละครนี้",
-            delPlaylist: "ลบเพลย์ลิสต์ปัจจุบัน", scanCard: " ดึงเพลงจากการ์ดตัวละครนี้",
-            ready: "✨ พร้อมเล่นแล้ว!", autoSave: "☁️ อัปเดตคลาวด์แล้ว!"
+            delPlaylist: "ลบเพลย์ลิสต์ปัจจุบัน", delChar: "ลบตัวละครปัจจุบัน", scanCard: " ดึงเพลงจากการ์ดตัวละครนี้",
+            ready: "✨ พร้อมเล่นแล้ว!", autoSave: "☁️ อัปเดตคลาวด์แล้ว!",
+            createBtn: " สร้าง", newPlaylistPlace: "ตั้งชื่อเพลย์ลิสต์ส่วนตัวใหม่..."
         },
         en: {
             userTab: "👤 Personal", charTab: "🐱 Character", tools: "Manage",
             searchPlace: "ID or Char Name...", searchBtn: " Search",
             addUrlPlace: "Paste link (.mp3, .ogg)...",
             cloudBtn: " Cloud Sync", confirmChar: " Add this character",
-            delPlaylist: "Delete Current Playlist", scanCard: " Extract from Card",
-            ready: "✨ Ready to play!", autoSave: "☁️ Auto-Saved to Cloud"
+            delPlaylist: "Delete Current Playlist", delChar: "Delete Current Character", scanCard: " Extract from Card",
+            ready: "✨ Ready to play!", autoSave: "☁️ Auto-Saved to Cloud",
+            createBtn: " Create", newPlaylistPlace: "New personal playlist name..."
+        },
+        zh: {
+            userTab: "👤 个人", charTab: "🐱 角色", tools: "管理",
+            searchPlace: "ID或角色名...", searchBtn: " 搜索",
+            addUrlPlace: "粘贴链接 (.mp3, .ogg)...",
+            cloudBtn: " 云端同步", confirmChar: " 添加该角色",
+            delPlaylist: "删除当前歌单", delChar: "删除当前角色", scanCard: " 从角色卡提取",
+            ready: "✨ 准备播放！", autoSave: "☁️ 已自动保存到云端！",
+            createBtn: " 创建", newPlaylistPlace: "新个人歌单名称..."
         }
     };
 
@@ -108,7 +119,7 @@
         /* ── PLAYER WINDOW ── */
         #cattamusic-player-window {
             position:fixed!important; z-index:10000!important;
-            width:270px!important; border-radius:22px!important;
+            width:295px!important; border-radius:22px!important;
             overflow:hidden!important; user-select:none!important;
             font-family:var(--catta-font)!important;
             box-shadow:0 20px 60px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.06) inset!important;
@@ -126,7 +137,7 @@
             font-family:var(--catta-font)!important; letter-spacing:.3px!important;
         }
         #cattamusic-player-window .hdr-right {
-            display:flex!important; align-items:center!important; gap:5px!important;
+            display:flex!important; align-items:center!important; gap:3px!important;
         }
         #catta-track-count {
             font-size:9px!important; font-family:var(--catta-font)!important;
@@ -825,7 +836,7 @@ function saveData() {
         const winPosStyle = settings.posWindow ? `top:${settings.posWindow.top};left:${settings.posWindow.left};transform:none;` : `top:12px;left:50%;transform:translateX(-50%);`;
         
         const S = {
-            win:  `display:none;position:fixed!important;z-index:10000!important;${winPosStyle}width:270px;border-radius:22px;overflow:hidden;font-family:'Itim',cursive;background:${T.dark};border:1.5px solid ${T.main}44;box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset;`,
+            win:  `display:none;position:fixed!important;z-index:10000!important;${winPosStyle}width:295px;border-radius:22px;overflow:hidden;font-family:'Itim',cursive;background:${T.dark};border:1.5px solid ${T.main}44;box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset;`,
             hdr:  `display:flex;justify-content:space-between;align-items:center;padding:10px 12px 8px;cursor:grab;background:var(--c-bg-2, rgba(0,0,0,.25));border-bottom:1px solid var(--c-bd, rgba(255,255,255,.07));`,
             ttl:  `font-size:14px;font-family:'Itim',cursive;background:linear-gradient(90deg,${T.main},${T.accent});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;`,
             hdR:  `display:flex;align-items:center;gap:5px;`,
@@ -864,7 +875,7 @@ function saveData() {
                 <div style="${S.hdR}">
                     <span id="catta-track-count" style="${S.cnt}">0 tracks</span>
                     <button id="catta-btn-font" style="${S.minB}; font-weight:bold; font-size:10px;" title="เปลี่ยนฟอนต์"><i class="fa-solid fa-font"></i></button>
-                    <button id="catta-btn-lang" style="${S.minB}; font-weight:bold; font-size:10px;">${settings.lang === 'th' ? 'EN' : 'TH'}</button>
+                    <button id="catta-btn-lang" style="${S.minB}; font-weight:bold; font-size:10px;">${(settings.lang || 'th').toUpperCase()}</button>
                     <button id="catta-close-win" style="${S.cls}">×</button>            
                 </div>
             </div>
@@ -977,7 +988,7 @@ function saveData() {
         }
 
         function applyLanguage() {
-            const t = i18n[settings.lang];
+            const t = i18n[settings.lang] || i18n.th; 
             $('#catta-tab-user').text(t.userTab);
             $('#catta-tab-char').text(t.charTab);
             $('#catta-btn-toggle-tools').attr('title', t.tools);
@@ -986,16 +997,26 @@ function saveData() {
             $('#catta-input-url').attr('placeholder', t.addUrlPlace);
             $('#catta-btn-cloud-sync').html(`<i class="fa-solid fa-cloud-arrow-down"></i>${t.cloudBtn}`);
             $('#catta-btn-confirm-char').html(`<i class="fa-solid fa-user-plus"></i>${t.confirmChar}`);
-            $('#catta-btn-del-user, #catta-btn-del-char').html(`<i class="fa-solid fa-trash"></i> ${t.delPlaylist}`);
+            $('#catta-btn-del-user').html(`<i class="fa-solid fa-trash"></i> ${t.delPlaylist}`);
+            $('#catta-btn-del-char').html(`<i class="fa-solid fa-trash"></i> ${t.delChar}`);
             $('#catta-btn-scan-card').html(`<i class="fa-solid fa-radar"></i>${t.scanCard}`);
+            $('#catta-btn-new-user').html(`<i class="fa-solid fa-plus"></i>${t.createBtn}`);
+            $('#catta-new-user-name').attr('placeholder', t.newPlaylistPlace);
+            
             if ($('#catta-display-name').text().includes('✨')) {
                 $('#catta-display-name').text(t.ready);
             }
-            $('#catta-btn-lang').text(settings.lang === 'th' ? 'EN' : 'TH');
+
+            $('#catta-btn-lang').text(settings.lang.toUpperCase());
         }
 
+
         $('#catta-btn-lang').on('click', function() {
-            settings.lang = settings.lang === 'th' ? 'en' : 'th';
+            const langs = ['th', 'en', 'zh']; 
+            let idx = langs.indexOf(settings.lang);
+            if(idx === -1) idx = 0;
+            
+            settings.lang = langs[(idx + 1) % langs.length]; 
             saveData();
             applyLanguage();
         });
