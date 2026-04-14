@@ -81,8 +81,8 @@
     align-items: center;
     padding: 12px 14px 8px;
     cursor: grab;
-    background: rgba(0,0,0,0.2);
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    background: var(--c-bg-2, rgba(0,0,0,0.2));
+    border-bottom: 0.5px solid var(--c-bd, rgba(255,255,255,0.06));
 }
 .cattamusic-header:active { cursor: grabbing; }
 .catta-header-title {
@@ -95,7 +95,7 @@
     letter-spacing: 0.3px;
 }
 #catta-close-win {
-    background: rgba(255,255,255,0.08);
+    background: var(--c-bg-inp, rgba(255,255,255,0.08));
     border: none;
     color: var(--catta-muted);
     cursor: pointer;
@@ -114,7 +114,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    border-bottom: 0.5px solid var(--c-bd, rgba(255,255,255,0.06));
     background: linear-gradient(180deg, rgba(255,107,157,0.05) 0%, transparent 100%);
 }
 #catta-cover-img {
@@ -162,7 +162,7 @@
 
 /* === STATUS BAR === */
 .cattamusic-screen {
-    background: rgba(0,0,0,0.25);
+    background: var(--c-bg-2, rgba(0,0,0,0.25));
     border: none;
     padding: 5px 14px;
     font-size: 10px;
@@ -192,7 +192,7 @@
 }
 .catta-progress-bar {
     height: 3px;
-    background: rgba(255,255,255,0.1);
+    background: var(--c-bd, rgba(255,255,255,0.1));
     border-radius: 3px;
     position: relative;
     cursor: pointer;
@@ -223,7 +223,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    border-bottom: 0.5px solid var(--c-bd, rgba(255,255,255,0.06));
+    background: var(--c-bg-2, transparent);
 }
 .cattamusic-controls button {
     background: none;
@@ -288,8 +289,8 @@
     display: flex;
     padding: 0 10px;
     gap: 4px;
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
-    background: rgba(0,0,0,0.15);
+    border-bottom: 0.5px solid var(--c-bd, rgba(255,255,255,0.06));
+    background: var(--c-bg-2, rgba(0,0,0,0.15));
 }
 .cattamusic-tabs button {
     flex: 1;
@@ -320,7 +321,7 @@
     cursor: pointer;
     padding: 0 12px !important;
     font-size: 14px;
-    border-left: 0.5px solid rgba(255,255,255,0.08) !important;
+    border-left: 0.5px solid var(--c-bd, rgba(255,255,255,0.08)) !important;
     border-radius: 0 !important;
     transition: color 0.2s !important;
 }
@@ -343,18 +344,18 @@
     padding: 7px 14px;
     font-size: 11px;
     cursor: pointer;
-    color: var(--catta-muted);
+    color: var(--catta-text, var(--catta-muted));
     transition: all 0.18s;
     border-left: 2px solid transparent;
     font-weight: 600;
     gap: 6px;
 }
 .playlist-item:hover {
-    background: rgba(255,107,157,0.06);
+    background: var(--c-bg-2, rgba(255,107,157,0.06));
     color: var(--catta-text);
 }
 .playlist-item.active-track {
-    background: linear-gradient(90deg, rgba(255,107,157,0.15), transparent);
+    background: linear-gradient(90deg, var(--c-bg-inp, rgba(255,107,157,0.15)), transparent);
     color: var(--catta-text);
     border-left-color: var(--catta-main);
     font-weight: 800;
@@ -373,7 +374,7 @@
     text-overflow: ellipsis;
 }
 .playlist-item .del-btn {
-    color: rgba(255,255,255,0.2);
+    color: var(--c-bd, rgba(255,255,255,0.2));
     cursor: pointer;
     font-weight: bold;
     padding: 0 4px;
@@ -403,15 +404,15 @@
 
 /* === TOOLS CONTAINER === */
 #catta-tools-container {
-    background: rgba(0,0,0,0.2);
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    background: var(--c-bg-2, rgba(0,0,0,0.2));
+    border-bottom: 0.5px solid var(--c-bd, rgba(255,255,255,0.06));
 }
 .catta-manager-row { display: flex; flex-direction: column; gap: 5px; }
 .catta-manager-row input,
 .catta-manager-row select {
-    background: rgba(255,255,255,0.07) !important;
+    background: var(--c-bg-inp, rgba(255,255,255,0.07)) !important;
     color: var(--catta-text) !important;
-    border: 0.5px solid rgba(255,255,255,0.15) !important;
+    border: 0.5px solid var(--c-bd, rgba(255,255,255,0.15)) !important;
     border-radius: 10px !important;
     padding: 6px 10px !important;
     font-size: 11px !important;
