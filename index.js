@@ -470,17 +470,34 @@
         if (!charPlaylists["chat"]) charPlaylists["chat"] = { name: "Unknown", avatar: ICON_URL, tracks: [] };
     }
 
-    function saveData() {
+function saveData() {
         localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
         localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
         localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
+
+        // ระบบ Cloud Sync: ส่งข้อมูลอัปเดตไปที่ Casa DB ทันที
         const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
-        const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
-        if (uid && token) {
+        if (uid && isAuthorized) {
             fetch(`${settings.apiUrl}/v1/music/save_playlist`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: uid, token: token, user_playlists: userPlaylists, char_playlists: charPlaylists })
-            }).catch(e => console.warn("Cloud Sync Error:", e));
+                body: JSON.stringify({ uid: uid, user_playlists: userPlaylists, char_playlists: charPlaylists })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    console.log("[CattaMusic] ☁️ Auto-Saved to Cloud");
+                    // แจ้งเตือนเล็กๆ ว่าเซฟลงคลาวด์แล้ว
+                    const marquee = $("#catta-display-name");
+                    if (marquee.text() !== "☁️ Auto-Saved to Cloud") {
+                        const old = marquee.text();
+                        marquee.text("☁️ อัปเดตคลาวด์แล้ว!");
+                        setTimeout(() => marquee.text(old), 3000);
+                    }
+                } else {
+                    console.error("[CattaMusic] ☁️ Save Failed:", data.error);
+                }
+            })
+            .catch(e => console.error("[CattaMusic] Cloud Sync Error:", e));
         }
     }
 
@@ -900,6 +917,7 @@
                         <button id="catta-btn-save" class="catta-btn-small" style="${S.sB}background:linear-gradient(135deg,${T.main},${T.accent});" title="เพิ่มเพลง"><i class="fa-solid fa-plus"></i></button>
                         <button id="catta-btn-import-txt" class="catta-btn-small" style="${S.sB}background:var(--c-bg-inp, rgba(255,255,255,0.1));color:var(--catta-text-muted, #fff)!important;" title="นำเข้าเพลย์ลิสต์ (.txt)"><i class="fa-solid fa-file-import"></i></button>
                         <button id="catta-btn-export-txt" class="catta-btn-small" style="${S.sB}background:var(--c-bg-inp, rgba(255,255,255,0.1));color:var(--catta-text-muted, #fff)!important;" title="ส่งออกเพลย์ลิสต์ (.txt)"><i class="fa-solid fa-file-export"></i></button>
+                        <button id="catta-btn-cloud-sync" class="catta-btn-small" style="${S.sB}background:#0288d1; margin-left:auto;" title="โหลดข้อมูลล่าสุดจากคลาวด์"><i class="fa-solid fa-cloud-arrow-down"></i> ดึงข้อมูล</button>
                     </div>
                 </div>
                 <div id="catta-list-display" style="${S.lst}"></div>
@@ -1241,6 +1259,42 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+        });
+
+        // ☁️ โหลดข้อมูลจาก Cloud (Manual Sync)
+        $("#catta-btn-cloud-sync").on('click', async () => {
+            if (!isAuthorized) { alert("🔒 โปรดเข้าสู่ระบบ Catta Cafe ก่อนครับ"); return; }
+            
+            const btn = $("#catta-btn-cloud-sync");
+            const oldHtml = btn.html();
+            btn.html('<i class="fa-solid fa-spinner fa-spin"></i>'); // เปลี่ยนไอคอนเป็นกำลังโหลด
+
+            const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
+            try {
+                const res = await fetch(`${settings.apiUrl}/v1/music/load_playlist`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uid: uid })
+                });
+                const data = await res.json();
+                
+                if (data.success && (data.user_playlists || data.char_playlists)) {
+                    if (data.user_playlists) userPlaylists = data.user_playlists;
+                    if (data.char_playlists) charPlaylists = data.char_playlists;
+                    
+                    // บันทึกลงเครื่องทับของเดิม
+                    localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
+                    localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
+                    
+                    updateListSelectors(); updateCoverUI(); renderPlaylist();
+                    notifyUser("☁️ โหลดข้อมูลจาก Cloud สำเร็จ!");
+                } else {
+                    notifyUser("⚠️ ไม่พบข้อมูลที่เคยเซฟไว้บน Cloud");
+                }
+            } catch(e) {
+                console.error("Manual Cloud Sync Error:", e);
+                notifyUser("❌ เชื่อมต่อคลาวด์ล้มเหลว");
+            }
+            btn.html(oldHtml); // คืนค่าปุ่มกลับเป็นเหมือนเดิม
         });
 
         updateListSelectors();
