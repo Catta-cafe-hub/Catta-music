@@ -520,10 +520,13 @@ function saveData() {
     function generateId() { return Math.random().toString(36).substr(2, 9); }
 
     function getActiveCharInfo() {
-        if (window.this_chid !== undefined && window.characters && window.characters[window.this_chid]) {
-            const charData = window.characters[window.this_chid];
+        const charList = (typeof characters !== 'undefined') ? characters : window.characters;
+        const activeId = (typeof this_chid !== 'undefined') ? this_chid : window.this_chid;
+
+        if (activeId !== undefined && charList && charList[activeId]) {
+            const charData = charList[activeId];
             return {
-                id: window.this_chid.toString(),
+                id: activeId.toString(),
                 name: charData.name,
                 avatar: charData.avatar ? `/characters/${charData.avatar}` : ICON_URL
             };
@@ -654,8 +657,11 @@ function saveData() {
         // 🕵️‍♂️ แอบดึงข้อมูลความลับของตัวละครจาก SillyTavern (Description, Personality, Scenario)
         let sourceText = "";
         try {
-            if (window.characters && window.this_chid !== undefined && window.characters[window.this_chid]) {
-                const charData = window.characters[window.this_chid];
+            const charList = (typeof characters !== 'undefined') ? characters : window.characters;
+            const activeId = (typeof this_chid !== 'undefined') ? this_chid : window.this_chid;
+            
+            if (charList && activeId !== undefined && charList[activeId]) {
+                const charData = charList[activeId];
                 sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\\n\\n');
             }
         } catch (e) {
@@ -1634,6 +1640,9 @@ function saveData() {
         let targetId = "chat";
         let targetName = "Unknown";
         let targetAvatar = ICON_URL;
+
+        const charList = (typeof characters !== 'undefined') ? characters : window.characters;
+        const activeId = (typeof this_chid !== 'undefined') ? this_chid : window.this_chid;
 
         // เช็คว่าเปิดการ์ดตัวละครไหนอยู่
         if (window.characters && window.this_chid !== undefined && window.characters[window.this_chid]) {
