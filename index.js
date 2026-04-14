@@ -9,9 +9,6 @@
 (function() {
     "use strict";
 
-    // ══════════════════════════════════════════════
-    // 1. CONSTANTS & CONFIG
-    // ══════════════════════════════════════════════
     const EXT_ID = "cattamusic";
     const WIN_ID = "cattamusic-player-window";
     const BUBBLE_ID = "cattamusic-bubble";
@@ -29,7 +26,7 @@
         posBubble: { top: '80%', left: '10%' }
     };
 
-    // Data Structure แบ่งเป็น 2 ส่วนชัดเจน: ส่วนตัว และ ตัวละคร
+
     let userPlaylists = {
         "default": { name: "เพลย์ลิสต์ส่วนตัวของฉัน", tracks: [] }
     };
@@ -38,8 +35,8 @@
         "chat": { name: "Unknown", avatar: ICON_URL, tracks: [] }
     };
     
-    // State การแสดงผลและการเล่น
-    let viewingTab = 'user'; // 'user' หรือ 'char'
+
+    let viewingTab = 'user'; 
     let viewingId = 'default';
     
     let playingTab = 'user';
@@ -448,18 +445,16 @@
         $('head').append(inlineCSS);
     }
 
-    // ══════════════════════════════════════════════
-    // 3. DATA CORE
-    // ══════════════════════════════════════════════
+
     function loadData() {
         const s = localStorage.getItem(LS_SETTINGS);
         if (s) {
             settings = { ...settings, ...JSON.parse(s) };
         }
         
-        // บังคับเปลี่ยน localhost เป็น URL จริงแบบเด็ดขาด
+
         settings.apiUrl = 'https://st-cattacafe.casa/casa_api';
-        saveData(); // บันทึกทับลงไปทันที
+        saveData(); 
         
         const up = localStorage.getItem(LS_USER_PLAYLISTS);
         if (up) userPlaylists = JSON.parse(up);
@@ -475,7 +470,7 @@ function saveData() {
         localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
         localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
 
-        // ระบบ Cloud Sync: ส่งข้อมูลอัปเดตไปที่ Casa DB ทันที
+
         const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
         if (uid && isAuthorized) {
             fetch(`${settings.apiUrl}/v1/music/save_playlist`, {
@@ -486,7 +481,7 @@ function saveData() {
             .then(data => {
                 if(data.success) {
                     console.log("[CattaMusic] ☁️ Auto-Saved to Cloud");
-                    // แจ้งเตือนเล็กๆ ว่าเซฟลงคลาวด์แล้ว
+
                     const marquee = $("#catta-display-name");
                     if (marquee.text() !== "☁️ Auto-Saved to Cloud") {
                         const old = marquee.text();
@@ -519,7 +514,6 @@ function saveData() {
 
     function generateId() { return Math.random().toString(36).substr(2, 9); }
 
-    // ฟังก์ชันใหม่: กวาดหาข้อมูลตัวละครจาก ST ทุกเวอร์ชั่น
     function getCurrentSTCharacter() {
         if (typeof getContext === 'function') {
             try {
@@ -543,7 +537,7 @@ function saveData() {
         return null;
     }
 
-    // แก้ไขฟังก์ชันเดิม ให้มาดึงข้อมูลจากฟังก์ชันใหม่แทน
+
     function getActiveCharInfo() {
         const stChar = getCurrentSTCharacter();
         if (stChar) {
@@ -558,16 +552,15 @@ function saveData() {
     }
 
     function getTargetChar() {
-        // 1. ลองดึงจากแชทปัจจุบันที่กำลังคุยอยู่
+
         let activeChar = getActiveCharInfo();
         if (activeChar) return activeChar;
-        
-        // 2. ถ้าดึงไม่ได้ (เช่น แชทกลุ่ม หรือเทสระบบ) แต่ผู้ใช้ 'เลือก' ตัวละครจากรายการที่ค้นหาไว้แล้ว ให้ยึดตัวนั้น
+
         if (viewingTab === 'char' && viewingId && viewingId !== 'chat' && charPlaylists[viewingId]) {
             return { id: viewingId, name: charPlaylists[viewingId].name, avatar: charPlaylists[viewingId].avatar };
         }
         
-        // 3. ไม่รู้เลยจริงๆ
+
         return { id: 'chat', name: charPlaylists['chat']?.name || 'Unknown', avatar: charPlaylists['chat']?.avatar || ICON_URL };
     }
 
@@ -585,16 +578,13 @@ function saveData() {
 
         const track = { name: "✨ " + trackName.replace(/^✨\s*/, '').trim(), url: trackUrl.trim(), mood: mood };
         if (!charPlaylists[targetId].tracks.some(t => t.url === track.url)) {
-            charPlaylists[targetId].tracks.unshift(track); // ไว้บนสุด
+            charPlaylists[targetId].tracks.unshift(track);
             saveData();
             updateListSelectors();
         }
         return targetId;
     }
 
-    // ══════════════════════════════════════════════
-    // 4. SCANNER & INLINE UI (Dante Style)
-    // ══════════════════════════════════════════════
     async function scanLatestChat() {
         if (!settings.isEnabled || !isAuthorized) return;
 
@@ -606,7 +596,7 @@ function saveData() {
         
         const originalText = latestMsgBox.innerText;
 
-        // วาด UI ปุ่ม Music ทับข้อความดิบ (Single Track)
+
         chatMessages.forEach(msgBox => {
             if (msgBox.innerHTML.includes('::::') && msgBox.innerHTML.includes('[music]')) {
                 msgBox.innerHTML = msgBox.innerHTML.replace(
@@ -625,18 +615,17 @@ function saveData() {
         if (msgId === lastProcessedMsgId) return;
         lastProcessedMsgId = msgId;
 
-        // A. Audio Catcher (จับทุกลิงก์เสียง)
+
         let foundAnyAudio = false;
         let firstAudioUrl = null;
 
-        // 1. จับแบบเจาะจง (มีปุ่ม inline)
         const musicMatch = originalText.match(CHAT_MUSIC_REGEX);
         if (musicMatch) {
             let targetId = addTrackToActiveChar(musicMatch[1], musicMatch[2], "shared");
             firstAudioUrl = musicMatch[2].trim();
             foundAnyAudio = true;
         } else {
-            // 2. จับแบบหว่านแหหาลิงก์ไฟล์เสียงทั้งหมด (กรณีบอทพิมพ์ลิงก์มาดิบๆ)
+
             const audioRegex = /(https?:\/\/[^\s\)]+\.(?:mp3|wav|ogg|m4a))/gi;
             let audioMatches;
             let extractedTracks = [];
@@ -649,7 +638,7 @@ function saveData() {
                 firstAudioUrl = extractedTracks[0];
                 foundAnyAudio = true;
                 
-                // ยัดลงเพลย์ลิสต์จากหลังมาหน้า เพื่อให้เพลงแรกเด้งขึ้นไปอยู่บนสุดพอดี
+
                 for (let i = extractedTracks.length - 1; i >= 0; i--) {
                     let url = extractedTracks[i];
                     let filename = url.split('/').pop();
@@ -661,7 +650,7 @@ function saveData() {
             }
         }
 
-        // เล่นเพลงทันทีถ้าเจอลิงก์ในแชท (ไม่ว่าจะจากปุ่มหรือจากลิงก์ดิบๆ)
+
         if (foundAnyAudio && firstAudioUrl) {
             let target = getTargetChar();
             let targetId = target.id;
@@ -677,14 +666,11 @@ function saveData() {
             notifyUser("📥 ดึงเพลงจากแชทและเริ่มเล่นทันที!");
         }
 
-        // 🕵️‍♂️ แอบดึงข้อมูลความลับของตัวละครจาก SillyTavern (Description, Personality, Scenario)
         let sourceText = "";
         try {
-            const charList = (typeof characters !== 'undefined') ? characters : window.characters;
-            const activeId = (typeof this_chid !== 'undefined') ? this_chid : window.this_chid;
-            
-            if (charList && activeId !== undefined && charList[activeId]) {
-                const charData = charList[activeId];
+            const stChar = getCurrentSTCharacter();
+            if (stChar) {
+                const charData = stChar.data;
                 sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\\n\\n');
             }
         } catch (e) {
@@ -694,7 +680,7 @@ function saveData() {
         const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
         const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
 
-        // 🧠 ยิงให้ Casa (VPS) เป็นสมองประมวลผล (ดึงเพลย์ลิสต์ลับ + วิเคราะห์อารมณ์)
+
         console.log("[CattaMusic] 🚀 Sending POST to Casa Scan API:", `${settings.apiUrl}/v1/music/scan`);
         console.log("[CattaMusic] 📦 Payload:", { uid, token: token ? "HAS_TOKEN" : "NO_TOKEN", source_text_length: sourceText.length, chat_text_length: originalText.length });
         
@@ -724,12 +710,12 @@ function saveData() {
 
                 let hasNewTracks = false;
 
-                // 1. จัดการ Playlist ที่ Casa แกะมาให้
+
                 if (data.playlist && data.playlist.length > 0) {
                     data.playlist.forEach(track => {
                         if (!charPlaylists[targetId].tracks.some(t => t.url === track.url)) {
                             if (track.name.startsWith('✨')) {
-                                charPlaylists[targetId].tracks.unshift(track); // เพลงแชทให้อยู่บนสุด
+                                charPlaylists[targetId].tracks.unshift(track); 
                             } else {
                                 charPlaylists[targetId].tracks.push(track);
                             }
@@ -744,21 +730,26 @@ function saveData() {
                     if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
                 }
 
-                // 2. รับคำสั่งเล่นเพลงอัตโนมัติ (Mood Sync) จาก Casa
+
                 if (settings.autoMood && data.auto_play_track) {
                     const trackToPlay = charPlaylists[targetId].tracks.findIndex(t => t.url === data.auto_play_track.url);
                     if (trackToPlay !== -1) {
-                        playTrack(trackToPlay, 'char', targetId);
-                        notifyUser("🎭 เปลี่ยนเพลงตามอารมณ์ฉาก!");
+
+                        if (isPlaying && playingTab === 'char' && playingId === targetId && currentTrackIndex === trackToPlay) {
+                            console.log("[CattaMusic] 🎵 เล่นเพลงอารมณ์นี้อยู่แล้ว ข้ามการเปลี่ยนเพลง");
+                        } else {
+                            playTrack(trackToPlay, 'char', targetId);
+                            notifyUser(`🎭 เปลี่ยนอารมณ์เพลง: ${data.auto_play_track.mood.split('|')[0]}`);
+                        }
                     }
                 }
-            }
+            }                
         } catch (e) {
             console.error("CattaMusic API Error (Casa Scan):", e);
         }
     }
 
-    // Global Click Handler สำหรับ Inline Player
+
     $(document).off('click', '.catta-inline-music').on('click', '.catta-inline-music', function() {
         if (!isAuthorized) { alert("🔒 โปรดเข้าสู่ระบบ Catta Cafe"); return; }
         const url = $(this).data('url');
@@ -776,9 +767,6 @@ function saveData() {
         playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === url), 'char', targetId);
     });
 
-    // ══════════════════════════════════════════════
-    // 5. UI COMPONENTS
-    // ══════════════════════════════════════════════
     function buildSettings() {
         if ($(`#${EXT_ID}-settings`).length) return;
         const html = `
@@ -957,7 +945,7 @@ function saveData() {
         <input type="file" id="catta-txt-upload" accept=".txt" style="display:none;">`;
         $("body").append(html);
         
-        // ══ MINIMIZE LOGIC ══
+
         let isMinimized = false;
         
         function setMinimized(mini) {
@@ -965,7 +953,7 @@ function saveData() {
             const win = $(`#${WIN_ID}`);
             if (mini) {
                 win.addClass('minimized');
-                // sync mini bar info
+
                 $('#catta-mini-img').attr('src', $('#catta-cover-img').attr('src'));
                 let songName = $('#catta-display-name').text();
                 if (songName === '✨ Ready to play!') songName = 'Catta Music';
@@ -979,14 +967,14 @@ function saveData() {
         $('#catta-btn-minimize').on('click', () => setMinimized(true));
         $('#catta-btn-maximize').on('click', () => setMinimized(false));
         
-        // Mini bar controls
+
         $('#catta-mini-play').on('click', () => {
             if(isAuthorized) { togglePlay(); $('#catta-mini-play').html(isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>'); }
         });
         $('#catta-mini-prev').on('click', () => isAuthorized && playPrev());
         $('#catta-mini-next').on('click', () => isAuthorized && playNext());
         
-        // Image Upload Logic
+
         $("#catta-cover-img, #catta-mini-img").on('click', function() {
             if (viewingTab === 'user' || (isMinimized && playingTab === 'user')) {
                 $("#catta-cover-upload").click();
@@ -1011,7 +999,7 @@ function saveData() {
             }
         });
 
-        // Audio Progress Logic
+
         function formatTime(seconds) {
             if (isNaN(seconds)) return "00:00";
             const m = Math.floor(seconds / 60);
@@ -1057,7 +1045,7 @@ function saveData() {
         $("#catta-progress, #catta-mini-progress").on('input', (e) => { isDraggingProgress = true; updateRangeBg(e); });
         $("#catta-progress, #catta-mini-progress").on('change', (e) => { seekAudio(e); isDraggingProgress = false; });
         
-        // Buttons
+
         $('#catta-tab-user').on('click', () => switchTab('user'));
         $('#catta-tab-char').on('click', () => switchTab('char'));
         
@@ -1093,7 +1081,7 @@ function saveData() {
             if (settings.showBubble) $(`#${BUBBLE_ID}`).fadeIn(200);
         });
 
-        // -- USER MANAGER --
+
         $("#catta-user-sel").on('change', function() { viewingId = $(this).val(); updateCoverUI(); renderPlaylist(); });
         
         $("#catta-btn-new-user").on('click', () => {
@@ -1115,7 +1103,7 @@ function saveData() {
             }
         });
 
-        // -- CHAR MANAGER --
+
         $("#catta-char-sel").on('change', function() { viewingId = $(this).val(); updateCoverUI(); renderPlaylist(); });
 
         let currentSearchResults = [];
@@ -1194,7 +1182,6 @@ function saveData() {
             scanCharacterCard(true);
         });
 
-        // Add URLs (Supports multiple URLs pasted directly)
         $("#catta-btn-save").on('click', () => {
             if (!isAuthorized) return;
             const inputVal = $("#catta-input-url").val().trim();
@@ -1230,7 +1217,7 @@ function saveData() {
             }
         });
 
-        // 📥 นำเข้า TXT
+
         $("#catta-btn-import-txt").on('click', () => { if(isAuthorized) $("#catta-txt-upload").click(); });
         $("#catta-txt-upload").on('change', function(e) {
             const file = e.target.files[0];
@@ -1270,12 +1257,12 @@ function saveData() {
                     alert("⚠️ ไม่พบลิงก์เพลงที่สามารถเพิ่มได้เลย");
                 }
                 
-                $("#catta-txt-upload").val(""); // reset
+                $("#catta-txt-upload").val(""); 
             };
             reader.readAsText(file);
         });
 
-        // 📤 ส่งออก TXT
+
         $("#catta-btn-export-txt").on('click', () => {
             if (!isAuthorized) return;
             let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
@@ -1283,7 +1270,7 @@ function saveData() {
             
             if(tracks.length === 0) return alert("❌ เพลย์ลิสต์ว่างเปล่า ไม่มีอะไรให้ส่งออก");
             
-            // Format: ชื่อเพลง ตามด้วยบรรทัดลิงก์ ให้ดูเป็นระเบียบ
+
             let content = `🐾 Catta Music Playlist: ${listObj[viewingId].name}\n═══════════════════════════════════════════════════\n`;
             content += tracks.map(t => `${t.name}\n- ${t.url}`).join('\n\n');
             
@@ -1296,7 +1283,6 @@ function saveData() {
             document.body.removeChild(a);
         });
 
-        // ☁️ โหลดข้อมูลจาก Cloud (Manual Sync)
         $("#catta-btn-cloud-sync").on('click', async () => {
             if (!isAuthorized) { alert("🔒 โปรดเข้าสู่ระบบ Catta Cafe ก่อนครับ"); return; }
             
@@ -1316,7 +1302,7 @@ function saveData() {
                     if (data.user_playlists) userPlaylists = data.user_playlists;
                     if (data.char_playlists) charPlaylists = data.char_playlists;
                     
-                    // บันทึกลงเครื่องทับของเดิม
+
                     localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
                     localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
                     
@@ -1329,7 +1315,7 @@ function saveData() {
                 console.error("Manual Cloud Sync Error:", e);
                 notifyUser("❌ เชื่อมต่อคลาวด์ล้มเหลว");
             }
-            btn.html(oldHtml); // คืนค่าปุ่มกลับเป็นเหมือนเดิม
+            btn.html(oldHtml); 
         });
 
         updateListSelectors();
@@ -1340,9 +1326,6 @@ function saveData() {
 
     }
 
-    // ══════════════════════════════════════════════
-    // 6. HELPERS & RENDER
-    // ══════════════════════════════════════════════
     function updateListSelectors() {
         const uSel = $("#catta-user-sel").empty();
         for (const [id, data] of Object.entries(userPlaylists)) uSel.append(`<option value="${id}">${data.name}</option>`);
@@ -1364,7 +1347,6 @@ function saveData() {
         let img = ICON_URL;
         let charTabName = "🐱 ตัวละคร";
 
-        // ถ้าเล่นอยู่ ให้โชว์ปกของอันที่กำลังเล่นเป็นหลัก
         let targetTab = isPlaying ? playingTab : viewingTab;
         let targetId = isPlaying ? playingId : viewingId;
 
@@ -1374,7 +1356,7 @@ function saveData() {
                 title = p.name;
                 img = p.avatar || ICON_URL;
             }
-            // อัปเดตชื่อแท็บตัวละครตามสิ่งที่เปิดดูอยู่
+
             const c = charPlaylists[viewingId];
             if (c && viewingId !== 'chat') charTabName = `🐱 ${c.name}`;
         } else {
@@ -1389,7 +1371,7 @@ function saveData() {
         $("#catta-cover-title").text(title);
         $("#catta-cover-img").attr("src", img);
         
-        // อัปเดตข้อความบนปุ่มแท็บ
+
         const tabBtn = $("#catta-tab-char");
         const currentText = tabBtn.text();
         const newText = charTabName.length > 15 ? charTabName.substring(0, 15) + '...' : charTabName;
@@ -1418,7 +1400,7 @@ function saveData() {
             const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
             
-            // Fix transform jumping
+
             if (!isBubble && el.style.transform.includes('translateX')) {
                 const rect = el.getBoundingClientRect();
                 el.style.transform = "none";
@@ -1466,17 +1448,17 @@ function saveData() {
         }
         
         const T = themes[settings.theme] || themes.pink;
-        // Reset all tab styles
+
         $('.cattamusic-tabs button').css({ color: T.muted, borderBottom: '2px solid transparent' });
-        // Highlight active tab with inline style
+
         $(`#catta-tab-${tab}`).css({ color: T.main, borderBottom: `2px solid ${T.main}` }).addClass('active');
         $(`#catta-tab-${tab === 'user' ? 'char' : 'user'}`).removeClass('active');
         
-        // Hide tools to prevent UI clutter and sync toggle state
+
         const toolsBtn = $("#catta-btn-toggle-tools");
         if(toolsBtn.length) {
             toolsBtn.css('color', 'var(--catta-text-muted, #999)').css('background', 'none');
-            // Trigger a clean close if it was open
+
             if ($("#catta-tools-container").is(':visible')) {
                  $("#catta-tools-container").hide();
                  toolsBtn.data('isOpen', false);
@@ -1535,11 +1517,11 @@ function saveData() {
         $("#catta-display-name").text(list[i].name);
         $("#catta-play-dot").css('opacity','1');
         
-        // sync mini bar
+
         $('#catta-mini-title').text(list[i].name);
         $('#catta-mini-play').html('<i class="fa-solid fa-pause"></i>');
         
-        // แสดง mood pills
+
         if (list[i].mood) {
             const T = themes[settings.theme] || themes.pink;
             const pills = list[i].mood.split('|').map(m => `<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:${T.main}18;color:${T.main};border:1px solid ${T.main}44;font-family:'Itim',cursive;">${m.trim()}</span>`).join('');
@@ -1557,9 +1539,9 @@ function saveData() {
     function togglePlay() {
         const list = viewingTab === 'char' ? charPlaylists[viewingId].tracks : userPlaylists[viewingId].tracks;
         
-        // ถ้ายังไม่ได้เริ่มเล่น หรือไม่มีลิงก์เพลงค้างใน Audio เลย
+
         if (!audioPlayer.src || audioPlayer.src === window.location.href) {
-            // ให้เล่นเพลงแรกใน *หน้าต่างที่กำลังเปิดดูอยู่ (Viewing)*
+
             if (list && list.length > 0) {
                 return playTrack(0, viewingTab, viewingId);
             } else {
@@ -1567,7 +1549,7 @@ function saveData() {
             }
         }
         
-        // ถัามีเพลงเล่นค้างอยู่ ให้สลับเล่น/หยุด
+
         if (isPlaying) { audioPlayer.pause(); $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); $(`#${WIN_ID}`).removeClass('playing'); }
         else { audioPlayer.play(); $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>'); $(`#${WIN_ID}`).addClass('playing'); }
         isPlaying = !isPlaying;
@@ -1627,7 +1609,6 @@ function saveData() {
         win.find('#catta-banner-container').css('background', `linear-gradient(180deg,${T.main}12,transparent)`);
         win.find('.cattamusic-playlist').css('background', T.dark);
 
-        // Active tab indicator
         win.find('.cattamusic-tabs button.active').css('borderBottomColor', T.main).css('color', T.main);
 
         settings.theme = themeName; saveData();
@@ -1649,9 +1630,6 @@ function saveData() {
         marquee.text(msg); setTimeout(() => marquee.text(old), 5000);
     }
 
-    // ══════════════════════════════════════════════
-    // 7. INIT
-    // ══════════════════════════════════════════════
     $(document).on('visual_update_event', () => { scanLatestChat(); });
 
     $(document).on('chat_opened', () => { setTimeout(() => scanCharacterCard(false), 2000); });
@@ -1729,8 +1707,7 @@ function saveData() {
             buildBubble();
             buildPlayerWindow();
             const isAuth = checkAuth();
-            
-            // ระบบ Cloud Sync: ดึงข้อมูลจาก Casa DB เมื่อล็อกอินแล้ว
+
             if (isAuth) {
                 const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
                 const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
@@ -1743,7 +1720,7 @@ function saveData() {
                     if (data.success && (data.user_playlists || data.char_playlists)) {
                         if (data.user_playlists) userPlaylists = data.user_playlists;
                         if (data.char_playlists) charPlaylists = data.char_playlists;
-                        // บันทึกลง Local กันเหนียวอีกรอบ
+
                         localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
                         localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
                         updateListSelectors(); updateCoverUI(); renderPlaylist();
