@@ -1,2 +1,2 @@
-# 🐾 Cattagram — SillyTavern Extension
+
 
