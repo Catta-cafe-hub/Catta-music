@@ -864,8 +864,8 @@ function saveData() {
                 <div style="${S.hdR}">
                     <span id="catta-track-count" style="${S.cnt}">0 tracks</span>
                     <button id="catta-btn-font" style="${S.minB}; font-weight:bold; font-size:10px;" title="เปลี่ยนฟอนต์"><i class="fa-solid fa-font"></i></button>
-                    <button id="catta-close-win" style="${S.cls}">×</button>
                     <button id="catta-btn-lang" style="${S.minB}; font-weight:bold; font-size:10px;">${settings.lang === 'th' ? 'EN' : 'TH'}</button>
+                    <button id="catta-close-win" style="${S.cls}">×</button>            
                 </div>
             </div>
             <div id="catta-mini-bar" style="${S.mini}">
