@@ -1775,6 +1775,61 @@ function saveData() {
         }
     }
 
+    function scanCharacterCard(isManual = false) {
+        const stChar = getCurrentSTCharacter();
+        if (!stChar) {
+            if (isManual) alert("❌ ไม่พบข้อมูลตัวละครที่เปิดอยู่");
+            return;
+        }
+
+        const charData = stChar.data;
+        let sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\n\n');
+        
+        let foundAny = false;
+        let addedCount = 0;
+        
+        let target = getTargetChar();
+        let targetId = target.id;
+
+        const match = PLAYLIST_BLOCK_REGEX.exec(sourceText);
+        if (match && match[1]) {
+            const lines = match[1].split('\n');
+            const urlRegex = /(https?:\/\/[^\s]+)/i;
+            
+            if (!charPlaylists[targetId]) {
+                charPlaylists[targetId] = { name: target.name, avatar: target.avatar, tracks: [] };
+            }
+
+            lines.forEach(line => {
+                const urlMatch = line.match(urlRegex);
+                if (urlMatch) {
+                    const url = urlMatch[1].trim();
+                    if (!charPlaylists[targetId].tracks.some(t => t.url === url)) {
+                        let name = line.replace(url, '').trim();
+                        if (name.startsWith('-')) name = name.substring(1).trim();
+                        if (!name) {
+                            name = url.split('/').pop() || "Unknown";
+                            try { name = decodeURIComponent(name); } catch(e){}
+                            name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
+                        }
+                        charPlaylists[targetId].tracks.push({ name, url, mood: "card-extract" });
+                        addedCount++;
+                        foundAny = true;
+                    }
+                }
+            });
+        }
+
+        if (foundAny) {
+            saveData();
+            updateListSelectors();
+            if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
+            if (isManual) alert(`✅ ดึงเพลงจากการ์ดสำเร็จ ${addedCount} เพลง`);
+        } else {
+            if (isManual) alert("⚠️ ไม่พบแท็ก [Catta-music-playlist] หรือลิงก์เพลงในการ์ดตัวละครนี้");
+        }
+    }
+
     $(document).on('chat_opened', () => { setTimeout(() => scanCharacterCard(false), 2000); });
 
     async function init() {
