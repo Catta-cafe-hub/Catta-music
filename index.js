@@ -36,7 +36,8 @@ const i18n = {
             cloudBtn: " ดึงข้อมูล", confirmChar: " เพิ่มตัวละครนี้",
             delPlaylist: "ลบเพลย์ลิสต์ปัจจุบัน", delChar: "ลบตัวละครปัจจุบัน", scanCard: " ดึงเพลงจากการ์ดตัวละครนี้",
             ready: "✨ พร้อมเล่นแล้ว!", autoSave: "☁️ อัปเดตคลาวด์แล้ว!",
-            createBtn: " สร้าง", newPlaylistPlace: "ตั้งชื่อเพลย์ลิสต์ส่วนตัวใหม่..."
+            createBtn: " สร้าง", newPlaylistPlace: "ตั้งชื่อเพลย์ลิสต์ส่วนตัวใหม่...",
+            noChar: "ไม่มีตัวละคร"
         },
         en: {
             userTab: "👤 Personal", charTab: "🐱 Character", tools: "Manage",
@@ -45,7 +46,8 @@ const i18n = {
             cloudBtn: " Cloud Sync", confirmChar: " Add this character",
             delPlaylist: "Delete Current Playlist", delChar: "Delete Current Character", scanCard: " Extract from Card",
             ready: "✨ Ready to play!", autoSave: "☁️ Auto-Saved to Cloud",
-            createBtn: " Create", newPlaylistPlace: "New personal playlist name..."
+            createBtn: " Create", newPlaylistPlace: "New personal playlist name...",
+            noChar: "No Character"
         },
         zh: {
             userTab: "👤 个人", charTab: "🐱 角色", tools: "管理",
@@ -54,7 +56,8 @@ const i18n = {
             cloudBtn: " 云端同步", confirmChar: " 添加该角色",
             delPlaylist: "删除当前歌单", delChar: "删除当前角色", scanCard: " 从角色卡提取",
             ready: "✨ 准备播放！", autoSave: "☁️ 已自动保存到云端！",
-            createBtn: " 创建", newPlaylistPlace: "新个人歌单名称..."
+            createBtn: " 创建", newPlaylistPlace: "新个人歌单名称...",
+            noChar: "未选择角色"
         }
     };
 
@@ -1422,20 +1425,34 @@ function saveData() {
         uSel.val(viewingTab === 'user' ? viewingId : 'default');
 
         const cSel = $("#catta-char-sel").empty();
-        for (const [id, data] of Object.entries(charPlaylists)) cSel.append(`<option value="${id}">${data.name}</option>`);
+        const activeChar = getActiveCharInfo();
+        const t = i18n[settings.lang] || i18n.th;
+        const defaultChatName = activeChar ? activeChar.name : t.noChar;
+        
+        for (const [id, data] of Object.entries(charPlaylists)) {
+            // ถ้าเป็น 'chat' ให้แสดงชื่อเป็นตัวละครปัจจุบันแทน หรือแสดงว่าไม่ได้เข้าแชท
+            const displayName = id === 'chat' ? defaultChatName : data.name;
+            cSel.append(`<option value="${id}">${displayName}</option>`);
+        }
+        
         cSel.val(viewingTab === 'char' ? viewingId : 'chat');
     }
 
     function updateCoverUI() {
+        const t = i18n[settings.lang] || i18n.th;
         let activeChar = getActiveCharInfo();
         if (charPlaylists["chat"]) {
-            charPlaylists["chat"].name = activeChar ? activeChar.name : "Unknown";
-            if(activeChar && activeChar.avatar) charPlaylists["chat"].avatar = activeChar.avatar;
+            charPlaylists["chat"].name = activeChar ? activeChar.name : t.noChar;
+            if(activeChar && activeChar.avatar) {
+                charPlaylists["chat"].avatar = activeChar.avatar;
+            } else {
+                charPlaylists["chat"].avatar = ICON_URL;
+            }
         }
 
         let title = "Catta Music";
         let img = ICON_URL;
-        let charTabName = "🐱 ตัวละคร";
+        let charTabName = t.charTab;
 
         let targetTab = isPlaying ? playingTab : viewingTab;
         let targetId = isPlaying ? playingId : viewingId;
@@ -1454,7 +1471,11 @@ function saveData() {
             if (p) { 
                 title = p.name; 
                 img = p.avatar; 
-                if (targetId !== 'chat') charTabName = `🐱 ${p.name}`;
+                if (targetId !== 'chat') {
+                    charTabName = `🐱 ${p.name}`;
+                } else if (!activeChar) {
+                    charTabName = `🐱 ${t.noChar}`;
+                }
             }
         }
         
