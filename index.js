@@ -355,21 +355,22 @@ const i18n = {
 
         /* ── INLINE MUSIC PILL (in chat) ── */
         .catta-inline-music {
-            display:inline-flex!important; align-items:center!important; gap:10px!important;
-            background:rgba(20,10,40,.9)!important; border:1px solid rgba(255,107,157,.4)!important;
+            display:flex!important; width:fit-content!important; margin:10px auto!important;
+            align-items:center!important; gap:10px!important;
+            background:var(--c-bg-2, rgba(20,10,40,.8))!important; border:1px solid var(--catta-main, rgba(255,107,157,.4))!important;
             color:#fff!important; padding:8px 16px!important; border-radius:20px!important;
             cursor:pointer!important; font-family:var(--catta-font)!important; font-size:13px!important;
             box-shadow:0 4px 16px rgba(0,0,0,.35)!important;
-            transition:all .25s cubic-bezier(.34,1.56,.64,1)!important; margin:5px 0!important;
+            transition:all .25s cubic-bezier(.34,1.56,.64,1)!important;
         }
         .catta-inline-music:hover {
             transform:translateY(-3px)!important;
-            box-shadow:0 10px 28px rgba(255,107,157,.3)!important;
+            box-shadow:0 10px 28px var(--catta-glow, rgba(255,107,157,.3))!important;
         }
-        .catta-inline-music .music-icon { font-size:18px!important; }
+        .catta-inline-music .music-icon { font-size:18px!important; color:var(--catta-main, #ff6b9d)!important; filter: drop-shadow(0 0 6px var(--catta-glow, rgba(255,107,157,.3))); }
         .catta-inline-music .music-info { display:flex!important; flex-direction:column!important; line-height:1.3!important; }
         .catta-inline-music .music-title { font-weight:400!important; color:#fff!important; font-family:var(--catta-font)!important; }
-        .catta-inline-music .music-status { font-size:9px!important; text-transform:uppercase!important; letter-spacing:1px!important; font-family:var(--catta-font)!important; }
+        .catta-inline-music .music-status { font-size:9px!important; text-transform:uppercase!important; letter-spacing:1px!important; font-family:var(--catta-font)!important; color:var(--catta-main, #ff6b9d)!important; }
 
         /* ── SETTINGS ── */
         .cattamusic-settings-block {
