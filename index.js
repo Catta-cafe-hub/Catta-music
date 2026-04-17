@@ -17,7 +17,7 @@
     const LS_SETTINGS = "cattamusic_settings";
     const ICON_URL = "https://file.garden/aZx9zS2e7UEiSmfr/cattamusic.png";
 
-    const CHAT_MUSIC_REGEX = /::::\s*\[music\]\s*(.*?)\s*\((https?:\/\/([^\s)]+))\)\s*::::/i;
+    const CHAT_MUSIC_REGEX = /::::\s*\[music\]\s*(.*?)\s*\(([^)]+)\)\s*::::/i;
     const PLAYLIST_BLOCK_REGEX = /\[Catta-music-playlist\s*([\s\S]*?)\]/i;
 
     let settings = {
@@ -647,7 +647,7 @@ function saveData() {
         chatMessages.forEach(msgBox => {
             if (msgBox.innerHTML.includes('::::') && msgBox.innerHTML.includes('[music]')) {
                 msgBox.innerHTML = msgBox.innerHTML.replace(
-                    /::::\s*\[music\]\s*(.*?)\s*\((https?:\/\/[^\s)]+)\)\s*::::/gi,
+                    /::::\s*\[music\]\s*(.*?)\s*\(([^)]+)\)\s*::::/gi,
                     `<div class="catta-inline-music" data-url="$2" data-name="$1">
                         <div class="music-icon"><i class="fa-solid fa-compact-disc"></i></div>
                         <div class="music-info">
@@ -790,6 +790,12 @@ function saveData() {
         if (!isAuthorized) { alert("🔒 โปรดเข้าสู่ระบบ Catta Cafe"); return; }
         const url = $(this).data('url');
         const name = $(this).data('name');
+
+        // ป้องกันบอทส่งลิงก์หลอกๆ มา แล้วทำให้เครื่องเล่นแฮงค์
+        if (!url || !url.startsWith('http')) {
+            alert("❌ ไม่สามารถเล่นได้ เนื่องจากลิงก์เพลงไม่ถูกต้อง:\n\n" + url);
+            return;
+        }
         
         let targetId = addTrackToActiveChar(name, url, "shared");
         
