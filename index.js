@@ -577,8 +577,16 @@ function saveData() {
         const stChar = getCurrentSTCharacter();
         if (stChar) {
             const charData = stChar.data;
+            // ใช้ "ชื่อตัวละคร" มาเป็น ID เพื่อความคงทน ป้องกันปัญหาเวลาลูกค้าเปลี่ยนรูปภาพการ์ด
+            let persistentId = stChar.id.toString();
+            if (charData.name) {
+                persistentId = charData.name.replace(/\s+/g, '_').toLowerCase();
+            } else if (charData.avatar) {
+                persistentId = charData.avatar.split('.').slice(0, -1).join('.') || charData.avatar;
+            }
+            
             return {
-                id: stChar.id.toString(),
+                id: persistentId,
                 name: charData.name,
                 avatar: charData.avatar ? `/characters/${charData.avatar}` : ICON_URL
             };
@@ -1237,7 +1245,10 @@ function saveData() {
             if (idx === null || !currentSearchResults[idx]) return;
             
             const selectedChar = currentSearchResults[idx];
-            charPlaylists[selectedChar.id] = { name: selectedChar.name, avatar: selectedChar.avatar || ICON_URL, tracks: [] };
+            // ตรวจสอบว่ามีเพลย์ลิสต์ของตัวละครนี้อยู่แล้วหรือไม่ เพื่อป้องกันการลบเพลงเก่าทิ้ง
+            if (!charPlaylists[selectedChar.id]) {
+                charPlaylists[selectedChar.id] = { name: selectedChar.name, avatar: selectedChar.avatar || ICON_URL, tracks: [] };
+            }
             
             $("#catta-char-search-results").hide();
             $("#catta-search-char").val("");
@@ -1654,6 +1665,11 @@ function saveData() {
         if(!win.length) return;
 
         const isLight = T.type === 'light';
+
+        // ปล่อยตัวแปร CSS ให้ Global เพื่อให้ปุ่มลิงก์เพลงในแชท (Inline Music Pill) ใช้สีธีมและฟอนต์ตามไปด้วย
+        document.documentElement.style.setProperty('--catta-main', T.main);
+        document.documentElement.style.setProperty('--catta-glow', T.glow);
+        document.documentElement.style.setProperty('--catta-font', settings.fontFamily === 'Kanit' ? "'Kanit', sans-serif" : "'Itim', cursive");
 
         win.css({ 
             background: T.dark, 
