@@ -633,9 +633,11 @@ function saveData() {
     }
 
     async function scanLatestChat() {
-        console.log("[CattaMusic] 🔍 เริ่มต้นการสแกนแชท...");
+        console.log("[CattaMusic] 🔍 เริ่มต้นการสแกนแชท (Local Trigger Mode)...");
         if (!settings.isEnabled) { console.log("[CattaMusic] ❌ ปิดการทำงานอยู่"); return; }
-        if (!isAuthorized) { console.log("[CattaMusic] 🔒 ข้ามการสแกน: ยังไม่ได้ Login (Token ไม่มี)"); return; }
+        
+        // หมายเหตุ: เอาการเช็ค isAuthorized ออกจากการสแกนแชททั่วไป เพื่อให้ใช้ Local Trigger ได้แม้ไม่ได้ล็อกอิน
+        // แต่ยังเก็บไว้ใช้ตรวจสอบก่อนเซฟลง Cloud
 
         const chatMessages = document.querySelectorAll('.mes_text');
         if (chatMessages.length === 0) { console.log("[CattaMusic] ❌ ไม่พบกล่องข้อความ"); return; }
@@ -661,129 +663,119 @@ function saveData() {
         });
 
         if (originalText === lastProcessedMsgId) {
-
             return;
         }
         lastProcessedMsgId = originalText;
 
-        console.log("[CattaMusic] ⏱️ เริ่มนับถอยหลัง 1.5 วินาที...");
-        clearTimeout(window.cattaScanTimer);
-        window.cattaScanTimer = setTimeout(async () => {
-            console.log("[CattaMusic] 🚀 ครบเวลา! เริ่มส่งให้ Casa วิเคราะห์อารมณ์");
+        console.log("[CattaMusic] ⏱️ เริ่มประมวลผล Local Trigger...");
+        
+        let foundAnyAudio = false;
+        let firstAudioUrl = null;
 
-            let foundAnyAudio = false;
-            let firstAudioUrl = null;
-
-            const musicMatch = originalText.match(CHAT_MUSIC_REGEX);
-            if (musicMatch) {
-                let targetId = addTrackToActiveChar(musicMatch[1], musicMatch[2], "shared");
-                firstAudioUrl = musicMatch[2].trim();
+        const musicMatch = originalText.match(CHAT_MUSIC_REGEX);
+        if (musicMatch) {
+            let targetId = addTrackToActiveChar(musicMatch[1], musicMatch[2], "shared");
+            firstAudioUrl = musicMatch[2].trim();
+            foundAnyAudio = true;
+        } else {
+            const audioRegex = /(https?:\/\/[^\s\)]+\.(?:mp3|wav|ogg|m4a))/gi;
+            let audioMatches;
+            let extractedTracks = [];
+            while ((audioMatches = audioRegex.exec(originalText)) !== null) {
+                extractedTracks.push(audioMatches[1]);
+            }
+            if (extractedTracks.length > 0) {
+                firstAudioUrl = extractedTracks[0];
                 foundAnyAudio = true;
-            } else {
-                const audioRegex = /(https?:\/\/[^\s\)]+\.(?:mp3|wav|ogg|m4a))/gi;
-                let audioMatches;
-                let extractedTracks = [];
-                while ((audioMatches = audioRegex.exec(originalText)) !== null) {
-                    extractedTracks.push(audioMatches[1]);
-                }
-                if (extractedTracks.length > 0) {
-                    firstAudioUrl = extractedTracks[0];
-                    foundAnyAudio = true;
-                    for (let i = extractedTracks.length - 1; i >= 0; i--) {
-                        let url = extractedTracks[i];
-                        let filename = url.split('/').pop();
-                        try { filename = decodeURIComponent(filename); } catch(e) {}
-                        filename = filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
-                        addTrackToActiveChar(filename, url, "auto-detect");
-                    }
+                for (let i = extractedTracks.length - 1; i >= 0; i--) {
+                    let url = extractedTracks[i];
+                    let filename = url.split('/').pop();
+                    try { filename = decodeURIComponent(filename); } catch(e) {}
+                    filename = filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
+                    addTrackToActiveChar(filename, url, "auto-detect");
                 }
             }
+        }
 
-            if (foundAnyAudio && firstAudioUrl) {
-                let target = getTargetChar();
-                let targetId = target.id;
-                const win = $(`#${WIN_ID}`);
-                if (!win.is(':visible') && settings.showBubble) {
-                    win.fadeIn(200);
-                    $(`#${BUBBLE_ID}`).fadeOut(200);
+        if (foundAnyAudio && firstAudioUrl) {
+            let target = getTargetChar();
+            let targetId = target.id;
+            const win = $(`#${WIN_ID}`);
+            if (!win.is(':visible') && settings.showBubble) {
+                win.fadeIn(200);
+                $(`#${BUBBLE_ID}`).fadeOut(200);
+            }
+            switchTab('char', targetId);
+            playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === firstAudioUrl), 'char', targetId);
+            notifyUser("📥 ดึงเพลงจากแชทและเริ่มเล่นทันที!");
+            return; // ถ้ามีลิงก์เพลงส่งมาตรงๆ ให้เล่นลิงก์นั้นก่อน ไม่ต้องสนอารมณ์
+        }
+
+        // --- LOCAL MOOD TRIGGER SYSTEM ---
+        if (!settings.autoMood) return;
+
+        let target = getTargetChar();
+        let targetId = target.id;
+        
+        if (!charPlaylists[targetId] || !charPlaylists[targetId].tracks || charPlaylists[targetId].tracks.length === 0) {
+            console.log("[CattaMusic] ❌ ไม่มีเพลงในเพลย์ลิสต์ตัวละคร ข้ามการจับอารมณ์");
+            return;
+        }
+
+        const textToScan = originalText.toLowerCase();
+        let bestMatchTrack = null;
+        let highestScore = 0;
+        let matchedMoods = [];
+
+        // 1. รวบรวมเพลงที่มีการตั้งค่า Mood (Trigger words)
+        const availableTracks = charPlaylists[targetId].tracks.filter(t => t.mood && t.mood !== "shared" && t.mood !== "auto-detect" && t.mood !== "card-extract");
+
+        if (availableTracks.length === 0) return;
+
+        // 2. ให้คะแนนแต่ละเพลงตามจำนวนคำที่เจอ
+        availableTracks.forEach((track, index) => {
+            const keywords = track.mood.toLowerCase().split('|').map(k => k.trim()).filter(k => k.length > 0);
+            let score = 0;
+            
+            keywords.forEach(keyword => {
+                // ค้นหาจำนวนคำที่ตรงกันในข้อความ
+                const regex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                const matches = textToScan.match(regex);
+                if (matches) {
+                    score += matches.length;
                 }
-                switchTab('char', targetId);
-                playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === firstAudioUrl), 'char', targetId);
-                notifyUser("📥 ดึงเพลงจากแชทและเริ่มเล่นทันที!");
-            }
+            });
 
-            let sourceText = "";
-            try {
-                const stChar = getCurrentSTCharacter();
-                if (stChar) {
-                    const charData = stChar.data;
-                    sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\\n\\n');
+            if (score > 0) {
+                if (score > highestScore) {
+                    highestScore = score;
+                    bestMatchTrack = { track, index };
+                    matchedMoods = [bestMatchTrack];
+                } else if (score === highestScore) {
+                    // ถ้าคะแนนเท่ากัน เก็บเข้า list ไว้สุ่ม
+                    matchedMoods.push({ track, index });
                 }
-            } catch (e) {
-                console.warn("CattaMusic: ไม่สามารถเข้าถึงข้อมูลตัวละครได้", e);
             }
+        });
 
-            const uid = localStorage.getItem('catta_uid') || localStorage.getItem('dante_uid');
-            const token = localStorage.getItem('catta_auth_token') || localStorage.getItem('dante_token');
+        // 3. ตัดสินใจเล่นเพลง
+        if (matchedMoods.length > 0) {
+            // สุ่มจากกลุ่มที่ได้คะแนนสูงสุดเท่ากัน
+            const selected = matchedMoods[Math.floor(Math.random() * matchedMoods.length)];
+            const trackIndex = charPlaylists[targetId].tracks.findIndex(t => t.url === selected.track.url);
 
-            try {
-                const res = await fetch(`${settings.apiUrl}/v1/music/scan`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ uid: uid, token: token, source_text: sourceText, chat_text: originalText })
-                });
-                
-                const data = await res.json();
-                console.log("[CattaMusic] 📥 Casa ตอบกลับมาว่า:", data);
-
-                if (data.success) {
-                    let target = getTargetChar();
-                    let targetId = target.id;
-                    
-                    if (!charPlaylists[targetId]) {
-                        charPlaylists[targetId] = { name: target.name, avatar: target.avatar, tracks: [] };
-                    }
-
-                    let hasNewTracks = false;
-
-                    if (data.playlist && data.playlist.length > 0) {
-                        data.playlist.forEach(track => {
-                            if (!charPlaylists[targetId].tracks.some(t => t.url === track.url)) {
-                                if (track.name.startsWith('✨')) {
-                                    charPlaylists[targetId].tracks.unshift(track); 
-                                } else {
-                                    charPlaylists[targetId].tracks.push(track);
-                                }
-                                hasNewTracks = true;
-                            }
-                        });
-                    }
-
-                    if (hasNewTracks) {
-                        saveData();
-                        updateListSelectors();
-                        if (viewingTab === 'char' && viewingId === targetId) renderPlaylist();
-                    }
-
-                    if (settings.autoMood && data.auto_play_track) {
-                        const trackToPlay = charPlaylists[targetId].tracks.findIndex(t => t.url === data.auto_play_track.url);
-                        if (trackToPlay !== -1) {
-                            if (isPlaying && playingTab === 'char' && playingId === targetId && currentTrackIndex === trackToPlay) {
-                                console.log("[CattaMusic] 🎵 เพลงนี้เล่นอยู่แล้ว ข้ามการเปลี่ยนเพลง");
-                            } else {
-                                console.log("[CattaMusic] 🎭 สั่งเล่นเพลง:", data.auto_play_track.name);
-                                playTrack(trackToPlay, 'char', targetId);
-                                notifyUser(`🎭 เปลี่ยนอารมณ์เพลง: ${data.auto_play_track.mood.split('|')[0]}`);
-                            }
-                        } else {
-                            console.log("[CattaMusic] ⚠️ หาเพลงไม่เจอใน Playlist:", data.auto_play_track.url);
-                        }
-                    }
-                }                
-            } catch (e) {
-                console.error("CattaMusic API Error (Casa Scan):", e);
+            if (trackIndex !== -1) {
+                if (isPlaying && playingTab === 'char' && playingId === targetId && currentTrackIndex === trackIndex) {
+                    console.log("[CattaMusic] 🎵 เพลงนี้เล่นอยู่แล้ว ข้ามการเปลี่ยนเพลง");
+                } else {
+                    console.log(`[CattaMusic] 🎭 Local Trigger เจอคำ! สั่งเล่นเพลง: ${selected.track.name} (Score: ${highestScore})`);
+                    playTrack(trackIndex, 'char', targetId);
+                    notifyUser(`🎭 เปลี่ยนเพลงตามคำ (Trigger): ${selected.track.mood.split('|')[0]}`);
+                }
             }
-        }, 1500);
+        } else {
+             console.log("[CattaMusic] ☁️ ไม่พบคำ Trigger ที่ตรงกับเพลงใดๆ ในเพลย์ลิสต์");
+        }
     }
 
 
@@ -1807,12 +1799,22 @@ function saveData() {
                     if (!charPlaylists[targetId].tracks.some(t => t.url === url)) {
                         let name = line.replace(url, '').trim();
                         if (name.startsWith('-')) name = name.substring(1).trim();
+                        
+                        // ถอดอารมณ์เพลง (Mood) ออกมาจากชื่อเพลง (ถ้ามีวงเล็บเหลี่ยมเช่น [Sad])
+                        let extractedMood = "card-extract";
+                        const moodMatch = name.match(/\[(.*?)\]/);
+                        if (moodMatch) {
+                            extractedMood = moodMatch[1].trim();
+                            name = name.replace(moodMatch[0], '').trim();
+                        }
+
                         if (!name) {
                             name = url.split('/').pop() || "Unknown";
                             try { name = decodeURIComponent(name); } catch(e){}
                             name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
                         }
-                        charPlaylists[targetId].tracks.push({ name, url, mood: "card-extract" });
+                        
+                        charPlaylists[targetId].tracks.push({ name, url, mood: extractedMood });
                         addedCount++;
                         foundAny = true;
                     }
