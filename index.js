@@ -1786,37 +1786,66 @@ function saveData() {
         const match = PLAYLIST_BLOCK_REGEX.exec(sourceText);
         if (match && match[1]) {
             const lines = match[1].split('\n');
-            const urlRegex = /(https?:\/\/[^\s]+)/i;
+            const urlRegex = /(https?:\/\/[^\s;]+)/i;
             
             if (!charPlaylists[targetId]) {
                 charPlaylists[targetId] = { name: target.name, avatar: target.avatar, tracks: [] };
             }
 
             lines.forEach(line => {
-                const urlMatch = line.match(urlRegex);
-                if (urlMatch) {
-                    const url = urlMatch[1].trim();
-                    if (!charPlaylists[targetId].tracks.some(t => t.url === url)) {
-                        let name = line.replace(url, '').trim();
-                        if (name.startsWith('-')) name = name.substring(1).trim();
-                        
-                        // ถอดอารมณ์เพลง (Mood) ออกมาจากชื่อเพลง (ถ้ามีวงเล็บเหลี่ยมเช่น [Sad])
-                        let extractedMood = "card-extract";
-                        const moodMatch = name.match(/\[(.*?)\]/);
-                        if (moodMatch) {
-                            extractedMood = moodMatch[1].trim();
-                            name = name.replace(moodMatch[0], '').trim();
-                        }
+                if (!line.trim() || line.trim() === ']') return;
 
-                        if (!name) {
-                            name = url.split('/').pop() || "Unknown";
-                            try { name = decodeURIComponent(name); } catch(e){}
-                            name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
-                        }
+                // รองรับรูปแบบใหม่: ชื่อเพลง; https://ลิงก์; อารมณ์|อารมณ์
+                if (line.includes(';')) {
+                    const parts = line.split(';');
+                    if (parts.length >= 2) {
+                        let name = parts[0].replace(/^[0-9.-]+\s*/, '').trim(); // ลบตัวเลข/ขีดข้างหน้า
+                        const urlMatch = parts[1].match(urlRegex);
                         
-                        charPlaylists[targetId].tracks.push({ name, url, mood: extractedMood });
-                        addedCount++;
-                        foundAny = true;
+                        if (urlMatch) {
+                            const url = urlMatch[1].trim();
+                            let extractedMood = "card-extract";
+                            
+                            // ถ้ามีส่วนที่ 3 (อารมณ์)
+                            if (parts.length >= 3 && parts[2].trim()) {
+                                extractedMood = parts[2].trim();
+                            }
+
+                            if (!charPlaylists[targetId].tracks.some(t => t.url === url)) {
+                                charPlaylists[targetId].tracks.push({ name, url, mood: extractedMood });
+                                addedCount++;
+                                foundAny = true;
+                            }
+                        }
+                    }
+                } 
+                // รองรับรูปแบบเดิม (Fallback): - ชื่อเพลง [อารมณ์] https://ลิงก์
+                else {
+                    const urlMatch = line.match(urlRegex);
+                    if (urlMatch) {
+                        const url = urlMatch[1].trim();
+                        if (!charPlaylists[targetId].tracks.some(t => t.url === url)) {
+                            let name = line.replace(url, '').trim();
+                            if (name.startsWith('-')) name = name.substring(1).trim();
+                            
+                            // ถอดอารมณ์เพลง (Mood) ออกมาจากชื่อเพลง (ถ้ามีวงเล็บเหลี่ยมเช่น [Sad])
+                            let extractedMood = "card-extract";
+                            const moodMatch = name.match(/\[(.*?)\]/);
+                            if (moodMatch) {
+                                extractedMood = moodMatch[1].trim();
+                                name = name.replace(moodMatch[0], '').trim();
+                            }
+
+                            if (!name) {
+                                name = url.split('/').pop() || "Unknown";
+                                try { name = decodeURIComponent(name); } catch(e){}
+                                name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
+                            }
+                            
+                            charPlaylists[targetId].tracks.push({ name, url, mood: extractedMood });
+                            addedCount++;
+                            foundAny = true;
+                        }
                     }
                 }
             });
