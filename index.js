@@ -79,30 +79,6 @@ const i18n = {
     let currentTrackIndex = -1;
 
     let audioPlayer = new Audio();
-    // --- CROSS-EXTENSION AUDIO SYNC (Pause basic-music when Catta-music plays) ---
-    audioPlayer.addEventListener('play', () => {
-        if (window._cattaAudioPlayer && !window._cattaAudioPlayer.paused) {
-            window._cattaAudioPlayer.pause();
-            if (window._cattaActiveBtn) {
-                window._cattaActiveBtn.innerHTML = '<i class="fa-solid fa-play" style="margin-left: 2px;"></i>';
-                window._cattaActiveBtn.classList.remove('playing');
-                window._cattaActiveBtn = null;
-            }
-        }
-    });
-    
-    // Allow basic-music to pause Catta-music
-    window.cattaPauseMainMusic = function() {
-        if (isPlaying && audioPlayer && !audioPlayer.paused) {
-            audioPlayer.pause();
-            isPlaying = false;
-            $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>');
-            $(`#${WIN_ID}`).removeClass('playing');
-            updateCoverUI();
-        }
-    };
-    // -----------------------------------------------------------------------------
-
     let isPlaying = false;
     let volume = 3;
     let loopMode = 0;
@@ -1710,7 +1686,7 @@ function saveData() {
 
         const isLight = T.type === 'light';
 
-    
+        // ปล่อยตัวแปร CSS ให้ Global เพื่อให้ปุ่มลิงก์เพลงในแชท (Inline Music Pill) ใช้สีธีมและฟอนต์ตามไปด้วย
         document.documentElement.style.setProperty('--catta-main', T.main);
         document.documentElement.style.setProperty('--catta-glow', T.glow);
         document.documentElement.style.setProperty('--catta-font', settings.fontFamily === 'Kanit' ? "'Kanit', sans-serif" : "'Itim', cursive");
