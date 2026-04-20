@@ -9,6 +9,28 @@
 (function() {
     "use strict";
 
+    // --- MODULE REGISTRATION ---
+    if (window.CattaUI) {
+        window.CattaUI.registerModule({
+            id: "cattamusic",
+            name: "🎶 Catta Music (Main Player)",
+            desc: "เครื่องเล่นเพลงหลัก มีหน้าต่าง Playlist และเชื่อมต่อระบบเสียงข้ามโมดูล",
+            defaultState: true,
+            rules: [
+                {
+                    findRegex: "(::::\\s*\\[music\\]\\s*(.*?)\\s*\\(([^)]+)\\)\\s*::::)",
+                    replaceString: function(match, full, title, url) {
+                        if (typeof window.cattaMusicAddSharedTrack === 'function') {
+                            window.cattaMusicAddSharedTrack(title, url);
+                        }
+                        return '<div class="catta-ios-music" style="font-size:10px; color:#aaa; font-style:italic;">🎶 เพลงถูกเพิ่มเข้า Catta Music แล้ว: ' + title + '</div>';
+                    }
+                }
+            ]
+        });
+    }
+
+
     const EXT_ID = "cattamusic";
     const WIN_ID = "cattamusic-player-window";
     const BUBBLE_ID = "cattamusic-bubble";
@@ -78,7 +100,32 @@ const i18n = {
     let playingId = 'default';
     let currentTrackIndex = -1;
 
+    
     let audioPlayer = new Audio();
+    // --- CROSS-EXTENSION AUDIO SYNC (Pause basic-music when Catta-music plays) ---
+    audioPlayer.addEventListener('play', () => {
+        if (window._cattaAudioPlayer && !window._cattaAudioPlayer.paused) {
+            window._cattaAudioPlayer.pause();
+            if (window._cattaActiveBtn) {
+                window._cattaActiveBtn.innerHTML = '<i class="fa-solid fa-play" style="margin-left: 2px;"></i>';
+                window._cattaActiveBtn.classList.remove('playing');
+                window._cattaActiveBtn = null;
+            }
+        }
+    });
+
+    // Allow basic-music to pause Catta-music
+    window.cattaPauseMainMusic = function() {
+        if (isPlaying && audioPlayer && !audioPlayer.paused) {
+            audioPlayer.pause();
+            isPlaying = false;
+            $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>');
+            $(`#${WIN_ID}`).removeClass('playing');
+            updateCoverUI();
+        }
+    };
+    // -----------------------------------------------------------------------------
+
     let isPlaying = false;
     let volume = 3;
     let loopMode = 0;
@@ -611,6 +658,7 @@ function saveData() {
         return { id: 'chat', name: charPlaylists['chat']?.name || 'Unknown', avatar: charPlaylists['chat']?.avatar || ICON_URL };
     }
 
+    window.cattaMusicAddSharedTrack = function(name, url) { return addTrackToActiveChar(name, url, 'shared'); };
     function addTrackToActiveChar(trackName, trackUrl, mood) {
         let target = getTargetChar();
         let targetId = target.id;
@@ -1750,19 +1798,15 @@ function saveData() {
     function setupChatRadar() {
 
         if (typeof eventSource !== 'undefined' && typeof event_types !== 'undefined') {
-            eventSource.on(event_types.MESSAGE_RECEIVED, () => { console.log("[CattaMusic] 🔔 Event: MESSAGE_RECEIVED"); scanLatestChat(); });
-            eventSource.on(event_types.GENERATION_STOPPED, () => { console.log("[CattaMusic] 🔔 Event: GENERATION_STOPPED"); scanLatestChat(); });
-            eventSource.on(event_types.MESSAGE_EDITED, () => { console.log("[CattaMusic] 🔔 Event: MESSAGE_EDITED"); scanLatestChat(); });
+            // CattaCore handles this now scanLatestChat(); });
+            // GENERATION_STOPPED handled via rules
+            // GENERATION_STOPPED handled via rules
         }
 
 
         const chatBox = document.getElementById('chat');
         if (chatBox) {
-            const observer = new MutationObserver(() => {
-
-                scanLatestChat();
-            });
-            observer.observe(chatBox, { childList: true, subtree: true });
+            // MutationObserver removed, CattaCore handles this
             console.log("[CattaMusic] 📡 ติดตั้ง Visual Radar สำเร็จ!");
         }
     }
@@ -1861,7 +1905,7 @@ function saveData() {
         }
     }
 
-    $(document).on('chat_opened', () => { setTimeout(() => scanCharacterCard(false), 2000); });
+    // Chat opened handled by standard CattaUI rules });
 
     async function init() {
         loadData();
@@ -1895,7 +1939,7 @@ function saveData() {
 
             setupChatRadar();
 
-            setTimeout(scanLatestChat, 1000);
+            // scanLatestChat handled by rules
         }
     }
 
