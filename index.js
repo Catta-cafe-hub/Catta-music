@@ -6,7 +6,7 @@
  * + INLINE MUSIC PLAYER & FULL-BANNER CHARACTER PLAYLISTS
  */
 
-(function() {
+(function () {
     "use strict";
 
     // --- MODULE REGISTRATION ---
@@ -19,7 +19,7 @@
             rules: [
                 {
                     findRegex: "(::::\\s*\\[music\\]\\s*(.*?)\\s*\\(([^)]+)\\)\\s*::::)",
-                    replaceString: function(match, full, title, url) {
+                    replaceString: function (match, full, title, url) {
                         if (typeof window.cattaMusicAddSharedTrack === 'function') {
                             window.cattaMusicAddSharedTrack(title, url);
                         }
@@ -45,12 +45,12 @@
     let settings = {
         showBubble: true, isEnabled: true, autoMood: true, theme: 'orange',
         lang: 'th',
-        apiUrl: 'https://st-cattacafe.casa/casa_api', 
+        apiUrl: 'https://st-cattacafe.casa/casa_api',
         posBubble: { top: '80%', left: '10%' },
         fontFamily: 'Kanit',
     };
 
-const i18n = {
+    const i18n = {
         th: {
             userTab: "👤 ส่วนตัว", charTab: "🐱 ตัวละคร", tools: "จัดการ",
             searchPlace: "ID หรือชื่อตัวละคร...", searchBtn: " ค้นหา",
@@ -87,20 +87,20 @@ const i18n = {
     let userPlaylists = {
         "default": { name: "เพลย์ลิสต์ส่วนตัวของฉัน", tracks: [] }
     };
-    
+
     let charPlaylists = {
         "chat": { name: "Unknown", avatar: ICON_URL, tracks: [] }
     };
-    
 
-    let viewingTab = 'user'; 
+
+    let viewingTab = 'user';
     let viewingId = 'default';
-    
+
     let playingTab = 'user';
     let playingId = 'default';
     let currentTrackIndex = -1;
 
-    
+
     let audioPlayer = new Audio();
     // --- CROSS-EXTENSION AUDIO SYNC (Pause basic-music when Catta-music plays) ---
     audioPlayer.addEventListener('play', () => {
@@ -115,7 +115,7 @@ const i18n = {
     });
 
     // Allow basic-music to pause Catta-music
-    window.cattaPauseMainMusic = function() {
+    window.cattaPauseMainMusic = function () {
         if (isPlaying && audioPlayer && !audioPlayer.paused) {
             audioPlayer.pause();
             isPlaying = false;
@@ -133,28 +133,28 @@ const i18n = {
     let lastProcessedMsgId = "";
 
     const themes = {
-        peach:    { main:'#ff8a80', accent:'#ffd180', dark:'#1e1515', card:'#2a1c1c', text:'#fff0e6', muted:'#d4a39b', glow:'rgba(255,138,128,0.4)',  dot:'rgba(255,138,128,0.9)'  },
-        sunflower:{ main:'#ffd54f', accent:'#ff8f00', dark:'#1a1a1c', card:'#242428', text:'#fffde7', muted:'#bcaaa4', glow:'rgba(255,213,79,0.35)', dot:'rgba(255,213,79,0.9)' },
-        cloud:    { type:'light', main:'#64b5f6', accent:'#e1bee7', dark:'#f0f4f8', card:'#ffffff', text:'#37474f', muted:'#78909c', glow:'rgba(100,181,246,0.25)', dot:'rgba(100,181,246,0.9)' },
-        neon:     { main:'#00e676', accent:'#18ffff', dark:'#050505', card:'#0f1411', text:'#e8f5e9', muted:'#4caf50', glow:'rgba(0,230,118,0.5)',   dot:'rgba(0,230,118,0.9)'   },
-        mint:     { main:'#69f0ae', accent:'#ffff8d', dark:'#001a14', card:'#002b22', text:'#e0f2f1', muted:'#80cbc4', glow:'rgba(105,240,174,0.35)', dot:'rgba(105,240,174,0.9)' },
-        sakura:   { main:'#ff9ebb', accent:'#fff0f5', dark:'#1f1116', card:'#2d1821', text:'#ffebf0', muted:'#c598a8', glow:'rgba(255,158,187,0.4)',  dot:'rgba(255,158,187,0.9)' },
-        blood:    { main:'#d50000', accent:'#ff3d00', dark:'#0a0000', card:'#140000', text:'#ffebee', muted:'#e57373', glow:'rgba(213,0,0,0.5)',      dot:'rgba(213,0,0,0.9)'     },
-        caramel:  { main:'#d48c46', accent:'#f3e5ab', dark:'#1c140f', card:'#2a1f18', text:'#f5ebe1', muted:'#a68a76', glow:'rgba(212,140,70,0.4)',   dot:'rgba(212,140,70,0.9)'  },
-        galaxy:   { main:'#b388ff', accent:'#00e5ff', dark:'#090514', card:'#130b29', text:'#e1bee7', muted:'#7e57c2', glow:'rgba(179,136,255,0.45)', dot:'rgba(179,136,255,0.9)' },
-        cyberpunk:{ main:'#ff007f', accent:'#00f0ff', dark:'#0b0014', card:'#150024', text:'#e0f7fa', muted:'#b39ddb', glow:'rgba(255,0,127,0.5)',    dot:'rgba(255,0,127,0.9)'   },
-        snow:     { type:'light', main:'#81d4fa', accent:'#b2dfdb', dark:'#f5f9ff', card:'#e8f0f8', text:'#2c3e50', muted:'#90a4ae', glow:'rgba(129,212,250,0.3)',  dot:'rgba(129,212,250,0.9)' },
-        dark:     { main:'#aaaaaa', accent:'#ffffff', dark:'#0a0a0a', card:'#141414', text:'#e0e0e0', muted:'#707070', glow:'rgba(170,170,170,0.2)',  dot:'rgba(170,170,170,0.7)' },
-        pink:     { main:'#ff6b9d', accent:'#ff9a56', dark:'#1a0a2e', card:'#2d1b54', text:'#f0e8ff', muted:'#b08ecf', glow:'rgba(255,107,157,0.4)',  dot:'rgba(255,107,157,0.8)'  },
-        orange:   { main:'#ff9a56', accent:'#ffd93d', dark:'#1f0e00', card:'#2e1a00', text:'#fff0e0', muted:'#c4956b', glow:'rgba(255,154,86,0.4)',   dot:'rgba(255,154,86,0.9)'   },
-        blue:     { main:'#4d96ff', accent:'#6bcb77', dark:'#050f2e', card:'#0d1f5c', text:'#e8f0ff', muted:'#7a9fd4', glow:'rgba(77,150,255,0.4)',   dot:'rgba(77,150,255,0.9)'   },
-        purple:   { main:'#b388ff', accent:'#ff6b9d', dark:'#0d0025', card:'#1a0040', text:'#f0e8ff', muted:'#9b78d4', glow:'rgba(179,136,255,0.45)', dot:'rgba(179,136,255,0.9)'  },
-        midnight: { main:'#4fc3f7', accent:'#81d4fa', dark:'#050a12', card:'#0d1525', text:'#e0f4ff', muted:'#6a9fb5', glow:'rgba(79,195,247,0.4)',   dot:'rgba(79,195,247,0.9)'   },
-        latte:    { main:'#d4a574', accent:'#ff9a56', dark:'#1a1008', card:'#2e1c0c', text:'#fff0dc', muted:'#b08c6a', glow:'rgba(212,165,116,0.4)',  dot:'rgba(212,165,116,0.9)'  },
-        green:    { main:'#66bb6a', accent:'#a5d6a7', dark:'#051a05', card:'#0a2e0a', text:'#e0ffe0', muted:'#7cb87e', glow:'rgba(102,187,106,0.4)',  dot:'rgba(102,187,106,0.9)'  },
-        cotton:   { main:'#ffb6c1', accent:'#a7c7e7', dark:'#1a0a1a', card:'#2a152a', text:'#ffe0e9', muted:'#d4a0b3', glow:'rgba(255,182,193,0.4)',  dot:'rgba(255,182,193,0.9)'  },
-        sky:      { main:'#87cefa', accent:'#e0ffff', dark:'#050a1a', card:'#0d122a', text:'#e0f4ff', muted:'#8aa9c4', glow:'rgba(135,206,250,0.4)',  dot:'rgba(135,206,250,0.9)'  },
-        vanilla:  { type:'light', main:'#ff75a0', accent:'#fbc2eb', dark:'#ffffff', card:'#fff0f5', text:'#5c4b51', muted:'#a89098', glow:'rgba(255,117,160,0.25)',  dot:'rgba(255,117,160,0.9)'  }
+        peach: { main: '#ff8a80', accent: '#ffd180', dark: '#1e1515', card: '#2a1c1c', text: '#fff0e6', muted: '#d4a39b', glow: 'rgba(255,138,128,0.4)', dot: 'rgba(255,138,128,0.9)' },
+        sunflower: { main: '#ffd54f', accent: '#ff8f00', dark: '#1a1a1c', card: '#242428', text: '#fffde7', muted: '#bcaaa4', glow: 'rgba(255,213,79,0.35)', dot: 'rgba(255,213,79,0.9)' },
+        cloud: { type: 'light', main: '#64b5f6', accent: '#e1bee7', dark: '#f0f4f8', card: '#ffffff', text: '#37474f', muted: '#78909c', glow: 'rgba(100,181,246,0.25)', dot: 'rgba(100,181,246,0.9)' },
+        neon: { main: '#00e676', accent: '#18ffff', dark: '#050505', card: '#0f1411', text: '#e8f5e9', muted: '#4caf50', glow: 'rgba(0,230,118,0.5)', dot: 'rgba(0,230,118,0.9)' },
+        mint: { main: '#69f0ae', accent: '#ffff8d', dark: '#001a14', card: '#002b22', text: '#e0f2f1', muted: '#80cbc4', glow: 'rgba(105,240,174,0.35)', dot: 'rgba(105,240,174,0.9)' },
+        sakura: { main: '#ff9ebb', accent: '#fff0f5', dark: '#1f1116', card: '#2d1821', text: '#ffebf0', muted: '#c598a8', glow: 'rgba(255,158,187,0.4)', dot: 'rgba(255,158,187,0.9)' },
+        blood: { main: '#d50000', accent: '#ff3d00', dark: '#0a0000', card: '#140000', text: '#ffebee', muted: '#e57373', glow: 'rgba(213,0,0,0.5)', dot: 'rgba(213,0,0,0.9)' },
+        caramel: { main: '#d48c46', accent: '#f3e5ab', dark: '#1c140f', card: '#2a1f18', text: '#f5ebe1', muted: '#a68a76', glow: 'rgba(212,140,70,0.4)', dot: 'rgba(212,140,70,0.9)' },
+        galaxy: { main: '#b388ff', accent: '#00e5ff', dark: '#090514', card: '#130b29', text: '#e1bee7', muted: '#7e57c2', glow: 'rgba(179,136,255,0.45)', dot: 'rgba(179,136,255,0.9)' },
+        cyberpunk: { main: '#ff007f', accent: '#00f0ff', dark: '#0b0014', card: '#150024', text: '#e0f7fa', muted: '#b39ddb', glow: 'rgba(255,0,127,0.5)', dot: 'rgba(255,0,127,0.9)' },
+        snow: { type: 'light', main: '#81d4fa', accent: '#b2dfdb', dark: '#f5f9ff', card: '#e8f0f8', text: '#2c3e50', muted: '#90a4ae', glow: 'rgba(129,212,250,0.3)', dot: 'rgba(129,212,250,0.9)' },
+        dark: { main: '#aaaaaa', accent: '#ffffff', dark: '#0a0a0a', card: '#141414', text: '#e0e0e0', muted: '#707070', glow: 'rgba(170,170,170,0.2)', dot: 'rgba(170,170,170,0.7)' },
+        pink: { main: '#ff6b9d', accent: '#ff9a56', dark: '#1a0a2e', card: '#2d1b54', text: '#f0e8ff', muted: '#b08ecf', glow: 'rgba(255,107,157,0.4)', dot: 'rgba(255,107,157,0.8)' },
+        orange: { main: '#ff9a56', accent: '#ffd93d', dark: '#1f0e00', card: '#2e1a00', text: '#fff0e0', muted: '#c4956b', glow: 'rgba(255,154,86,0.4)', dot: 'rgba(255,154,86,0.9)' },
+        blue: { main: '#4d96ff', accent: '#6bcb77', dark: '#050f2e', card: '#0d1f5c', text: '#e8f0ff', muted: '#7a9fd4', glow: 'rgba(77,150,255,0.4)', dot: 'rgba(77,150,255,0.9)' },
+        purple: { main: '#b388ff', accent: '#ff6b9d', dark: '#0d0025', card: '#1a0040', text: '#f0e8ff', muted: '#9b78d4', glow: 'rgba(179,136,255,0.45)', dot: 'rgba(179,136,255,0.9)' },
+        midnight: { main: '#4fc3f7', accent: '#81d4fa', dark: '#050a12', card: '#0d1525', text: '#e0f4ff', muted: '#6a9fb5', glow: 'rgba(79,195,247,0.4)', dot: 'rgba(79,195,247,0.9)' },
+        latte: { main: '#d4a574', accent: '#ff9a56', dark: '#1a1008', card: '#2e1c0c', text: '#fff0dc', muted: '#b08c6a', glow: 'rgba(212,165,116,0.4)', dot: 'rgba(212,165,116,0.9)' },
+        green: { main: '#66bb6a', accent: '#a5d6a7', dark: '#051a05', card: '#0a2e0a', text: '#e0ffe0', muted: '#7cb87e', glow: 'rgba(102,187,106,0.4)', dot: 'rgba(102,187,106,0.9)' },
+        cotton: { main: '#ffb6c1', accent: '#a7c7e7', dark: '#1a0a1a', card: '#2a152a', text: '#ffe0e9', muted: '#d4a0b3', glow: 'rgba(255,182,193,0.4)', dot: 'rgba(255,182,193,0.9)' },
+        sky: { main: '#87cefa', accent: '#e0ffff', dark: '#050a1a', card: '#0d122a', text: '#e0f4ff', muted: '#8aa9c4', glow: 'rgba(135,206,250,0.4)', dot: 'rgba(135,206,250,0.9)' },
+        vanilla: { type: 'light', main: '#ff75a0', accent: '#fbc2eb', dark: '#ffffff', card: '#fff0f5', text: '#5c4b51', muted: '#a89098', glow: 'rgba(255,117,160,0.25)', dot: 'rgba(255,117,160,0.9)' }
     };
 
     if (!$('#cattamusic-inline-css').length) {
@@ -537,11 +537,11 @@ const i18n = {
         if (s) {
             settings = { ...settings, ...JSON.parse(s) };
         }
-        
+
 
         settings.apiUrl = 'https://st-cattacafe.casa/casa_api';
-        saveData(); 
-        
+        saveData();
+
         const up = localStorage.getItem(LS_USER_PLAYLISTS);
         if (up) userPlaylists = JSON.parse(up);
         if (!userPlaylists["default"]) userPlaylists["default"] = { name: "เพลย์ลิสต์ส่วนตัวของฉัน", tracks: [] };
@@ -551,7 +551,7 @@ const i18n = {
         if (!charPlaylists["chat"]) charPlaylists["chat"] = { name: "Unknown", avatar: ICON_URL, tracks: [] };
     }
 
-function saveData() {
+    function saveData() {
         localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
         localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
         localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
@@ -563,22 +563,22 @@ function saveData() {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ uid: uid, user_playlists: userPlaylists, char_playlists: charPlaylists })
             })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    console.log("[CattaMusic] ☁️ Auto-Saved to Cloud");
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log("[CattaMusic] ☁️ Auto-Saved to Cloud");
 
-                    const marquee = $("#catta-display-name");
-                    if (marquee.text() !== "☁️ Auto-Saved to Cloud") {
-                        const old = marquee.text();
-                        marquee.text("☁️ อัปเดตคลาวด์แล้ว!");
-                        setTimeout(() => marquee.text(old), 3000);
+                        const marquee = $("#catta-display-name");
+                        if (marquee.text() !== "☁️ Auto-Saved to Cloud") {
+                            const old = marquee.text();
+                            marquee.text("☁️ อัปเดตคลาวด์แล้ว!");
+                            setTimeout(() => marquee.text(old), 3000);
+                        }
+                    } else {
+                        console.error("[CattaMusic] ☁️ Save Failed:", data.error);
                     }
-                } else {
-                    console.error("[CattaMusic] ☁️ Save Failed:", data.error);
-                }
-            })
-            .catch(e => console.error("[CattaMusic] Cloud Sync Error:", e));
+                })
+                .catch(e => console.error("[CattaMusic] Cloud Sync Error:", e));
         }
     }
 
@@ -590,12 +590,12 @@ function saveData() {
         return isAuthorized;
     }
 
-    function getViewingArray() { 
-        return viewingTab === 'user' ? (userPlaylists[viewingId]?.tracks || []) : (charPlaylists[viewingId]?.tracks || []); 
+    function getViewingArray() {
+        return viewingTab === 'user' ? (userPlaylists[viewingId]?.tracks || []) : (charPlaylists[viewingId]?.tracks || []);
     }
-    
-    function getPlayingArray() { 
-        return playingTab === 'user' ? (userPlaylists[playingId]?.tracks || []) : (charPlaylists[playingId]?.tracks || []); 
+
+    function getPlayingArray() {
+        return playingTab === 'user' ? (userPlaylists[playingId]?.tracks || []) : (charPlaylists[playingId]?.tracks || []);
     }
 
     function generateId() { return Math.random().toString(36).substr(2, 9); }
@@ -607,7 +607,7 @@ function saveData() {
                 if (ctx.characterId !== undefined && ctx.characters && ctx.characters[ctx.characterId]) {
                     return { id: ctx.characterId, data: ctx.characters[ctx.characterId] };
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
         if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
             try {
@@ -615,7 +615,7 @@ function saveData() {
                 if (ctx.characterId !== undefined && ctx.characters && ctx.characters[ctx.characterId]) {
                     return { id: ctx.characterId, data: ctx.characters[ctx.characterId] };
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
         if (typeof window.this_chid !== 'undefined' && window.characters && window.characters[window.this_chid]) {
             return { id: window.this_chid, data: window.characters[window.this_chid] };
@@ -635,7 +635,7 @@ function saveData() {
             } else if (charData.avatar) {
                 persistentId = charData.avatar.split('.').slice(0, -1).join('.') || charData.avatar;
             }
-            
+
             return {
                 id: persistentId,
                 name: charData.name,
@@ -653,21 +653,21 @@ function saveData() {
         if (viewingTab === 'char' && viewingId && viewingId !== 'chat' && charPlaylists[viewingId]) {
             return { id: viewingId, name: charPlaylists[viewingId].name, avatar: charPlaylists[viewingId].avatar };
         }
-        
+
 
         return { id: 'chat', name: charPlaylists['chat']?.name || 'Unknown', avatar: charPlaylists['chat']?.avatar || ICON_URL };
     }
 
-    window.cattaMusicAddSharedTrack = function(name, url) { return addTrackToActiveChar(name, url, 'shared'); };
+    window.cattaMusicAddSharedTrack = function (name, url) { return addTrackToActiveChar(name, url, 'shared'); };
     function addTrackToActiveChar(trackName, trackUrl, mood) {
         let target = getTargetChar();
         let targetId = target.id;
-        
+
         if (!charPlaylists[targetId]) {
-            charPlaylists[targetId] = { 
-                name: target.name, 
-                avatar: target.avatar, 
-                tracks: [] 
+            charPlaylists[targetId] = {
+                name: target.name,
+                avatar: target.avatar,
+                tracks: []
             };
         }
 
@@ -683,7 +683,7 @@ function saveData() {
     async function scanLatestChat() {
         console.log("[CattaMusic] 🔍 เริ่มต้นการสแกนแชท (Local Trigger Mode)...");
         if (!settings.isEnabled) { console.log("[CattaMusic] ❌ ปิดการทำงานอยู่"); return; }
-        
+
         // หมายเหตุ: เอาการเช็ค isAuthorized ออกจากการสแกนแชททั่วไป เพื่อให้ใช้ Local Trigger ได้แม้ไม่ได้ล็อกอิน
         // แต่ยังเก็บไว้ใช้ตรวจสอบก่อนเซฟลง Cloud
 
@@ -716,7 +716,7 @@ function saveData() {
         lastProcessedMsgId = originalText;
 
         console.log("[CattaMusic] ⏱️ เริ่มประมวลผล Local Trigger...");
-        
+
         let foundAnyAudio = false;
         let firstAudioUrl = null;
 
@@ -738,7 +738,7 @@ function saveData() {
                 for (let i = extractedTracks.length - 1; i >= 0; i--) {
                     let url = extractedTracks[i];
                     let filename = url.split('/').pop();
-                    try { filename = decodeURIComponent(filename); } catch(e) {}
+                    try { filename = decodeURIComponent(filename); } catch (e) { }
                     filename = filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
                     addTrackToActiveChar(filename, url, "auto-detect");
                 }
@@ -764,7 +764,7 @@ function saveData() {
 
         let target = getTargetChar();
         let targetId = target.id;
-        
+
         if (!charPlaylists[targetId] || !charPlaylists[targetId].tracks || charPlaylists[targetId].tracks.length === 0) {
             console.log("[CattaMusic] ❌ ไม่มีเพลงในเพลย์ลิสต์ตัวละคร ข้ามการจับอารมณ์");
             return;
@@ -784,7 +784,7 @@ function saveData() {
         availableTracks.forEach((track, index) => {
             const keywords = track.mood.toLowerCase().split('|').map(k => k.trim()).filter(k => k.length > 0);
             let score = 0;
-            
+
             keywords.forEach(keyword => {
                 // ค้นหาจำนวนคำที่ตรงกันในข้อความ
                 const regex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
@@ -822,12 +822,12 @@ function saveData() {
                 }
             }
         } else {
-             console.log("[CattaMusic] ☁️ ไม่พบคำ Trigger ที่ตรงกับเพลงใดๆ ในเพลย์ลิสต์");
+            console.log("[CattaMusic] ☁️ ไม่พบคำ Trigger ที่ตรงกับเพลงใดๆ ในเพลย์ลิสต์");
         }
     }
 
 
-    $(document).off('click', '.catta-inline-music').on('click', '.catta-inline-music', function() {
+    $(document).off('click', '.catta-inline-music').on('click', '.catta-inline-music', function () {
         if (!isAuthorized) { alert("🔒 โปรดเข้าสู่ระบบ Catta Cafe"); return; }
         const url = $(this).data('url');
         const name = $(this).data('name');
@@ -837,15 +837,15 @@ function saveData() {
             alert("❌ ไม่สามารถเล่นได้ เนื่องจากลิงก์เพลงไม่ถูกต้อง:\n\n" + url);
             return;
         }
-        
+
         let targetId = addTrackToActiveChar(name, url, "shared");
-        
+
         const win = $(`#${WIN_ID}`);
         if (!win.is(':visible')) {
             win.fadeIn(200);
             $(`#${BUBBLE_ID}`).fadeOut(200);
         }
-        
+
         switchTab('char', targetId);
         playTrack(charPlaylists[targetId].tracks.findIndex(t => t.url === url), 'char', targetId);
     });
@@ -855,33 +855,33 @@ function saveData() {
         const html = `
             <div id="${EXT_ID}-settings" class="cattamusic-settings-block">
                 <h4>🐾 Catta Music Player</h4>
-                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-enabled" ${settings.isEnabled?'checked':''}><label for="catta-cfg-enabled">เปิดการทำงาน</label></div>
-                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-bubble" ${settings.showBubble?'checked':''}><label for="catta-cfg-bubble">แสดงไอคอนลอย (Bubble)</label></div>
-                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-mood" ${settings.autoMood?'checked':''}><label for="catta-cfg-mood">Mood Sync (Auto Play)</label></div>
-                <div style="margin-top:10px;"><label>สีธีม:</label><div class="theme-selectors">${Object.keys(themes).map(t=>`<div class="theme-dot" data-theme="${t}" style="background:${themes[t].main}"></div>`).join('')}</div></div>
+                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-enabled" ${settings.isEnabled ? 'checked' : ''}><label for="catta-cfg-enabled">เปิดการทำงาน</label></div>
+                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-bubble" ${settings.showBubble ? 'checked' : ''}><label for="catta-cfg-bubble">แสดงไอคอนลอย (Bubble)</label></div>
+                <div class="flex-container flex-align-center"><input type="checkbox" id="catta-cfg-mood" ${settings.autoMood ? 'checked' : ''}><label for="catta-cfg-mood">Mood Sync (Auto Play)</label></div>
+                <div style="margin-top:10px;"><label>สีธีม:</label><div class="theme-selectors">${Object.keys(themes).map(t => `<div class="theme-dot" data-theme="${t}" style="background:${themes[t].main}"></div>`).join('')}</div></div>
             </div>`;
         $('#extensions_settings').append(html);
-        $('#catta-cfg-enabled').on('change', function() { settings.isEnabled = this.checked; saveData(); location.reload(); });
-        $('#catta-cfg-bubble').on('change', function() { settings.showBubble = this.checked; $(`#${BUBBLE_ID}`).toggle(settings.showBubble); saveData(); });
-        $('#catta-cfg-mood').on('change', function() { settings.autoMood = this.checked; saveData(); });
-        $('.theme-dot').on('click', function() { applyTheme($(this).data('theme')); });
+        $('#catta-cfg-enabled').on('change', function () { settings.isEnabled = this.checked; saveData(); location.reload(); });
+        $('#catta-cfg-bubble').on('change', function () { settings.showBubble = this.checked; $(`#${BUBBLE_ID}`).toggle(settings.showBubble); saveData(); });
+        $('#catta-cfg-mood').on('change', function () { settings.autoMood = this.checked; saveData(); });
+        $('.theme-dot').on('click', function () { applyTheme($(this).data('theme')); });
     }
 
     function buildBubble() {
         if (!settings.isEnabled || document.getElementById(BUBBLE_ID)) return;
         const bubble = document.createElement('div');
         bubble.id = BUBBLE_ID;
-        bubble.style.cssText = `position:fixed; width:60px; height:60px; top:${settings.posBubble.top}; left:${settings.posBubble.left}; background:url('${ICON_URL}') no-repeat center/contain; z-index:10001; cursor:pointer; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3)); display:${settings.showBubble?'block':'none'};`;
+        bubble.style.cssText = `position:fixed; width:60px; height:60px; top:${settings.posBubble.top}; left:${settings.posBubble.left}; background:url('${ICON_URL}') no-repeat center/contain; z-index:10001; cursor:pointer; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3)); display:${settings.showBubble ? 'block' : 'none'};`;
         document.body.appendChild(bubble);
         makeDraggable(bubble, null, true);
-        
+
         let sX, sY, isToggling = false;
-        bubble.addEventListener('mousedown', (e)=>{sX=e.clientX; sY=e.clientY;});
-        bubble.addEventListener('touchstart', (e)=>{sX=e.touches[0].clientX; sY=e.touches[0].clientY;});
+        bubble.addEventListener('mousedown', (e) => { sX = e.clientX; sY = e.clientY; });
+        bubble.addEventListener('touchstart', (e) => { sX = e.touches[0].clientX; sY = e.touches[0].clientY; });
         const click = (e) => {
             const cX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
             const cY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
-            if (Math.abs(cX-sX)<5 && Math.abs(cY-sY)<5) {
+            if (Math.abs(cX - sX) < 5 && Math.abs(cY - sY) < 5) {
                 if (isToggling) return;
                 isToggling = true;
                 togglePlayerSmart();
@@ -895,39 +895,39 @@ function saveData() {
         if (document.getElementById(WIN_ID)) return;
         const T = themes[settings.theme] || themes.pink;
         const winPosStyle = settings.posWindow ? `top:${settings.posWindow.top};left:${settings.posWindow.left};transform:none;` : `top:12px;left:50%;transform:translateX(-50%);`;
-        
+
         const S = {
-            win:  `display:none;position:fixed!important;z-index:10000!important;${winPosStyle}width:295px;border-radius:22px;overflow:hidden;font-family:'Itim',cursive;background:${T.dark};border:1.5px solid ${T.main}44;box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset;`,
-            hdr:  `display:flex;justify-content:space-between;align-items:center;padding:10px 12px 8px;cursor:grab;background:var(--c-bg-2, rgba(0,0,0,.25));border-bottom:1px solid var(--c-bd, rgba(255,255,255,.07));`,
-            ttl:  `font-size:14px;font-family:'Itim',cursive;background:linear-gradient(90deg,${T.main},${T.accent});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;`,
-            hdR:  `display:flex;align-items:center;gap:5px;`,
-            cnt:  `font-size:9px;color:${T.muted};font-family:'Itim',cursive;`,
+            win: `display:none;position:fixed!important;z-index:10000!important;${winPosStyle}width:295px;border-radius:22px;overflow:hidden;font-family:'Itim',cursive;background:${T.dark};border:1.5px solid ${T.main}44;box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px ${T.glow},0 0 0 1px rgba(255,255,255,.05) inset;`,
+            hdr: `display:flex;justify-content:space-between;align-items:center;padding:10px 12px 8px;cursor:grab;background:var(--c-bg-2, rgba(0,0,0,.25));border-bottom:1px solid var(--c-bd, rgba(255,255,255,.07));`,
+            ttl: `font-size:14px;font-family:'Itim',cursive;background:linear-gradient(90deg,${T.main},${T.accent});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;`,
+            hdR: `display:flex;align-items:center;gap:5px;`,
+            cnt: `font-size:9px;color:${T.muted};font-family:'Itim',cursive;`,
             minB: `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0;box-shadow:none!important;background:var(--c-bg-inp, rgba(255,255,255,.09));color:var(--catta-text-muted, ${T.muted});transition:all .2s;`,
-            cls:  `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;box-shadow:none!important;background:var(--c-bg-1, rgba(255,255,255,.06));color:var(--catta-text-muted, ${T.muted});transition:all .2s;`,
+            cls: `width:22px;height:22px;border:none!important;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;box-shadow:none!important;background:var(--c-bg-1, rgba(255,255,255,.06));color:var(--catta-text-muted, ${T.muted});transition:all .2s;`,
             mini: `align-items:center;gap:8px;padding:8px 12px;background:var(--c-bg-2, rgba(0,0,0,.2));border-top:1px solid var(--c-bd, rgba(255,255,255,.07));`,
             mImg: `width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.5);`,
             mTtl: `font-size:11px;font-family:'Itim',cursive;color:${T.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`,
             mSub: `font-size:9px;font-family:'Itim',cursive;color:${T.muted};margin-top:1px;`,
             mBtn: `background:none;border:none!important;cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .2s;box-shadow:none!important;font-size:13px;color:var(--catta-text-muted, ${T.muted});`,
-            mPlay:`background:none;border:none!important;cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .2s;box-shadow:none!important;font-size:17px;color:${T.main};`,
-            ban:  `display:flex;align-items:center;gap:11px;padding:11px 13px 9px;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.06));background:linear-gradient(180deg,${T.main}12,transparent);`,
-            cov:  `width:52px;height:52px;border-radius:13px;object-fit:cover;flex-shrink:0;box-shadow:0 6px 20px rgba(0,0,0,.5);cursor:pointer;`,
+            mPlay: `background:none;border:none!important;cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .2s;box-shadow:none!important;font-size:17px;color:${T.main};`,
+            ban: `display:flex;align-items:center;gap:11px;padding:11px 13px 9px;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.06));background:linear-gradient(180deg,${T.main}12,transparent);`,
+            cov: `width:52px;height:52px;border-radius:13px;object-fit:cover;flex-shrink:0;box-shadow:0 6px 20px rgba(0,0,0,.5);cursor:pointer;`,
             cTtl: `font-size:13px;font-family:'Itim',cursive;color:var(--catta-text, ${T.text});white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;`,
-            scr:  `padding:4px 13px;display:flex;background:var(--c-bg-2, rgba(0,0,0,.22));`,
+            scr: `padding:4px 13px;display:flex;background:var(--c-bg-2, rgba(0,0,0,.22));`,
             sBar: `display:flex;justify-content:space-between;align-items:center;width:100%;font-size:9px;font-family:'Itim',cursive;color:var(--catta-text-muted, ${T.muted});`,
-            dot:  `width:6px;height:6px;border-radius:50%;background:${T.main};opacity:0;`,
+            dot: `width:6px;height:6px;border-radius:50%;background:${T.main};opacity:0;`,
             ctrl: `display:flex;align-items:center;justify-content:space-around;padding:9px 12px 7px;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.06));background:var(--c-bg-2, rgba(0,0,0,.12));`,
             cBtn: `background:none!important;border:none!important;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;padding:0;box-shadow:none!important;color:var(--catta-text-muted, ${T.muted});`,
             pBtn: `border:none!important;cursor:pointer;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;padding:0;color:#fff!important;background:linear-gradient(135deg,${T.main},${T.accent});box-shadow:0 6px 20px ${T.glow};`,
             tabs: `display:flex;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.06));padding:0 8px;gap:2px;background:var(--c-bg-2, rgba(0,0,0,.15));`,
-            tab:  `flex:1;border:none!important;padding:7px 3px;font-size:11px;cursor:pointer;font-family:'Itim',cursive;background:transparent!important;color:var(--catta-text-muted, ${T.muted});transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-1px;box-shadow:none!important;`,
-            tTl:  `flex:none;background:none!important;border:none!important;cursor:pointer;padding:0 10px;font-size:13px;border-left:1px solid var(--c-bd, rgba(255,255,255,.07));color:var(--catta-text-muted, ${T.muted});transition:color .2s;box-shadow:none!important;`,
-            pl:   `background:transparent;`,
+            tab: `flex:1;border:none!important;padding:7px 3px;font-size:11px;cursor:pointer;font-family:'Itim',cursive;background:transparent!important;color:var(--catta-text-muted, ${T.muted});transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-1px;box-shadow:none!important;`,
+            tTl: `flex:none;background:none!important;border:none!important;cursor:pointer;padding:0 10px;font-size:13px;border-left:1px solid var(--c-bd, rgba(255,255,255,.07));color:var(--catta-text-muted, ${T.muted});transition:color .2s;box-shadow:none!important;`,
+            pl: `background:transparent;`,
             tool: `display:none;padding:8px 10px;flex-direction:column;gap:5px;border-bottom:1px solid var(--c-bd, rgba(255,255,255,.07));background:var(--c-bg-2, rgba(0,0,0,.2));`,
-            inp:  `background:var(--c-bg-inp, rgba(255,255,255,.08))!important;color:var(--catta-text, ${T.text})!important;border:1px solid var(--c-bd, rgba(255,255,255,.15))!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;`,
-            sel:  `background:var(--c-bg-inp, rgba(255,255,255,.08))!important;color:var(--catta-text, ${T.text})!important;border:1px solid var(--c-bd, rgba(255,255,255,.15))!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;flex-grow:1;`,
-            sB:   `border:none!important;color:#fff!important;padding:6px 10px;border-radius:10px;font-family:'Itim',cursive;font-size:11px;cursor:pointer;box-shadow:none!important;white-space:nowrap;flex-shrink:0;`,
-            lst:  `max-height:120px;overflow-y:auto;padding:4px 0;`,
+            inp: `background:var(--c-bg-inp, rgba(255,255,255,.08))!important;color:var(--catta-text, ${T.text})!important;border:1px solid var(--c-bd, rgba(255,255,255,.15))!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;`,
+            sel: `background:var(--c-bg-inp, rgba(255,255,255,.08))!important;color:var(--catta-text, ${T.text})!important;border:1px solid var(--c-bd, rgba(255,255,255,.15))!important;border-radius:10px!important;padding:6px 10px!important;font-size:11px!important;font-family:'Itim',cursive!important;outline:none!important;box-shadow:none!important;flex-grow:1;`,
+            sB: `border:none!important;color:#fff!important;padding:6px 10px;border-radius:10px;font-family:'Itim',cursive;font-size:11px;cursor:pointer;box-shadow:none!important;white-space:nowrap;flex-shrink:0;`,
+            lst: `max-height:120px;overflow-y:auto;padding:4px 0;`,
         };
         const html = `
         <div id="${WIN_ID}" style="${S.win}">
@@ -1031,10 +1031,10 @@ function saveData() {
         <input type="file" id="catta-cover-upload" accept="image/*" style="display:none;">
         <input type="file" id="catta-txt-upload" accept=".txt" style="display:none;">`;
         $("body").append(html);
-        
+
 
         let isMinimized = false;
-        
+
         function setMinimized(mini) {
             isMinimized = mini;
             const win = $(`#${WIN_ID}`);
@@ -1050,7 +1050,7 @@ function saveData() {
                     const t = i18n[settings.lang] || i18n.th;
                     actualSongName = t.ready;
                 }
-                
+
                 $('#catta-mini-title').text(actualSongName);
                 $('#catta-mini-play').html(isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>');
             } else {
@@ -1059,7 +1059,7 @@ function saveData() {
         }
 
         function applyLanguage() {
-            const t = i18n[settings.lang] || i18n.th; 
+            const t = i18n[settings.lang] || i18n.th;
             $('#catta-tab-user').text(t.userTab);
             $('#catta-tab-char').text(t.charTab);
             $('#catta-btn-toggle-tools').attr('title', t.tools);
@@ -1073,7 +1073,7 @@ function saveData() {
             $('#catta-btn-scan-card').html(`<i class="fa-solid fa-radar"></i>${t.scanCard}`);
             $('#catta-btn-new-user').html(`<i class="fa-solid fa-plus"></i>${t.createBtn}`);
             $('#catta-new-user-name').attr('placeholder', t.newPlaylistPlace);
-            
+
             if ($('#catta-display-name').text().includes('✨')) {
                 $('#catta-display-name').text(t.ready);
             }
@@ -1082,47 +1082,47 @@ function saveData() {
         }
 
 
-        $('#catta-btn-lang').on('click', function() {
-            const langs = ['th', 'en', 'zh']; 
+        $('#catta-btn-lang').on('click', function () {
+            const langs = ['th', 'en', 'zh'];
             let idx = langs.indexOf(settings.lang);
-            if(idx === -1) idx = 0;
-            
-            settings.lang = langs[(idx + 1) % langs.length]; 
+            if (idx === -1) idx = 0;
+
+            settings.lang = langs[(idx + 1) % langs.length];
             saveData();
             applyLanguage();
         });
         applyLanguage();
 
 
-        $('#catta-btn-font').on('click', function() {
+        $('#catta-btn-font').on('click', function () {
             settings.fontFamily = settings.fontFamily === 'Kanit' ? 'Itim' : 'Kanit';
             saveData();
             applyTheme(settings.theme);
             notifyUser("📝 เปลี่ยนฟอนต์เป็น: " + settings.fontFamily);
         });
-        
+
         $('#catta-btn-minimize').on('click', () => setMinimized(true));
         $('#catta-btn-maximize').on('click', () => setMinimized(false));
-        
+
 
         $('#catta-mini-play').on('click', () => {
-            if(isAuthorized) { togglePlay(); $('#catta-mini-play').html(isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>'); }
+            if (isAuthorized) { togglePlay(); $('#catta-mini-play').html(isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>'); }
         });
         $('#catta-mini-prev').on('click', () => isAuthorized && playPrev());
         $('#catta-mini-next').on('click', () => isAuthorized && playNext());
-        
 
-        $("#catta-cover-img, #catta-mini-img").on('click', function() {
+
+        $("#catta-cover-img, #catta-mini-img").on('click', function () {
             if (viewingTab === 'user' || (isMinimized && playingTab === 'user')) {
                 $("#catta-cover-upload").click();
             }
         });
 
-        $("#catta-cover-upload").on('change', function(e) {
+        $("#catta-cover-upload").on('change', function (e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e2) {
+                reader.onload = function (e2) {
                     const base64Img = e2.target.result;
                     const idToUpdate = isMinimized ? playingId : viewingId;
                     if (userPlaylists[idToUpdate]) {
@@ -1181,17 +1181,17 @@ function saveData() {
 
         $("#catta-progress, #catta-mini-progress").on('input', (e) => { isDraggingProgress = true; updateRangeBg(e); });
         $("#catta-progress, #catta-mini-progress").on('change', (e) => { seekAudio(e); isDraggingProgress = false; });
-        
+
 
         $('#catta-tab-user').on('click', () => switchTab('user'));
         $('#catta-tab-char').on('click', () => switchTab('char'));
-        
-        $("#catta-btn-toggle-tools").on('click', function() {
+
+        $("#catta-btn-toggle-tools").on('click', function () {
             let isOpen = $(this).data('isOpen') || false;
             isOpen = !isOpen;
             $(this).data('isOpen', isOpen);
-            
-            if(isOpen) {
+
+            if (isOpen) {
                 $("#catta-tools-container").slideDown(200);
                 $(this).css('color', 'var(--catta-text, #fff)');
                 $(this).css('background', 'var(--c-bg-inp, rgba(255,255,255,0.1))');
@@ -1202,11 +1202,11 @@ function saveData() {
             }
         });
 
-        $("#catta-btn-play").on('click', () => { 
-            if(isAuthorized) { 
-                if(!isPlaying && !audioPlayer.src) { lastProcessedMsgId = ""; scanLatestChat(); }
-                togglePlay(); 
-            } 
+        $("#catta-btn-play").on('click', () => {
+            if (isAuthorized) {
+                if (!isPlaying && !audioPlayer.src) { lastProcessedMsgId = ""; scanLatestChat(); }
+                togglePlay();
+            }
         });
         $("#catta-btn-next").on('click', () => isAuthorized && playNext());
         $("#catta-btn-prev").on('click', () => isAuthorized && playPrev());
@@ -1219,8 +1219,8 @@ function saveData() {
         });
 
 
-        $("#catta-user-sel").on('change', function() { viewingId = $(this).val(); updateCoverUI(); renderPlaylist(); });
-        
+        $("#catta-user-sel").on('change', function () { viewingId = $(this).val(); updateCoverUI(); renderPlaylist(); });
+
         $("#catta-btn-new-user").on('click', () => {
             const n = $("#catta-new-user-name").val().trim();
             if (!n) return;
@@ -1235,13 +1235,13 @@ function saveData() {
             if (confirm(`ลบเพลย์ลิสต์ "${userPlaylists[viewingId].name}" ใช่ไหม?`)) {
                 delete userPlaylists[viewingId];
                 viewingId = 'default';
-                if(playingTab === 'user' && playingId === viewingId) playingId = 'default';
+                if (playingTab === 'user' && playingId === viewingId) playingId = 'default';
                 saveData(); updateListSelectors(); updateCoverUI(); renderPlaylist();
             }
         });
 
 
-        $("#catta-char-sel").on('change', function() { viewingId = $(this).val(); updateCoverUI(); renderPlaylist(); });
+        $("#catta-char-sel").on('change', function () { viewingId = $(this).val(); updateCoverUI(); renderPlaylist(); });
 
         let currentSearchResults = [];
 
@@ -1266,11 +1266,11 @@ function saveData() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ char_id: charId, uid, token })
                 });
-                
+
                 console.log("[CattaMusic] 📥 Char Info Response Status:", res.status);
                 const data = await res.json();
                 console.log("[CattaMusic] 📄 Char Info Response Data:", data);
-                
+
                 if (data.success && data.results && data.results.length > 0) {
                     currentSearchResults = data.results;
                     const sel = $("#catta-char-result-sel").empty();
@@ -1282,24 +1282,24 @@ function saveData() {
                 } else {
                     notifyUser(`⚠️ ไม่พบข้อมูลตัวละครนี้`);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error("API Error", e);
                 notifyUser(`❌ เชื่อมต่อล้มเหลว`);
             }
-            
+
             btn.html(oldHtml);
         });
 
         $("#catta-btn-confirm-char").on('click', () => {
             const idx = $("#catta-char-result-sel").val();
             if (idx === null || !currentSearchResults[idx]) return;
-            
+
             const selectedChar = currentSearchResults[idx];
             // ตรวจสอบว่ามีเพลย์ลิสต์ของตัวละครนี้อยู่แล้วหรือไม่ เพื่อป้องกันการลบเพลงเก่าทิ้ง
             if (!charPlaylists[selectedChar.id]) {
                 charPlaylists[selectedChar.id] = { name: selectedChar.name, avatar: selectedChar.avatar || ICON_URL, tracks: [] };
             }
-            
+
             $("#catta-char-search-results").hide();
             $("#catta-search-char").val("");
             viewingId = selectedChar.id;
@@ -1312,7 +1312,7 @@ function saveData() {
             if (confirm(`ลบเพลย์ลิสต์ตัวละคร "${charPlaylists[viewingId].name}" ใช่ไหม?`)) {
                 delete charPlaylists[viewingId];
                 viewingId = 'chat';
-                if(playingTab === 'char' && playingId === viewingId) playingId = 'chat';
+                if (playingTab === 'char' && playingId === viewingId) playingId = 'chat';
                 saveData(); updateListSelectors(); updateCoverUI(); renderPlaylist();
             }
         });
@@ -1326,28 +1326,28 @@ function saveData() {
             if (!isAuthorized) return;
             const inputVal = $("#catta-input-url").val().trim();
             if (!inputVal) return;
-            
+
             const urlRegex = /(https?:\/\/[^\s]+)/gi;
             let matches;
             let addedCount = 0;
             let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
             let ytFound = false;
-            
+
             while ((matches = urlRegex.exec(inputVal)) !== null) {
                 const url = matches[1];
                 if (url.includes('youtube.com') || url.includes('youtu.be')) { ytFound = true; continue; }
-                
+
                 if (!listObj[viewingId].tracks.some(t => t.url === url)) {
                     let name = url.split('/').pop() || "Unknown";
-                    try { name = decodeURIComponent(name); } catch(e){}
+                    try { name = decodeURIComponent(name); } catch (e) { }
                     name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
                     listObj[viewingId].tracks.push({ name, url });
                     addedCount++;
                 }
             }
-            
+
             if (addedCount > 0) {
-                $("#catta-input-url").val(""); 
+                $("#catta-input-url").val("");
                 saveData(); renderPlaylist();
                 notifyUser(`✅ เพิ่ม ${addedCount} เพลง`);
             } else if (ytFound) {
@@ -1358,36 +1358,36 @@ function saveData() {
         });
 
 
-        $("#catta-btn-import-txt").on('click', () => { if(isAuthorized) $("#catta-txt-upload").click(); });
-        $("#catta-txt-upload").on('change', function(e) {
+        $("#catta-btn-import-txt").on('click', () => { if (isAuthorized) $("#catta-txt-upload").click(); });
+        $("#catta-txt-upload").on('change', function (e) {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             const reader = new FileReader();
-            reader.onload = function(e2) {
+            reader.onload = function (e2) {
                 const text = e2.target.result;
                 const lines = text.split('\n');
                 let addedCount = 0;
                 let ytFound = false;
                 const urlRegex = /(https?:\/\/[^\s]+)/i;
                 let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
-                
+
                 lines.forEach(line => {
                     const match = line.match(urlRegex);
                     if (match) {
                         const url = match[1].trim();
                         if (url.includes('youtube.com') || url.includes('youtu.be')) { ytFound = true; return; }
-                        
+
                         if (!listObj[viewingId].tracks.some(t => t.url === url)) {
                             let name = url.split('/').pop() || "Unknown";
-                            try { name = decodeURIComponent(name); } catch(e){}
+                            try { name = decodeURIComponent(name); } catch (e) { }
                             name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
                             listObj[viewingId].tracks.push({ name, url });
                             addedCount++;
                         }
                     }
                 });
-                
+
                 if (addedCount > 0) {
                     saveData(); renderPlaylist();
                     alert(`✅ นำเข้าสำเร็จ ${addedCount} เพลง`);
@@ -1396,8 +1396,8 @@ function saveData() {
                 } else {
                     alert("⚠️ ไม่พบลิงก์เพลงที่สามารถเพิ่มได้เลย");
                 }
-                
-                $("#catta-txt-upload").val(""); 
+
+                $("#catta-txt-upload").val("");
             };
             reader.readAsText(file);
         });
@@ -1407,13 +1407,13 @@ function saveData() {
             if (!isAuthorized) return;
             let listObj = viewingTab === 'user' ? userPlaylists : charPlaylists;
             const tracks = listObj[viewingId].tracks;
-            
-            if(tracks.length === 0) return alert("❌ เพลย์ลิสต์ว่างเปล่า ไม่มีอะไรให้ส่งออก");
-            
+
+            if (tracks.length === 0) return alert("❌ เพลย์ลิสต์ว่างเปล่า ไม่มีอะไรให้ส่งออก");
+
 
             let content = `🐾 Catta Music Playlist: ${listObj[viewingId].name}\n═══════════════════════════════════════════════════\n`;
             content += tracks.map(t => `${t.name}\n- ${t.url}`).join('\n\n');
-            
+
             const blob = new Blob([content], { type: 'text/plain' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -1425,7 +1425,7 @@ function saveData() {
 
         $("#catta-btn-cloud-sync").on('click', async () => {
             if (!isAuthorized) { alert("🔒 โปรดเข้าสู่ระบบ Catta Cafe ก่อนครับ"); return; }
-            
+
             const btn = $("#catta-btn-cloud-sync");
             const oldHtml = btn.html();
             btn.html('<i class="fa-solid fa-spinner fa-spin"></i>');
@@ -1437,32 +1437,32 @@ function saveData() {
                     body: JSON.stringify({ uid: uid })
                 });
                 const data = await res.json();
-                
+
                 if (data.success && (data.user_playlists || data.char_playlists)) {
                     if (data.user_playlists) userPlaylists = data.user_playlists;
                     if (data.char_playlists) charPlaylists = data.char_playlists;
-                    
+
 
                     localStorage.setItem(LS_USER_PLAYLISTS, JSON.stringify(userPlaylists));
                     localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
-                    
+
                     updateListSelectors(); updateCoverUI(); renderPlaylist();
                     notifyUser("☁️ โหลดข้อมูลจาก Cloud สำเร็จ!");
                 } else {
                     notifyUser("⚠️ ไม่พบข้อมูลที่เคยเซฟไว้บน Cloud");
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error("Manual Cloud Sync Error:", e);
                 notifyUser("❌ เชื่อมต่อคลาวด์ล้มเหลว");
             }
-            btn.html(oldHtml); 
+            btn.html(oldHtml);
         });
 
         updateListSelectors();
         switchTab('user');
         applyTheme(settings.theme);
         makeDraggable(document.getElementById(WIN_ID), '.cattamusic-header, #catta-mini-bar');
-        
+
 
     }
 
@@ -1475,13 +1475,13 @@ function saveData() {
         const activeChar = getActiveCharInfo();
         const t = i18n[settings.lang] || i18n.th;
         const defaultChatName = activeChar ? activeChar.name : t.noChar;
-        
+
         for (const [id, data] of Object.entries(charPlaylists)) {
             // ถ้าเป็น 'chat' ให้แสดงชื่อเป็นตัวละครปัจจุบันแทน หรือแสดงว่าไม่ได้เข้าแชท
             const displayName = id === 'chat' ? defaultChatName : data.name;
             cSel.append(`<option value="${id}">${displayName}</option>`);
         }
-        
+
         cSel.val(viewingTab === 'char' ? viewingId : 'chat');
     }
 
@@ -1490,7 +1490,7 @@ function saveData() {
         let activeChar = getActiveCharInfo();
         if (charPlaylists["chat"]) {
             charPlaylists["chat"].name = activeChar ? activeChar.name : t.noChar;
-            if(activeChar && activeChar.avatar) {
+            if (activeChar && activeChar.avatar) {
                 charPlaylists["chat"].avatar = activeChar.avatar;
             } else {
                 charPlaylists["chat"].avatar = ICON_URL;
@@ -1515,9 +1515,9 @@ function saveData() {
             if (c && viewingId !== 'chat') charTabName = `🐱 ${c.name}`;
         } else {
             const p = charPlaylists[targetId];
-            if (p) { 
-                title = p.name; 
-                img = p.avatar; 
+            if (p) {
+                title = p.name;
+                img = p.avatar;
                 if (targetId !== 'chat') {
                     charTabName = `🐱 ${p.name}`;
                 } else if (!activeChar) {
@@ -1525,10 +1525,10 @@ function saveData() {
                 }
             }
         }
-        
+
         $("#catta-cover-title").text(title);
         $("#catta-cover-img").attr("src", img);
-        
+
 
         const tabBtn = $("#catta-tab-char");
         const currentText = tabBtn.text();
@@ -1552,12 +1552,12 @@ function saveData() {
     function makeDraggable(el, handleSelector, isBubble = false) {
         if (!el) return;
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        
+
         const dragStart = (e) => {
             if (e.target.tagName.toLowerCase() === 'button' || e.target.closest('button') || e.target.tagName.toLowerCase() === 'input') return;
             const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-            
+
 
             if (!isBubble && el.style.transform.includes('translateX')) {
                 const rect = el.getBoundingClientRect();
@@ -1565,12 +1565,12 @@ function saveData() {
                 el.style.left = rect.left + "px";
                 el.style.top = rect.top + "px";
             }
-            
+
             pos3 = cx; pos4 = cy;
             document.onmouseup = document.ontouchend = () => {
                 document.onmouseup = document.ontouchend = document.onmousemove = document.ontouchmove = null;
-                if (isBubble) { 
-                    settings.posBubble = { top: (el.offsetTop/window.innerHeight*100)+"%", left: (el.offsetLeft/window.innerWidth*100)+"%" }; 
+                if (isBubble) {
+                    settings.posBubble = { top: (el.offsetTop / window.innerHeight * 100) + "%", left: (el.offsetLeft / window.innerWidth * 100) + "%" };
                 } else {
                     settings.posWindow = { top: el.style.top, left: el.style.left };
                 }
@@ -1588,7 +1588,7 @@ function saveData() {
                 if (!isBubble) el.style.transform = "none";
             };
         };
-        
+
         if (handleSelector) {
             const handles = el.querySelectorAll(handleSelector);
             handles.forEach(h => { h.onmousedown = h.ontouchstart = dragStart; });
@@ -1604,31 +1604,31 @@ function saveData() {
         } else {
             viewingId = tab === 'user' ? $("#catta-user-sel").val() : $("#catta-char-sel").val();
         }
-        
+
         const T = themes[settings.theme] || themes.pink;
 
         $('.cattamusic-tabs button').css({ color: T.muted, borderBottom: '2px solid transparent' });
 
         $(`#catta-tab-${tab}`).css({ color: T.main, borderBottom: `2px solid ${T.main}` }).addClass('active');
         $(`#catta-tab-${tab === 'user' ? 'char' : 'user'}`).removeClass('active');
-        
+
 
         const toolsBtn = $("#catta-btn-toggle-tools");
-        if(toolsBtn.length) {
+        if (toolsBtn.length) {
             toolsBtn.css('color', 'var(--catta-text-muted, #999)').css('background', 'none');
 
             if ($("#catta-tools-container").is(':visible')) {
-                 $("#catta-tools-container").hide();
-                 toolsBtn.data('isOpen', false);
+                $("#catta-tools-container").hide();
+                toolsBtn.data('isOpen', false);
             }
         }
-        
+
         $("#catta-user-sel").toggle(tab === 'user');
         $("#catta-char-sel").toggle(tab === 'char');
-        
+
         $("#catta-user-tools").toggle(tab === 'user');
         $("#catta-char-tools").toggle(tab === 'char');
-        
+
         updateListSelectors();
         updateCoverUI();
         renderPlaylist();
@@ -1636,11 +1636,15 @@ function saveData() {
 
     function renderPlaylist() {
         const container = $("#catta-list-display");
-        if(!container.length) return;
+        if (!container.length) return;
         container.empty();
-        
+
         const T = themes[settings.theme] || themes.pink;
         const list = getViewingArray();
+        
+        // Anti-XSS Sanitizer
+        const esc = (s) => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
         list.forEach((track, i) => {
             const isActive = (playingTab === viewingTab && playingId === viewingId && currentTrackIndex === i);
             const baseStyle = `display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-family:'Itim',cursive;font-size:11px;border-left:2px solid transparent;transition:background .15s;`;
@@ -1648,8 +1652,12 @@ function saveData() {
             const normalStyle = `color:${T.muted};`;
             const numBadge = isActive && isPlaying
                 ? `<div class="catta-eq" style="display:inline-flex;align-items:flex-end;gap:2px;height:14px;flex-shrink:0;width:16px;"><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:8px;animation:cattaEQ .55s ease-in-out infinite alternate;"></span><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:12px;animation:cattaEQ .55s ease-in-out infinite alternate .15s;"></span><span style="width:3px;border-radius:2px;background:${T.main};display:block;height:5px;animation:cattaEQ .55s ease-in-out infinite alternate .3s;"></span></div>`
-                : `<span class="track-num-badge" style="width:16px;text-align:center;font-size:10px;flex-shrink:0;font-family:'Itim',cursive;color:${T.muted};">${i+1}</span>`;
-            const item = $(`<div class="playlist-item ${isActive?'active-track':''}" style="${baseStyle}${isActive?activeStyle:normalStyle}">${numBadge}<span class="track-name-text" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Itim',cursive;color:var(--catta-text);">${track.name}</span>${track.mood?`<span style="font-size:9px;color:var(--catta-text-muted, ${T.muted});margin-right:2px;flex-shrink:0;max-width:55px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${track.mood.split('|')[0]}</span>`:''}<span class="del-btn" style="color:var(--c-bd, rgba(255,255,255,.18));cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0;line-height:1;">×</span></div>`);
+                : `<span class="track-num-badge" style="width:16px;text-align:center;font-size:10px;flex-shrink:0;font-family:'Itim',cursive;color:${T.muted};">${i + 1}</span>`;
+            
+            const safeName = esc(track.name);
+            const safeMood = track.mood ? esc(track.mood.split('|')[0]) : '';
+            
+            const item = $(`<div class="playlist-item ${isActive ? 'active-track' : ''}" style="${baseStyle}${isActive ? activeStyle : normalStyle}">${numBadge}<span class="track-name-text" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Itim',cursive;color:var(--catta-text);">${safeName}</span>${track.mood ? `<span style="font-size:9px;color:var(--catta-text-muted, ${T.muted});margin-right:2px;flex-shrink:0;max-width:55px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safeMood}</span>` : ''}<span class="del-btn" style="color:var(--c-bd, rgba(255,255,255,.18));cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0;line-height:1;">×</span></div>`);
             item.find('.track-name-text').on('click', () => isAuthorized && playTrack(i, viewingTab, viewingId));
             item.find('.del-btn').on('click', (e) => { e.stopPropagation(); list.splice(i, 1); saveData(); renderPlaylist(); });
             container.append(item);
@@ -1660,25 +1668,25 @@ function saveData() {
     function playTrack(i, tab, id) {
         playingTab = tab;
         playingId = id;
-        
+
         const list = getPlayingArray();
         if (i < 0 || i >= list.length) return;
-        
+
         currentTrackIndex = i;
         audioPlayer.src = list[i].url;
         audioPlayer.volume = volume / 5;
         audioPlayer.play().catch(e => console.warn("Auto-play blocked by browser. Click Play to start."));
         isPlaying = true;
-        
+
         $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>');
         $(`#${WIN_ID}`).addClass('playing');
         $("#catta-display-name").text(list[i].name);
-        $("#catta-play-dot").css('opacity','1');
-        
+        $("#catta-play-dot").css('opacity', '1');
+
 
         $('#catta-mini-title').text(list[i].name);
         $('#catta-mini-play').html('<i class="fa-solid fa-pause"></i>');
-        
+
 
         if (list[i].mood) {
             const T = themes[settings.theme] || themes.pink;
@@ -1687,16 +1695,16 @@ function saveData() {
         } else {
             $("#catta-mood-row").empty();
         }
-        
+
         updateCoverUI();
         renderPlaylist();
-        
+
         document.documentElement.style.setProperty('--catta-main', themes[settings.theme].main);
     }
 
     function togglePlay() {
         const list = viewingTab === 'char' ? charPlaylists[viewingId].tracks : userPlaylists[viewingId].tracks;
-        
+
 
         if (!audioPlayer.src || audioPlayer.src === window.location.href) {
 
@@ -1706,7 +1714,7 @@ function saveData() {
                 return notifyUser("⚠️ เพลย์ลิสต์นี้ว่างเปล่า");
             }
         }
-        
+
 
         if (isPlaying) { audioPlayer.pause(); $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); $(`#${WIN_ID}`).removeClass('playing'); }
         else { audioPlayer.play(); $("#catta-btn-play").html('<i class="fa-solid fa-pause"></i>'); $(`#${WIN_ID}`).addClass('playing'); }
@@ -1714,9 +1722,9 @@ function saveData() {
         updateCoverUI();
     }
 
-    function playNext() { const l = getPlayingArray(); if(l.length) playTrack((currentTrackIndex+1)%l.length, playingTab, playingId); }
-    function playPrev() { const l = getPlayingArray(); if(l.length) playTrack((currentTrackIndex-1+l.length)%l.length, playingTab, playingId); }
-    function changeVolume(v) { volume = Math.min(5, Math.max(1, volume + v)); audioPlayer.volume = volume/5; $("#catta-vol").text(`Vol: ${volume}`); }
+    function playNext() { const l = getPlayingArray(); if (l.length) playTrack((currentTrackIndex + 1) % l.length, playingTab, playingId); }
+    function playPrev() { const l = getPlayingArray(); if (l.length) playTrack((currentTrackIndex - 1 + l.length) % l.length, playingTab, playingId); }
+    function changeVolume(v) { volume = Math.min(5, Math.max(1, volume + v)); audioPlayer.volume = volume / 5; $("#catta-vol").text(`Vol: ${volume}`); }
     function changeLoopMode() {
         loopMode = (loopMode + 1) % 4;
         const btn = $("#catta-btn-loop");
@@ -1730,7 +1738,7 @@ function saveData() {
         const T = themes[themeName] || themes.pink;
         const win = $(`#${WIN_ID}`);
         win.css('--catta-font', settings.fontFamily === 'Kanit' ? "'Kanit', sans-serif" : "'Itim', cursive"); // เพิ่มบรรทัดนี้
-        if(!win.length) return;
+        if (!win.length) return;
 
         const isLight = T.type === 'light';
 
@@ -1739,8 +1747,8 @@ function saveData() {
         document.documentElement.style.setProperty('--catta-glow', T.glow);
         document.documentElement.style.setProperty('--catta-font', settings.fontFamily === 'Kanit' ? "'Kanit', sans-serif" : "'Itim', cursive");
 
-        win.css({ 
-            background: T.dark, 
+        win.css({
+            background: T.dark,
             borderColor: T.main + '44',
             boxShadow: `0 20px 60px rgba(0,0,0,.${isLight ? '2' : '8'}),0 0 40px ${T.glow},0 0 0 1px ${isLight ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.05)'} inset`,
             '--c-bg-1': isLight ? 'var(--c-main-dim)' : 'rgba(255,255,255,.06)',
@@ -1779,13 +1787,13 @@ function saveData() {
     }
 
     function showLockedUI() {
-        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'blur(4px) grayscale(1)', 'pointer-events':'none'});
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({ 'filter': 'blur(4px) grayscale(1)', 'pointer-events': 'none' });
         $("#catta-display-name").html("<span style='color:red;'>🔒 LOCK: Please Login Catta Cafe</span>");
         if (isPlaying) { audioPlayer.pause(); isPlaying = false; $("#catta-btn-play").html('<i class="fa-solid fa-play"></i>'); $(`#${WIN_ID}`).removeClass('playing'); updateCoverUI(); }
     }
 
     function hideLockedUI() {
-        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({'filter':'none', 'pointer-events':'auto'});
+        $(`#${WIN_ID} .cattamusic-controls, #${WIN_ID} .cattamusic-tabs, #${WIN_ID} .cattamusic-playlist`).css({ 'filter': 'none', 'pointer-events': 'auto' });
     }
 
     function notifyUser(msg) {
@@ -1820,10 +1828,10 @@ function saveData() {
 
         const charData = stChar.data;
         let sourceText = [charData.description, charData.personality, charData.scenario, charData.first_mes].join('\n\n');
-        
+
         let foundAny = false;
         let addedCount = 0;
-        
+
         let target = getTargetChar();
         let targetId = target.id;
 
@@ -1831,7 +1839,7 @@ function saveData() {
         if (match && match[1]) {
             const lines = match[1].split('\n');
             const urlRegex = /(https?:\/\/[^\s;]+)/i;
-            
+
             if (!charPlaylists[targetId]) {
                 charPlaylists[targetId] = { name: target.name, avatar: target.avatar, tracks: [] };
             }
@@ -1845,11 +1853,11 @@ function saveData() {
                     if (parts.length >= 2) {
                         let name = parts[0].replace(/^[0-9.-]+\s*/, '').trim(); // ลบตัวเลข/ขีดข้างหน้า
                         const urlMatch = parts[1].match(urlRegex);
-                        
+
                         if (urlMatch) {
                             const url = urlMatch[1].trim();
                             let extractedMood = "card-extract";
-                            
+
                             // ถ้ามีส่วนที่ 3 (อารมณ์)
                             if (parts.length >= 3 && parts[2].trim()) {
                                 extractedMood = parts[2].trim();
@@ -1862,7 +1870,7 @@ function saveData() {
                             }
                         }
                     }
-                } 
+                }
                 // รองรับรูปแบบเดิม (Fallback): - ชื่อเพลง [อารมณ์] https://ลิงก์
                 else {
                     const urlMatch = line.match(urlRegex);
@@ -1871,7 +1879,7 @@ function saveData() {
                         if (!charPlaylists[targetId].tracks.some(t => t.url === url)) {
                             let name = line.replace(url, '').trim();
                             if (name.startsWith('-')) name = name.substring(1).trim();
-                            
+
                             // ถอดอารมณ์เพลง (Mood) ออกมาจากชื่อเพลง (ถ้ามีวงเล็บเหลี่ยมเช่น [Sad])
                             let extractedMood = "card-extract";
                             const moodMatch = name.match(/\[(.*?)\]/);
@@ -1882,10 +1890,10 @@ function saveData() {
 
                             if (!name) {
                                 name = url.split('/').pop() || "Unknown";
-                                try { name = decodeURIComponent(name); } catch(e){}
+                                try { name = decodeURIComponent(name); } catch (e) { }
                                 name = name.replace(/\.(mp3|wav|ogg|m4a)$/i, '').replace(/[-_]/g, ' ');
                             }
-                            
+
                             charPlaylists[targetId].tracks.push({ name, url, mood: extractedMood });
                             addedCount++;
                             foundAny = true;
@@ -1933,7 +1941,7 @@ function saveData() {
                         localStorage.setItem(LS_CHAR_PLAYLISTS, JSON.stringify(charPlaylists));
                         updateListSelectors(); updateCoverUI(); renderPlaylist();
                     }
-                } catch(e) { console.warn("Cloud Sync Load Error:", e); }
+                } catch (e) { console.warn("Cloud Sync Load Error:", e); }
             }
 
 
@@ -1948,7 +1956,7 @@ function saveData() {
 
     audioPlayer.onended = () => {
         if (loopMode === 2) playTrack(currentTrackIndex, playingTab, playingId);
-        else if (loopMode === 3) { const l = getPlayingArray(); playTrack(Math.floor(Math.random()*l.length), playingTab, playingId); }
+        else if (loopMode === 3) { const l = getPlayingArray(); playTrack(Math.floor(Math.random() * l.length), playingTab, playingId); }
         else playNext();
     };
 
